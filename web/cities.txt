@@ -8,3 +8,6 @@
 ../city_grenoble/city_grenoble.json:45.1840,5.7154,165
 ../city_beer-sheva/city_beer-sheva.json:31.2518,34.7913,250
 ../city_dubai/city_dubai.json:25.2000,55.2700,300
+../city_ein-gedi/city_ein-gedi.json:31.4600,35.3900,150
+../city_modiin/city_modiin.json:31.8969,35.0104,300
+../city_paris/city_paris.json:48.8566,2.3522,300
