@@ -1,0 +1,6 @@
+{
+  "name": "adama",
+  "private": true,
+  "description": "Cities seen from space over 40 years, from free satellite data",
+  "dependencies": { "esbuild": "^0.28.2", "three": "^0.187.0" }
+}

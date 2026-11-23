@@ -1,0 +1,13 @@
+# generated pages, data and caches stay local
+*.html
+!web/src/template.html
+dist/
+node_modules
+data/
+city_*/
+raw/
+*.json
+!package.json
+.venv/
+__pycache__/
+.DS_Store
