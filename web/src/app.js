@@ -203,6 +203,7 @@ let lastE=null,inside=false;function aim(e){if(!explore)return;const b=renderer.
 renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&e.buttons===0)aim(e)});
 renderer.domElement.addEventListener('click',aim);
 renderer.domElement.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){hp=null;lastE=null;dirty=true}});
+{const zoomBy=f=>{cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,cam.zoom*f));cam.updateProjectionMatrix();dirty=true};document.getElementById('zi').onclick=()=>zoomBy(1.4);document.getElementById('zo').onclick=()=>zoomBy(1/1.4)}
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
 document.getElementById('gp').onclick=()=>{
