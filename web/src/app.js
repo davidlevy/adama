@@ -203,6 +203,10 @@ let lastE=null,inside=false;function aim(e){if(!explore)return;const b=renderer.
 renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&e.buttons===0)aim(e)});
 renderer.domElement.addEventListener('click',aim);
 renderer.domElement.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){hp=null;lastE=null;dirty=true}});
+{const zoomBy=f=>{cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,cam.zoom*f));cam.updateProjectionMatrix();dirty=true};document.getElementById('zi').onclick=()=>zoomBy(1.4);document.getElementById('zo').onclick=()=>zoomBy(1/1.4);
+// trackpad pinch: Chrome sends ctrl+wheel (which would zoom the page), Safari sends gesture events
+addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();zoomBy(Math.exp(-e.deltaY*.01))},{passive:false});
+let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
 document.getElementById('gp').onclick=()=>{
