@@ -51,8 +51,11 @@ const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
 const stBlocks=[];
+// static zones (water, bare ground, never-built green): merge 4x4 first, so they read as calm surfaces instead of a field of cubes
+for(let gy=0;gy<H-3;gy+=4)for(let gx=0;gx<W-3;gx+=4){const q=[];for(let dy=0;dy<4;dy++)for(let dx=0;dx<4;dx++){const j=idx[(gy+dy)*W+gx+dx];q.push(j<0?null:cells[j])}
+  if(q[0]&&q.every(c=>c&&c.st&&c.lt===q[0].lt)){q.forEach(c=>c.sm=1);stBlocks.push({x:gx+2-W/2,z:gy+2-H/2,s:3.96,h:q[0].h,lt:q[0].lt})}}
 for(let gy=0;gy<H-1;gy+=2)for(let gx=0;gx<W-1;gx+=2){const q4=[[0,0],[1,0],[0,1],[1,1]].map(([dx,dy])=>{const j=idx[(gy+dy)*W+gx+dx];return j<0?null:cells[j]});
-  if(q4.every(c=>c&&c.st&&c.lt===q4[0].lt)){q4.forEach(c=>c.sm=1);stBlocks.push({x:gx+1-W/2,z:gy+1-H/2,s:1.96,h:q4[0].h,lt:q4[0].lt})}}
+  if(q4.every(c=>c&&c.st&&!c.sm&&c.lt===q4[0].lt)){q4.forEach(c=>c.sm=1);stBlocks.push({x:gx+1-W/2,z:gy+1-H/2,s:1.96,h:q4[0].h,lt:q4[0].lt})}}
 cells.forEach(c=>{if(c.st&&!c.sm)stBlocks.push({x:c.x,z:c.z,s:.96,h:c.h,lt:c.lt})});
 let ND=0;cells.forEach(c=>{if(!c.st)c.di=ND++});
 const Tg=new Float32Array(ND),Ch=new Float32Array(ND),Cg=new Float32Array(ND*3),Cc=new Float32Array(ND*3),DX=new Float32Array(ND),DZ=new Float32Array(ND);let firstFill=true,animating=false;cells.forEach(c=>{if(!c.st){DX[c.di]=c.x;DZ[c.di]=c.z}});
