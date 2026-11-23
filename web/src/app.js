@@ -46,7 +46,7 @@ PL(RD+5,RD+6,1.6,-7.8,0x0d0d0f,.9);                           // lower stage
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0x9a9aa2}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#2c2823'),BARE2=new THREE.Color('#3d372f');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
