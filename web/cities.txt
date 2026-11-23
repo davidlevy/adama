@@ -1,0 +1,10 @@
+# One city per line: path to the city JSON (relative to the repo root), optionally
+# followed by :LAT,LON,RADIUS_CELLS to crop a large or elongated city to a round window.
+../city_ra-anana/city_ra-anana.json
+../city_eilat/city_eilat.json:29.5577,34.9519,170
+../city_jerusalem/city_jerusalem.json:31.7767,35.2345,230
+../city_haifa/city_haifa.json:32.8000,34.9900,250
+../city_tel-aviv/city_tel-aviv.json:32.0700,34.7800,280
+../city_grenoble/city_grenoble.json:45.1840,5.7154,165
+../city_beer-sheva/city_beer-sheva.json:31.2518,34.7913,250
+../city_dubai/city_dubai.json:25.2000,55.2700,300

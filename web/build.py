@@ -1,32 +1,60 @@
-"""Build one self-contained HTML page from one or more city JSON files.
+"""Build the static site folder: index.html, plus one JSON file per city loaded on demand.
 
-    python web/build.py out.html data/city_a/city_a.json data/city_b/city_b.json:LAT,LON,RADIUS_CELLS
+    python3 web/build.py [out_dir] [city.json[:LAT,LON,RADIUS_CELLS] ...]
+
+With no arguments it builds dist/site from the cities listed in web/cities.txt.
+
+Result:
+    out_dir/index.html
+    out_dir/data/cities.json      (index of available cities)
+    out_dir/data/<slug>.json      (one file per city, fetched when selected)
 
 A ":lat,lon,radius" suffix crops a very large or elongated city to a round window
-(radius in 20 m cells) around the given point.
+(radius in 20 m cells) around the given point. Serve out_dir over HTTP (fetch does not
+work from file://), for example by copying it to public/adama/ in an Astro site.
 """
 import json, subprocess, sys, os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prep
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(here)
-out = sys.argv[1]
-cities = []
-for arg in sys.argv[2:]:
-    path, _, crop = arg.partition(':')
+out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'dist', 'site')
+args = sys.argv[2:]
+if not args:
+    with open(os.path.join(here, 'cities.txt'), encoding='utf-8') as f:
+        args = [l.strip() for l in f if l.strip() and not l.startswith('#')]
+os.makedirs(os.path.join(out, 'data'), exist_ok=True)
+index = []
+for arg in args:
+    arg = arg if os.path.isabs(arg) else os.path.normpath(os.path.join(root, arg))
+    if not os.path.exists(arg.partition(':')[0] if not (len(arg) > 1 and arg[1] == ':') else arg):
+        print('skipping (file not found yet):', arg)
+        continue
+    path, _, crop = arg.partition(':') if not (len(arg) > 1 and arg[1] == ':') else (arg, '', '')
     if crop:
         lat, lon, r = crop.split(',')
-        cities.append(prep.load(path, lat=float(lat), lon=float(lon), R=int(r)))
+        d = prep.load(path, lat=float(lat), lon=float(lon), R=int(r))
     else:
-        cities.append(prep.load(path))
+        d = prep.load(path)
+    hp = os.path.join(os.path.dirname(path), 'heat.json')
+    if os.path.exists(hp):
+        d['heat'] = json.load(open(hp))
+    tp = os.path.join(os.path.dirname(path), 'towers.json')
+    if os.path.exists(tp):
+        d['towers'] = json.load(open(tp, encoding='utf-8'))
+    with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
+        json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0]})
+with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
+    json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
 os.makedirs(os.path.dirname(bundle), exist_ok=True)
 subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.js'),
-                '--bundle', '--minify', '--outfile=' + bundle, '--log-level=warning'], check=True)
+                '--bundle', '--minify', '--format=esm', '--target=es2022', '--outfile=' + bundle,
+                '--log-level=warning'], check=True)
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js
 head = open(os.path.join(here, 'src', 'template.html'), encoding='utf-8').read()
-with open(out, 'w', encoding='utf-8') as f:
-    f.write(head + '<script>window.CITIES=' + json.dumps(cities, separators=(',', ':'), ensure_ascii=False)
-            + '</script><script>' + js + '</script></body></html>')
+with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:
+    f.write(head + '<script type="module">' + js + '</script></body></html>')
 print('wrote', out)

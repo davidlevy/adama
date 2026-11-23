@@ -2,5 +2,10 @@
   "name": "adama",
   "private": true,
   "description": "Cities seen from space over 40 years, from free satellite data",
+  "scripts": {
+    "build": "python3 web/build.py",
+    "start": "python3 -m http.server 8000 -d dist/site",
+    "dev": "npm run build && npm run start"
+  },
   "dependencies": { "esbuild": "^0.28.2", "three": "^0.187.0" }
 }

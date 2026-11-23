@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-const CITIES=window.CITIES,SLUG=decodeURIComponent(location.hash.slice(1)),D=CITIES.find(c=>c.slug===SLUG)||CITIES[0],W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
+const CITIES=await getJSON(BASE+'cities.json'),SLUG=decodeURIComponent(location.hash.slice(1)),D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
-const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'}};
+const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'}};
 // UTM projection (WGS84), zone from D.crs
 const ZONE=+D.crs.slice(-2),NORTH=D.crs.startsWith('EPSG:326');
 function utm(lat,lon){const a=6378137,f=1/298.257223563,k0=.9996,n=f/(2-f),A=a/(1+n)*(1+n*n/4+n**4/64);
@@ -72,22 +73,51 @@ const roadLabs=[];
   for(const e of list){if(kept.length>=8)break;const m=e.pts[Math.floor(e.pts.length/2)];if(kept.every(k=>Math.hypot(k.x-m[0],k.z-m[1])>40))kept.push({nm:e.nm,x:m[0],z:m[1]})}
   kept.forEach(k=>{const d=document.createElement('div');d.className='rl';wrap.appendChild(d);roadLabs.push({d,nm:k.nm,v:new THREE.Vector3(k.x,3,k.z)})})}
 const I18={
-fr:{pts:'pts',since:'depuis {y}',sinceb:'plus bâti depuis {y}',newy:'nouveau cette année',tag:'vu du ciel, version utile',built:'bâti',green:'vert',neu:'nouveau',art:'axes principaux',kids:'aires de jeux',bf:'Avant',lens:'Cercle : {a} · Autour : {b}',pgs:'Aires de jeux : {n} (OpenStreetMap)',pc:'de la ville encore vert',wat:'eau',bare:'sol nu / désert',pcr:'du rayon de {r} km encore vert',pos:'Ma position',rot:'Rotation',w:'400 m : {p} % de vert',n:'Vert à {d} m',on:'Tu es sur du vert',b0:'Déjà bâti en ',b1:'Bâti en ',g:'Non bâti',gf:'Vert jusqu’en ',s30:'Landsat, 30 m par pixel (moins précis)',s10:'Sentinel-2, 10 m par pixel',sb:'Landsat + Sentinel-2',note:'Images satellites gratuites (Landsat depuis 1984, Sentinel-2 depuis 2017), un composite par an. Estimation par modèle : des zones de 20 m, pas des bâtiments. Avant 2017 la résolution est plus grossière.',outside:'Tu es à {d} km de la ville, hors de la carte.',loc:'Recherche de ta position...',nogeo:'Géolocalisation indisponible.',deny:'Position refusée.',nf:'Position introuvable.',ok:'Position affichée (±{a} m).'},
-en:{pts:'pts',since:'since {y}',sinceb:'more built since {y}',newy:'new this year',tag:'seen from above, made useful',built:'built',green:'green',neu:'new',art:'main roads',kids:'playgrounds',bf:'Before',lens:'Circle: {a} · Around: {b}',pgs:'Playgrounds: {n} (OpenStreetMap)',pc:'of the city still green',wat:'water',bare:'bare ground / desert',pcr:'of the {r} km radius still green',pos:'My position',rot:'Rotate',w:'400 m: {p}% green',n:'Green at {d} m',on:'You are on green',b0:'Already built in ',b1:'Built in ',g:'Not built',gf:'Green until ',s30:'Landsat, 30 m per pixel (less precise)',s10:'Sentinel-2, 10 m per pixel',sb:'Landsat + Sentinel-2',note:'Free satellite imagery (Landsat since 1984, Sentinel-2 since 2017), one composite per year. Model estimate: 20 m areas, not individual buildings. Before 2017 the resolution is coarser.',outside:'You are {d} km from the city, outside the map.',loc:'Finding your position...',nogeo:'Geolocation unavailable.',deny:'Location denied.',nf:'Position not found.',ok:'Position shown (±{a} m).'},
-he:{pts:'pts',since:'מאז {y}',sinceb:'בנוי יותר מאז {y}',newy:'חדש השנה',tag:'מבט מהשמיים, שימושי',built:'בנוי',green:'ירוק',neu:'חדש',art:'צירים ראשיים',kids:'מגרשי משחקים',bf:'לפני',lens:'עיגול: {a} · מסביב: {b}',pgs:'מגרשי משחקים: {n} (OpenStreetMap)',pc:'מהעיר עדיין ירוק',wat:'מים',bare:'קרקע חשופה / מדבר',pcr:'מהרדיוס של {r} ק״מ עדיין ירוק',pos:'המיקום שלי',rot:'סיבוב',w:'400 מ׳: {p}% ירוק',n:'ירוק במרחק {d} מ׳',on:'אתה על שטח ירוק',b0:'בנוי כבר ב־',b1:'נבנה ב־',g:'לא בנוי',gf:'ירוק עד ',s30:'Landsat, 30 מ׳ לפיקסל (פחות מדויק)',s10:'Sentinel-2, 10 מ׳ לפיקסל',sb:'Landsat + Sentinel-2',note:'תמונות לוויין חינמיות (Landsat מ־1984, Sentinel-2 מ־2017), הרכב אחד לשנה. אומדן של מודל: אזורים של 20 מ׳, לא בניינים. לפני 2017 הרזולוציה גסה יותר.',outside:'אתה {d} ק״מ מהעיר, מחוץ למפה.',loc:'מחפש מיקום...',nogeo:'מיקום לא זמין.',deny:'המיקום נדחה.',nf:'המיקום לא נמצא.',ok:'המיקום מוצג (±{a} מ׳).'}};
+fr:{heat:'Chaleur',hv:'chaleur de surface en été, depuis {y}',hl:'normal',hh:'plus chaud',pts:'pts',since:'depuis {y}',sinceb:'plus bâti depuis {y}',newy:'nouveau cette année',tag:'40 ans de villes qui s\u2019étendent, vues de l\u2019espace',scr:'Défiler',cr:'Données satellite',built:'bâti',green:'vert',neu:'nouveau',art:'axes principaux',kids:'aires de jeux',bf:'Avant',lens:'Cercle : {a} · Autour : {b}',pgs:'Aires de jeux : {n} (OpenStreetMap)',pc:'de la ville encore vert',wat:'eau',bare:'sol nu / désert',pcr:'du rayon de {r} km encore vert',pos:'Ma position',rot:'Rotation',w:'400 m : {p} % de vert',n:'Vert à {d} m',on:'Tu es sur du vert',b0:'Déjà bâti en ',b1:'Bâti en ',g:'Non bâti',gf:'Vert jusqu’en ',s30:'Landsat, 30 m par pixel (moins précis)',s10:'Sentinel-2, 10 m par pixel',sb:'Landsat + Sentinel-2',note:'Images satellites gratuites (Landsat depuis 1984, Sentinel-2 depuis 2017), un composite par an. Estimation par modèle : des zones de 20 m, pas des bâtiments. Avant 2017 la résolution est plus grossière.',outside:'Tu es à {d} km de la ville, hors de la carte.',loc:'Recherche de ta position...',nogeo:'Géolocalisation indisponible.',deny:'Position refusée.',nf:'Position introuvable.',ok:'Position affichée (±{a} m).'},
+en:{heat:'Heat',hv:'summer surface heat since {y}',hl:'normal',hh:'hotter',pts:'pts',since:'since {y}',sinceb:'more built since {y}',newy:'new this year',tag:'40 years of cities spreading, seen from space',scr:'Scroll',cr:'Satellite data',built:'built',green:'green',neu:'new',art:'main roads',kids:'playgrounds',bf:'Before',lens:'Circle: {a} · Around: {b}',pgs:'Playgrounds: {n} (OpenStreetMap)',pc:'of the city still green',wat:'water',bare:'bare ground / desert',pcr:'of the {r} km radius still green',pos:'My position',rot:'Rotate',w:'400 m: {p}% green',n:'Green at {d} m',on:'You are on green',b0:'Already built in ',b1:'Built in ',g:'Not built',gf:'Green until ',s30:'Landsat, 30 m per pixel (less precise)',s10:'Sentinel-2, 10 m per pixel',sb:'Landsat + Sentinel-2',note:'Free satellite imagery (Landsat since 1984, Sentinel-2 since 2017), one composite per year. Model estimate: 20 m areas, not individual buildings. Before 2017 the resolution is coarser.',outside:'You are {d} km from the city, outside the map.',loc:'Finding your position...',nogeo:'Geolocation unavailable.',deny:'Location denied.',nf:'Position not found.',ok:'Position shown (±{a} m).'},
+he:{heat:'חום',hv:'חום פני השטח בקיץ מאז {y}',hl:'רגיל',hh:'חם יותר',pts:'pts',since:'מאז {y}',sinceb:'בנוי יותר מאז {y}',newy:'חדש השנה',tag:'40 שנות התפשטות של ערים, מהחלל',scr:'גלול',cr:'נתוני לוויין',built:'בנוי',green:'ירוק',neu:'חדש',art:'צירים ראשיים',kids:'מגרשי משחקים',bf:'לפני',lens:'עיגול: {a} · מסביב: {b}',pgs:'מגרשי משחקים: {n} (OpenStreetMap)',pc:'מהעיר עדיין ירוק',wat:'מים',bare:'קרקע חשופה / מדבר',pcr:'מהרדיוס של {r} ק״מ עדיין ירוק',pos:'המיקום שלי',rot:'סיבוב',w:'400 מ׳: {p}% ירוק',n:'ירוק במרחק {d} מ׳',on:'אתה על שטח ירוק',b0:'בנוי כבר ב־',b1:'נבנה ב־',g:'לא בנוי',gf:'ירוק עד ',s30:'Landsat, 30 מ׳ לפיקסל (פחות מדויק)',s10:'Sentinel-2, 10 מ׳ לפיקסל',sb:'Landsat + Sentinel-2',note:'תמונות לוויין חינמיות (Landsat מ־1984, Sentinel-2 מ־2017), הרכב אחד לשנה. אומדן של מודל: אזורים של 20 מ׳, לא בניינים. לפני 2017 הרזולוציה גסה יותר.',outside:'אתה {d} ק״מ מהעיר, מחוץ למפה.',loc:'מחפש מיקום...',nogeo:'מיקום לא זמין.',deny:'המיקום נדחה.',nf:'המיקום לא נמצא.',ok:'המיקום מוצג (±{a} מ׳).'}};
 let LG=(()=>{try{const s=localStorage.getItem('city_lang');if(I18[s])return s}catch(e){}const n=(navigator.language||'en').slice(0,2);return I18[n]?n:'en'})();
 const T=k=>I18[LG][k];
 const YR=D.years,yi0=Y-1;let domYi=-1,lensOn=false,LR=9,tt=yi0,run=false,hp=null,dirty=true,facG=null;
+// Landsat surface temperature (optional layer): anomaly versus the city median, per 100 m block and year
+const HT=D.heat||null,HOFF=D.off||[0,0];let heatOn=false,HY=null,HM=null;
+if(HT){const fill=a=>{for(let i=0;i<a.length;i++)if(a[i]==null){let j=i-1;while(j>=0&&a[j]==null)j--;if(j<0){j=i+1;while(j<a.length&&a[j]==null)j++}a[i]=j>=0&&j<a.length?a[j]:null}return a};
+  HY=fill(HT.data.map(x=>x?b64(x):null));HM=fill(HT.med.slice())}
+const hIdx=yr=>Math.max(0,Math.min(HT.years.length-1,HT.years.indexOf(yr)<0?(yr<HT.years[0]?0:HT.years.length-1):HT.years.indexOf(yr)));
+function heatAt(arr,u,v){const fx=(HOFF[0]+u)/HT.block-.5,fy=(HOFF[1]+v)/HT.block-.5,x0=Math.floor(fx),y0=Math.floor(fy),tx=fx-x0,ty=fy-y0,w=HT.w,hh=HT.h;
+  const g=(x,y)=>arr[Math.max(0,Math.min(hh-1,y))*w+Math.max(0,Math.min(w-1,x))];
+  const q=(g(x0,y0)*(1-tx)+g(x0+1,y0)*tx)*(1-ty)+(g(x0,y0+1)*(1-tx)+g(x0+1,y0+1)*tx)*ty;return (q-HT.base)/HT.step}
+const HST=[[-6,.10,.30,.95],[-2.5,.15,.55,.85],[0,.20,.20,.22],[2.5,.95,.50,.10],[5,1,.20,.10],[8,1,.92,.70]];
+function heatMix(a){return Math.max(0,Math.min(1,(a-.5)/3))*.8}
+function heatCol(a,o){let i=0;while(i<HST.length-2&&a>HST[i+1][0])i++;const A=HST[i],B=HST[i+1],t=Math.max(0,Math.min(1,(a-A[0])/(B[0]-A[0])));return o.setRGB(A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t,A[3]+(B[3]-A[3])*t,THREE.SRGBColorSpace)}
+const hCol=new THREE.Color();
+// Real tall buildings from OpenStreetMap (optional towers.json): very dark glossy towers that rise when their area was built
+const TW=D.towers?D.towers.towers:[],NT=TW.length,TTg=new Float32Array(NT),TC=new Float32Array(NT),TD=[];
+const tMat=new THREE.MeshStandardMaterial({color:0x010101,roughness:.35,metalness:.4});
+tMat.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=vec3(.62,.66,.75)*pow(1.-abs(dot(normalize(vNormal),normalize(vViewPosition))),3.)*.22;')};
+const tGeo=new THREE.BoxGeometry(1,1,1);tGeo.translate(0,.5,0);
+const tMesh=new THREE.InstancedMesh(tGeo,tMat,Math.max(1,NT));tMesh.castShadow=true;tMesh.frustumCulled=false;scene.add(tMesh);
+TW.forEach(t=>{const [x,z]=toXZ(t[0],t[1]),c=cellAt(x,z);if(!c||Math.hypot(x,z)>RD-1){TD.push(null);return}
+  TD.push({x,z,sx:Math.min(5,Math.max(1.6,t[3]/14)),sz:Math.min(5,Math.max(1.6,t[4]/14)),h:2+t[2]/20*1.5,f:t[5]>0?Math.max(0,Math.min(yi0,t[5]-YR[0])):(c.f<999?c.f:yi0)})});
+function stepTowers(k){let mv=false;const a=tMesh.instanceMatrix.array;
+  for(let i=0;i<NT;i++){const T=TD[i],o=i*16;if(!T){a[o]=a[o+5]=a[o+10]=0;a[o+15]=1;continue}
+    const d=TTg[i]-TC[i];if(d>.002||d<-.002){TC[i]+=d*k;mv=true}else TC[i]=TTg[i];
+    a[o]=T.sx;a[o+5]=Math.max(.001,T.h*TC[i]);a[o+10]=T.sz;a[o+12]=T.x;a[o+13]=0;a[o+14]=T.z;a[o+15]=1}
+  tMesh.instanceMatrix.needsUpdate=true;return mv}
+function paintStatic(yi){const arr=HT&&heatOn?HY[hIdx(YR[yi])]:null,_c=new THREE.Color(),_a=new THREE.Color('#1c9e4a'),_b=new THREE.Color('#52d977');
+  stBlocks.forEach((b,i)=>{if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else _c.copy(_a).lerp(_b,b.h);if(arr){const an=heatAt(arr,b.x+W/2,b.z+H/2);_c.lerp(heatCol(an,new THREE.Color()),heatMix(an))}smesh.setColorAt(i,_c)});smesh.instanceColor.needsUpdate=true}
+function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,n=0;for(let j=Math.max(0,i-2);j<=Math.min(HM.length-1,i+2);j++)if(HM[j]!=null){a+=HM[j];n++}return a/n},d=avg(k)-avg(Math.min(2,HM.length-1)),nf=new Intl.NumberFormat(LG,{maximumFractionDigits:1,minimumFractionDigits:1});
+  document.getElementById('hvb').textContent=(k<=2?'':(d>=0?'+':'−')+nf.format(Math.abs(d))+' °C');document.getElementById('hvl').textContent=T('hv').replace('{y}',HT.years[Math.min(2,HT.years.length-1)]===YR[0]?YR[0]:HT.years[0])}
 const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=document.getElementById('tk'),tip=document.getElementById('tip');
 sl.max=yi0;sl.value=yi0;
 const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
-const COUNTRY={fr:'Israël',en:'Israel',he:'ישראל'};
+const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות'}},CODE={grenoble:'FR',dubai:'AE'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
 CITIES.forEach(c=>{const o=document.createElement('div');o.dataset.slug=c.slug;o.setAttribute('role','option');o.innerHTML='<span></span><small></small>';if(c.slug===D.slug)o.className='on';o.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};cml.appendChild(o)});
 cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o)};
 addEventListener('click',()=>cmEl.classList.remove('open'));addEventListener('keydown',e=>{if(e.key==='Escape')cmEl.classList.remove('open')});
 function applyLang(){domYi=-1;document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
-  const nm=(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];cmn.innerHTML='<span class="cn"></span> <span class="cc"></span>';cmn.firstChild.textContent=nm;cmn.lastChild.textContent=COUNTRY[LG];[...cml.children].forEach(o=>{o.firstChild.className='cn2';o.firstChild.textContent=(NAMES[o.dataset.slug]||{})[LG]||o.dataset.slug;o.lastChild.textContent=COUNTRY[LG]});document.title=nm+' · '+YR[0]+'-'+YR[yi0];
+  const nm=(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];cmn.innerHTML='<span class="cn"></span> <span class="cc"></span>';cmn.firstChild.textContent=nm;cmn.lastChild.textContent=COUNTRY[LG];[...cml.children].forEach(o=>{o.firstChild.className='cn2';o.firstChild.textContent=(NAMES[o.dataset.slug]||{})[LG]||o.dataset.slug;o.lastChild.textContent=CO(o.dataset.slug)[LG]});document.title=nm+' · '+YR[0]+'-'+YR[yi0];
   window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
@@ -97,10 +127,10 @@ function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.ins
   for(let i=0;i<ND;i++){let d=Tg[i]-Ch[i];if(d>.002||d<-.002){Ch[i]+=d*k;mv=true}else Ch[i]=Tg[i];
     const o=i*16;ma[o]=.94;ma[o+5]=Math.max(.05,Ch[i]);ma[o+10]=.94;ma[o+12]=DX[i];ma[o+14]=DZ[i];ma[o+15]=1;
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
-  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return mv}
+  mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
 function update(t){
   const yi=Math.min(yi0,Math.max(0,Math.round(t)));
-  let bt=0,nw=0,gv=0;
+  let bt=0,nw=0,gv=0;const HYc=HT&&heatOn?HY[hIdx(YR[yi])]:null;
   for(let i=0;i<cells.length;i++){const c=cells[i];if(c.st)continue;let h,color;const hv=c.h;
     const ye=lensOn&&hp&&Math.hypot(c.x-hp.x,c.z-hp.z)<LR?(yi>yi0/2?0:yi0):t;const built=c.f<=ye+1e-6;
     if(c.road&&(built||c.f===999)){h=.08;color=c.road===2?col.setRGB(2.3,2.3,2.3,THREE.LinearSRGBColorSpace):col.setRGB(.7,.7,.72,THREE.LinearSRGBColorSpace)}
@@ -109,13 +139,15 @@ function update(t){
     else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
     else if(c.lt===2){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}
     else{h=.3+hv*.3;color=col.copy(G1).lerp(G2,hv)}
+    if(heatOn&&HT&&!(c.road&&(built||c.f===999))){{const an=heatAt(HYc,c.gx+.5,c.gy+.5);color=color.clone().lerp(heatCol(an,hCol),heatMix(an))}}
     if(c.in&&c.f<=yi){bt++;if(c.lt===0)gv++;if(c.f===yi&&yi>0)nw++}
     Tg[c.di]=h;Cg[c.di*3]=color.r;Cg[c.di*3+1]=color.g;Cg[c.di*3+2]=color.b}
+  for(let i=0;i<NT;i++){const T=TD[i];TTg[i]=T?Math.max(0,Math.min(1,t-T.f+1)):0}
   if(firstFill){firstFill=false;Ch.set(Tg);Cc.set(Cg)}animating=true;
   facG.visible=yi===yi0;
-  if(yi===domYi){refreshTip(yi);return}domYi=yi;
+  if(yi===domYi){refreshTip(yi);return}domYi=yi;if(heatOn)paintStatic(yi),heatStat(yi);
   document.getElementById('yr').textContent=YR[yi];
-  const sensor=LS.has(YR[yi])?T('s30'):(YR[yi]<=2018?T('sb'):T('s10'));document.getElementById('sn').textContent=sensor;
+  const sensor=LS.has(YR[yi])?T('s30'):(YR[yi]<=2018?T('sb'):T('s10'));{const sn=document.getElementById('sn');sn.textContent=sensor.split(',')[0];sn.title=sensor}
   sl.style.setProperty('--p',(yi/yi0*100)+'%');
   tkEl.querySelectorAll('div').forEach(d=>d.classList.toggle('on',+d.dataset.idx===yi));
   bars.querySelectorAll('.bar').forEach(b=>b.classList.toggle('on',+b.dataset.i===yi));
@@ -124,7 +156,7 @@ function update(t){
   document.getElementById('f1').textContent=P(Math.round(bp))+' %';
   document.getElementById('f2').textContent=yi===0?'\u2014':sg(Math.round(bp-bp0))+' '+T('pts');document.getElementById('l2').textContent=T('sinceb').replace('{y}',YR[0]);
   
-  document.getElementById('f3').textContent=yi===0?'\u2014':sg(Math.round(dNew*10)/10)+' '+T('pts');document.getElementById('l3').textContent=T('newy');
+  document.getElementById('f3').textContent=yi===0?'\u2014':sg(Math.round(dNew*10)/10)+' '+T('pts');document.getElementById('l3').textContent=T('newy');['f2','f3'].forEach(k=>document.getElementById(k).parentElement.style.display=yi===0?'none':'');
   const gp=(NV-gv)/NIN*100;document.getElementById('pc').textContent=Math.round(gp)+' %';document.getElementById('gt').textContent=yi===0?'':(gp<GP0?'\u25BC ':'\u25B2 ')+P(Math.abs(Math.round(gp-GP0)))+' '+T('pts')+' '+T('since').replace('{y}',YR[0]);
   refreshTip(yi)}
 // timeline ticks every 5 years
@@ -140,17 +172,17 @@ addEventListener('wheel',()=>{if(ctl.autoRotate){ctl.autoRotate=false}idleT=0},{
 // playgrounds: floating clay balloons on thin strings (instanced, gently bobbing)
 facG=new THREE.Group();scene.add(facG);
 const BP=[];D.osm.playgrounds.forEach((p,i)=>{const [x,z]=toXZ(p[0],p[1]);if(!cellAt(x,z))return;BP.push({x,z,ph:(i*2.399)%(Math.PI*2),k:i%4})});
-const BCOL=[0xff7aa8,0xffa3bd,0xff9a76,0xc49bff].map(c=>new THREE.Color(c));
-const bmesh=new THREE.InstancedMesh(new THREE.SphereGeometry(1,28,20),new THREE.MeshStandardMaterial({roughness:.42,metalness:0}),Math.max(1,BP.length));
+const BCOL=[0xa56bff,0xa56bff,0xa56bff,0xa56bff].map(c=>new THREE.Color(c));
+const bmesh=new THREE.InstancedMesh(new THREE.SphereGeometry(1,28,20),new THREE.MeshStandardMaterial({roughness:.35,metalness:0,emissive:0x5a1fd0,emissiveIntensity:.45}),Math.max(1,BP.length));
 bmesh.castShadow=true;bmesh.frustumCulled=false;BP.forEach((b,i)=>bmesh.setColorAt(i,BCOL[b.k]));facG.add(bmesh);
-const bline=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(new Float32Array(BP.length*6),3)),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.45}));bline.frustumCulled=false;facG.add(bline);
-const bdot=new THREE.InstancedMesh(new THREE.CylinderGeometry(.55,.55,.05,20),new THREE.MeshBasicMaterial({color:0xff7aa8,transparent:true,opacity:.55,depthWrite:false}),Math.max(1,BP.length));
+const bline=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(new Float32Array(BP.length*6),3)),new THREE.LineBasicMaterial({color:0xa56bff,transparent:true,opacity:.3}));bline.frustumCulled=false;facG.add(bline);
+const bdot=new THREE.InstancedMesh(new THREE.CylinderGeometry(.55,.55,.05,20),new THREE.MeshBasicMaterial({color:0xa56bff,transparent:true,opacity:.55,depthWrite:false}),Math.max(1,BP.length));
 {const m=new THREE.Matrix4();BP.forEach((b,i)=>{m.makeTranslation(b.x,.3,b.z);bdot.setMatrixAt(i,m)});bdot.instanceMatrix.needsUpdate=true}facG.add(bdot);
 const _bm=new THREE.Matrix4(),_bq=new THREE.Quaternion(),_bp=new THREE.Vector3(),_bs=new THREE.Vector3();
 function animBalloons(tm){if(!facG.visible)return;const pa=bline.geometry.attributes.position;
   BP.forEach((b,i)=>{const y=7+Math.sin(tm*.9+b.ph)*.55,x=b.x+Math.sin(tm*.6+b.ph*1.7)*.35,z=b.z+Math.cos(tm*.5+b.ph)*.35;
-    _bp.set(x,y,z);_bs.set(1.15,1.4,1.15);_bm.compose(_bp,_bq,_bs);bmesh.setMatrixAt(i,_bm);
-    pa.setXYZ(i*2,b.x,.3,b.z);pa.setXYZ(i*2+1,x,y-1.35,z)});
+    _bp.set(x,y,z);_bs.set(.9,1.1,.9);_bm.compose(_bp,_bq,_bs);bmesh.setMatrixAt(i,_bm);
+    pa.setXYZ(i*2,b.x,.3,b.z);pa.setXYZ(i*2+1,x,y-1.05,z)});
   bmesh.instanceMatrix.needsUpdate=true;pa.needsUpdate=true}
 let npg=BP.length;
 // hover tooltip: year built + green share within 400 m
@@ -181,6 +213,7 @@ document.getElementById('gp').onclick=()=>{
     meV=new THREE.Vector3(x,6,z);me.style.display='block';msg.textContent=T('ok').replace('{a}',Math.round(p.coords.accuracy));
     hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;
   },e=>{msg.textContent=e.code===1?T('deny'):T('nf')},{enableHighAccuracy:true,timeout:15000})};
+const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{LG=b.dataset.l;applyLang()});
 const compass=document.getElementById('cp');
@@ -195,15 +228,15 @@ const ia=Math.max(0,ib-5);
 const gArr=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n/NIN*100});
 const lat0=(D.center?D.center[0]:(D.bbox[1]+D.bbox[3])/2).toFixed(2),lon0=(D.center?D.center[1]:(D.bbox[0]+D.bbox[2])/2).toFixed(2);
 const ST={
-fr:{s0:()=>({k:nm0().toUpperCase()+' · '+lat0+'°N '+lon0+'°E',h:'Vue du ciel, version utile.',p:'Des images satellites gratuites, une par an, de '+YR[0]+' à '+YR[yi0]+'. Fais défiler.'}),
+fr:{s0:()=>({k:nm0().toUpperCase()+' · '+lat0+'°N '+lon0+'°E',h:'Où est passé le vert ?',p:'Des images satellites gratuites, de '+YR[0]+' à '+YR[yi0]+'. Fais défiler.'}),
  s1:()=>({k:YR[ia]+' → '+YR[ib],b:'+'+Math.round(bArr[ib]-bArr[ia])+' pts',p:'de la ville est devenue bâtie en cinq ans. C\u2019est la plus forte poussée.',n:'Chaque bloc blanc vient de basculer.'}),
  s2:()=>{const d=bArr[yi0]-bArr[ib],n=yi0-ib;return{k:'DEPUIS '+YR[ib],b:'+'+Math.round(d)+' pts',p:'en '+n+' ans'+(n>0&&d/n<bestG/5?' : le rythme ralentit.':' : la ville continue de grandir.')}},
  s3:()=>({k:'CE QUI RESTE VERT',b:Math.round(gArr[yi0])+' %',g:1,p:'de la ville est encore verte, contre '+Math.round(gArr[0])+' % en '+YR[0]+'.',n:'Tout ce qui n\u2019est pas bâti : champs, parcs, jardins.'}),back:'↑ Histoire'},
-en:{s0:()=>({k:nm0().toUpperCase()+' · '+lat0+'°N '+lon0+'°E',h:'Seen from above, made useful.',p:'Free satellite images, one per year, from '+YR[0]+' to '+YR[yi0]+'. Scroll.'}),
+en:{s0:()=>({k:nm0().toUpperCase()+' · '+lat0+'°N '+lon0+'°E',h:'Where did the green go?',p:'Free satellite images, from '+YR[0]+' to '+YR[yi0]+'. Scroll.'}),
  s1:()=>({k:YR[ia]+' → '+YR[ib],b:'+'+Math.round(bArr[ib]-bArr[ia])+' pts',p:'of the city became built in five years. The biggest push.',n:'Each white block just flipped.'}),
  s2:()=>{const d=bArr[yi0]-bArr[ib],n=yi0-ib;return{k:'SINCE '+YR[ib],b:'+'+Math.round(d)+' pts',p:'in '+n+' years'+(n>0&&d/n<bestG/5?': the pace slows down.':': the city keeps growing.')}},
  s3:()=>({k:'WHAT STAYS GREEN',b:Math.round(gArr[yi0])+' %',g:1,p:'of the city is still green, down from '+Math.round(gArr[0])+' % in '+YR[0]+'.',n:'Everything not built: fields, parks, gardens.'}),back:'↑ Story'},
-he:{s0:()=>({k:nm0()+' · '+lat0+'°N '+lon0+'°E',h:'מבט מהשמיים, שימושי.',p:'תמונות לוויין חינמיות, אחת לשנה, מ־'+YR[0]+' עד '+YR[yi0]+'. גלול.'}),
+he:{s0:()=>({k:nm0()+' · '+lat0+'°N '+lon0+'°E',h:'לאן נעלם הירוק?',p:'תמונות לוויין חינמיות, מ־'+YR[0]+' עד '+YR[yi0]+'. גלול.'}),
  s1:()=>({k:YR[ia]+' → '+YR[ib],b:'+'+Math.round(bArr[ib]-bArr[ia])+' pts',p:'מהעיר נבנו בחמש שנים. הדחיפה הגדולה ביותר.',n:'כל בלוק לבן הרגע התהפך.'}),
  s2:()=>{const d=bArr[yi0]-bArr[ib],n=yi0-ib;return{k:'מאז '+YR[ib],b:'+'+Math.round(d)+' pts',p:'ב־'+n+' שנים'+(n>0&&d/n<bestG/5?': הקצב מואט.':': העיר ממשיכה לגדול.')}},
  s3:()=>({k:'מה נשאר ירוק',b:Math.round(gArr[yi0])+' %',g:1,p:'מהעיר עדיין ירוק, לעומת '+Math.round(gArr[0])+' % ב־'+YR[0]+'.',n:'כל מה שלא בנוי: שדות, פארקים, גינות.'}),back:'↑ סיפור'}};
@@ -228,7 +261,7 @@ function story(){
     if(y<st[1])t=0;else if(y<st[2])t=lerp(0,ib,ease(p1));else if(y<st[3])t=lerp(ib,yi0,ease(p2));else t=yi0;
     tt=t;sl.value=Math.round(t);dirty=true;lastY=y}
 }
-addEventListener('scroll',story,{passive:true});addEventListener('resize',story);
+addEventListener('scroll',story,{passive:true});addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
 window.__lh=()=>{upB.textContent=ST[LG].back;cardKey=-1;story()};
 upB.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
@@ -249,3 +282,5 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
+
+{const l=document.getElementById('ld');if(l){l.style.opacity=0;setTimeout(()=>l.remove(),600)}}

@@ -74,6 +74,14 @@ def parse_years(s):
     return [int(x) for x in s.split(",")]
 
 
+def data_root():
+    """Folder where city_<name> folders live: the folder you run from, or the parent of this repo
+    when you run from inside the repo."""
+    cwd = os.path.realpath(os.getcwd())
+    repo = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    return os.path.dirname(repo) if cwd == repo or cwd.startswith(repo + os.sep) else cwd
+
+
 def slug(s):
     s = re.sub(r"[^a-z0-9]+", "-", s.lower().split(",")[0]).strip("-")
     return s or "city"
@@ -112,6 +120,11 @@ def resolve_city(a, rep):
         lat, lon = 32.185, 34.870
         dlat, dlon = 3.0 / 111.32, 2.5 / (111.32 * np.cos(np.radians(lat)))
         bbox = [lon - dlon, lat - dlat, lon + dlon, lat + dlat]
+    if a.center:
+        lat, lon = [float(x) for x in a.center.split(",")]
+        dlat, dlon = a.radius / 111.32, a.radius / (111.32 * np.cos(np.radians(lat)))
+        bbox = [lon - dlon, lat - dlat, lon + dlon, lat + dlat]
+        geom = None
     pad_lat, pad_lon = 0.2 / 111.32, 0.2 / (111.32 * np.cos(np.radians((bbox[1] + bbox[3]) / 2)))
     bbox = [bbox[0] - pad_lon, bbox[1] - pad_lat, bbox[2] + pad_lon, bbox[3] + pad_lat]
     wkm = (bbox[2] - bbox[0]) * 111.32 * np.cos(np.radians((bbox[1] + bbox[3]) / 2))
@@ -403,11 +416,11 @@ def analyze(s2, ls, wc, years_s2, years_ls, rep):
 
 
 # ---------------------------------------------------------------- OpenStreetMap
-def overpass(q, rep, tries=3):
+def overpass(q, rep, tries=3, timeout=60):
     last = ""
     for url in OVERPASS * tries:
         try:
-            r = requests.post(url, data={"data": q}, headers=UA, timeout=60)
+            r = requests.post(url, data={"data": q}, headers=UA, timeout=timeout)
             if r.status_code == 200:
                 return r.json()
             last = "%s -> HTTP %d" % (url.split("/")[2], r.status_code)
@@ -470,6 +483,8 @@ def inside_mask(geom, grid, CH, CW):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--city", default="Ra'anana, Israel")
+    ap.add_argument("--center", default=None, help="LAT,LON of the city centre; use for big cities or regions (replaces the geocoded area)")
+    ap.add_argument("--radius", type=float, default=6.0, help="half-size in km around --center")
     ap.add_argument("--years-s2", default="2017-2026")
     ap.add_argument("--years-ls", default="1984-2018", help="2020 and 2021 are always added to train the Landsat model")
     ap.add_argument("--season-s2", default="02-15:04-15")
@@ -488,7 +503,7 @@ def main():
     lon0 = (bbox[0] + bbox[2]) / 2
     g10, g30 = make_grid(bbox, lon0, 10.0), make_grid(bbox, lon0, 30.0)
     log("Grid: %d x %d pixels at 10 m (%s)" % (g10["width"], g10["height"], g10["crs"]), rep)
-    out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "city_" + slug(a.city))
+    out_dir = os.path.join(data_root(), "city_" + slug(a.city))
     raw = os.path.join(out_dir, "raw")
     os.makedirs(raw, exist_ok=True)
 

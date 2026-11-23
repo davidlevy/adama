@@ -1,4 +1,4 @@
-import json,base64,math,numpy as np
+import json,base64,math
 def utm(lat,lon,zone=36):
     a=6378137;f=1/298.257223563;k0=.9996;n=f/(2-f);A=a/(1+n)*(1+n*n/4+n**4/64)
     al=[n/2-2*n*n/3+5*n**3/16,13*n*n/48-3*n**3/5,61*n**3/240]
@@ -19,8 +19,10 @@ def crop(d,lat=None,lon=None,R=None):
     out=dict(d)
     for k in ('first','inside','land'):
         if k in d:
-            a=np.frombuffer(base64.b64decode(d[k]),'uint8').reshape(h,w)[y0:y1,x0:x1]
-            out[k]=base64.b64encode(np.ascontiguousarray(a).tobytes()).decode()
+            raw=base64.b64decode(d[k])
+            rows=[raw[yy*w+x0:yy*w+x1] for yy in range(y0,y1)]
+            out[k]=base64.b64encode(b''.join(rows)).decode()
+    out['off']=[x0,y0]
     out['w'],out['h']=x1-x0,y1-y0
     out['bounds']=[L+x0*20,T-y1*20,L+x1*20,T-y0*20]
     # keep only road segments touching the window
