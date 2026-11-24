@@ -44,7 +44,7 @@ const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new 
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#7b6a2c'),FIELD2=new THREE.Color('#a08c3c');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#8a9a2c'),FIELD2=new THREE.Color('#c9d65a');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
@@ -64,7 +64,7 @@ mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
   sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWP;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWP=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uT;varying vec3 vWP;').replace('#include <color_fragment>','#include <color_fragment>\n float gk=step(max(diffuseColor.r,diffuseColor.b)+.04,diffuseColor.g);float tq=floor(uT*7.);vec2 gq=floor(gl_FragCoord.xy*.55)+tq*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);float wv=(sin(vWP.x*.11+vWP.z*.07+uT*1.1)*.5+.5)*(sin(vWP.z*.09-vWP.x*.05-uT*.8)*.5+.5);float wk=step(diffuseColor.r+.05,diffuseColor.b);float dk=step(.004,diffuseColor.r-diffuseColor.b)*step(diffuseColor.g,diffuseColor.r+.001)*(1.-gk)*(1.-wk);float sp=sin(vWP.x*.35+uT*1.6)*sin(vWP.z*.31-uT*1.2);diffuseColor.rgb*=(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.42*gk)*(1.+(gn-.5)*.1*wk)*(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.3*dk);float ws=(sin(vWP.x*.045+uT*.45)*sin(vWP.z*.04-uT*.36)+sin(vWP.x*.021-vWP.z*.027+uT*.27))*.25+.5;vec3 wa=diffuseColor.rgb*vec3(.62,.8,1.25),wb=diffuseColor.rgb*vec3(.85,1.45,1.2);diffuseColor.rgb=mix(diffuseColor.rgb,mix(wa,wb,clamp(ws,0.,1.)),wk);')};
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
-const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#2aa854'),G2=new THREE.Color('#74dd7c');
+const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1c9a4a'),G2=new THREE.Color('#86f08c');
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#2aa854'),_b=new THREE.Color('#74dd7c');
   stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.2+b.h*.1:.3+b.h*.3,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,b.h);else _c.copy(_a).lerp(_b,b.h);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
@@ -400,13 +400,13 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     m.classList.add('on');document.getElementById('mobok').onclick=close;addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('on'))close()})}}
 
 // ---------- ambient music that slowly builds up with the story (Web Audio, nothing to download) ----------
-// Slow chords, long soft notes, no sequencer. Layers come in with the progress p of the story: pad, bells, melody, sub, heartbeat, air.
-// Two melodies: the other one is used each time the city changes (stored in localStorage), not during a visit.
+// A drone that never stops, soft chords and a slow pentatonic melody that enter as the story advances. No sequencer.
+// Two pieces: the other one is used each time the city changes (stored in localStorage), not during a visit.
 {const S=60/70/4,
-    CHS=[[[57,0,3,7],[53,0,4,7],[48,0,4,7],[55,0,4,7]],[[57,0,3,7],[55,0,4,7],[53,0,4,7],[52,0,4,7]]],   // A: Am F C G, B: Am G F E
-    // one slot per beat (8 per chord): index in the chord tones [root,3rd,5th,octave,oct+3rd,oct+5th], -1 = silence
-    BELL=[[0,-1,2,-1,3,-1,1,-1],[2,-1,-1,1,-1,3,-1,-1]],
-    MEL=[[3,-1,-1,-1,4,-1,-1,2],[5,-1,-1,4,-1,-1,-1,3]],
+    PRG=[{d:45,ch:[[57,0,3,7,14],[53,0,4,7,11],[48,0,4,7,14],[55,0,4,7,14]],   // A minor: Am9 Fmaj7 Cadd9 Gadd9
+          mel:[76,-1,72,-1,74,-1,69,-1,72,-1,76,-1,79,-1,76,74]},
+         {d:38,ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,14]],   // D dorian: Dm9 Bbmaj7 Fadd9 Cadd9
+          mel:[81,-1,77,-1,79,-1,74,-1,77,-1,72,-1,74,-1,69,72]}],
     hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
   let SEC=0;try{const lc=localStorage.getItem('adama_mc'),ls=+localStorage.getItem('adama_ms')||0;SEC=lc===null?0:(lc===D.slug?ls:1-ls);localStorage.setItem('adama_mc',D.slug);localStorage.setItem('adama_ms',SEC)}catch(e){}
   let ac,mg,pad,bell,nb,an,timer=0,step=0,next=0,on=false,ex=null;
@@ -420,14 +420,17 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1};
   const tone=(t,f,dur,type,vol,cut,dest,att=.01)=>{const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
+  // a held note: rises over `att`, stays, fades over `att` (notes that follow each other cross-fade)
+  const sus=(t,f,dur,type,vol,cut,dest,att)=>{const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.setValueAtTime(vol,t+dur-att);g.gain.linearRampToValueAtTime(0,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
   const swell=(t,dur,vol,dest)=>{const n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();n.buffer=nb;n.loop=true;fl.type='bandpass';fl.frequency.value=2200;fl.Q.value=.6;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.6);g.gain.linearRampToValueAtTime(0,t+dur);n.connect(fl);fl.connect(g);g.connect(dest);n.start(t);n.stop(t+dur+.05)};
-  const play=(i,t,p)=>{const c=CHS[SEC][Math.floor(i/32)%4],r=c[0],iv=c.slice(1),ct=[0,iv[0],iv[1],12,12+iv[0],12+iv[1]],beat=i%32/4;
-    if(i%32===0){iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>tone(t,hz(r+x)*(1+d*.003),32*S,'sawtooth',.022,350+1000*p,pad,3)));tone(t,hz(r-12),32*S,'triangle',.05,600,pad,3);
-      const b=lv(p,.3);if(b>0)tone(t,hz(r-24),32*S,'sine',.2*b,200,mg,1.2);const a=lv(p,.5);if(a>0)swell(t,32*S,.03*a,pad)}
-    if(i%4===0){const bl=lv(p,.12),b=BELL[SEC][beat];if(bl>0&&b>=0)tone(t,hz(r+24+ct[b]),S*14,'sine',.045*bl,3000,bell,.01);
-      const ml=lv(p,.38),m=MEL[SEC][beat];if(ml>0&&m>=0)tone(t,hz(r+12+ct[m]),S*12,'triangle',.05*ml,1800,bell,.25)}
-    const k=lv(p,.62);if(k>0&&i%16===0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+.2);g.gain.setValueAtTime(.3*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.5);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.55)}};
+  const play=(i,t,p)=>{const P=PRG[SEC],c=P.ch[Math.floor(i/32)%4],r=c[0],iv=c.slice(1);
+    if(i%128===0)[[0,'sine',.09],[7,'triangle',.035],[12,'sine',.03]].forEach(([x,ty,v])=>[-1,1].forEach(d=>sus(t,hz(P.d+x)*(1+d*.002),128*S+6,ty,v,500,pad,6)));
+    if(i%32===0){const pd=lv(p,.05);if(pd>0)iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>sus(t,hz(r+x)*(1+d*.003),32*S+4,'triangle',.02*pd,500+900*p,pad,4)));
+      const a=lv(p,.45);if(a>0)swell(t,32*S,.025*a,pad);
+      const k=lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
+    if(i%8===0){const m=P.mel[(i/8)%16],ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
   const tick=()=>{if(explore!==ex){ex=explore;mg.gain.setTargetAtTime(vol(),ac.currentTime,ex?1.4:1.2)}const p=prog();while(next<ac.currentTime+.2){play(step,next,p);next+=S;step++}};
   const set=v=>{on=v;bt.classList.toggle('off',!v);bt.setAttribute('aria-pressed',v);bt.title=bt.ariaLabel=T('mus');
     if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(vol(),ac.currentTime,1.2);ex=explore;if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
