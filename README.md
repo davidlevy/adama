@@ -112,6 +112,16 @@ Then add it to `web/cities.txt` and its name and country in `NAMES` and `CODE` i
 
 For a big city or a region, give the centre and a radius in km: `--center 25.2,55.27 --radius 7`.
 
+## Share links
+
+The address follows the session and always holds a link that restores it: `https://host/adama/ra-anana?s=LgoAunJVAUfbRQmZeg`. The token `s` is base64url and short; it holds the year, the active layers (heat, air, districts, the "before" lens) and, in explore mode, the position, the zoom and the angle of the camera. The format is documented above `enc()` in `web/src/app.js`; flag bytes are extensible (a continuation bit), so new layers can be added at the end without breaking links already shared. City names are read with or without hyphens (`telaviv`, `tel-aviv`). The Share button copies the link.
+
+Two kinds of addresses, chosen at build time:
+- **path links** (`/adama/ra-anana?s=...`) when the page is built with `--base=/adama/` (or `--base=/`): the host must return `index.html` for `/<base><slug>`. `adama_site/publish.sh` does this for the copies it publishes: `web/vercel.json` has the rewrite for Vercel, and the personal site has the route `src/pages/adama/[slug].ts` for Cloudflare.
+- **hash links** (`#ra-anana?s=...`) for a plain static folder (`python3 -m http.server -d dist/site`).
+
+Old links (`#slug`, `#slug?y=2010&l=heat,air`, `#slug~token`) still open: on a path build they redirect to the path version.
+
 ## Publishing
 
 `adama_site/publish.sh` rebuilds the site from the current code and data. `--deploy` publishes it on the Cloudflare worker of the personal site (`/adama/`). `--vercel` deploys only the page to Vercel (`web/vercel.json` rewrites `/data/*` to the Cloudflare copy, and `data/` is not uploaded), so the 100 MB upload limit of the free plan does not matter. It checks first that Cloudflare holds the same cities and stops otherwise: run `--deploy` first. First time: `npx vercel login` then `npx vercel link` in `adama_site/`.
