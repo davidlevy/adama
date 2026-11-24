@@ -39,6 +39,9 @@ for arg in args:
     hp = os.path.join(os.path.dirname(path), 'heat.json')
     if os.path.exists(hp):
         d['heat'] = json.load(open(hp))
+    ap = os.path.join(os.path.dirname(path), 'air.json')
+    if os.path.exists(ap):
+        d['air'] = json.load(open(ap, encoding='utf-8'))
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))
@@ -47,7 +50,8 @@ for arg in args:
         d['hoods'] = json.load(open(np_, encoding='utf-8'))['hoods']
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
-    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0]})
+    has = [k for k in ('heat', 'air', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
