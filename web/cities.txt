@@ -11,3 +11,12 @@
 ../city_ein-gedi/city_ein-gedi.json:31.4600,35.3900,150
 ../city_modiin/city_modiin.json:31.8969,35.0104,300
 ../city_paris/city_paris.json:48.8566,2.3522,300
+../city_hod-hasharon/city_hod-hasharon.json:32.1500,34.8920,225
+../city_petah-tikva/city_petah-tikva.json:32.0880,34.8870,275
+../city_ramat-hasharon/city_ramat-hasharon.json:32.1460,34.8390,200
+../city_holon/city_holon.json:32.0160,34.7870,200
+../city_bnei-brak/city_bnei-brak.json:32.0840,34.8340,175
+../city_harish/city_harish.json:32.4580,35.0450,175
+../city_netanya/city_netanya.json:32.3215,34.8532,250
+../city_ashkelon/city_ashkelon.json:31.6690,34.5715,275
+../city_tiberias/city_tiberias.json:32.7959,35.5310,200
