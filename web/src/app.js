@@ -99,8 +99,9 @@ const tMat=new THREE.MeshStandardMaterial({color:0x010101,roughness:.35,metalnes
 tMat.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=vec3(.62,.66,.75)*pow(1.-abs(dot(normalize(vNormal),normalize(vViewPosition))),3.)*.22;')};
 const tGeo=new THREE.BoxGeometry(1,1,1);tGeo.translate(0,.5,0);
 const tMesh=new THREE.InstancedMesh(tGeo,tMat,Math.max(1,NT));tMesh.castShadow=true;tMesh.frustumCulled=false;scene.add(tMesh);
+const UNDATED_FROM=1990,UND=Math.min(yi0,Math.max(0,UNDATED_FROM-YR[0])); // towers without a known year: not before 1990 (the satellite model would show them as soon as their cell is built)
 TW.forEach(t=>{const [x,z]=toXZ(t[0],t[1]),c=cellAt(x,z);if(!c||Math.hypot(x,z)>RD-1){TD.push(null);return}
-  TD.push({x,z,sx:Math.min(5,Math.max(1.6,t[3]/14)),sz:Math.min(5,Math.max(1.6,t[4]/14)),h:2+t[2]/20*1.5,f:t[5]>0?Math.max(0,Math.min(yi0,t[5]-YR[0])):(c.f<999?c.f:yi0)})});
+  TD.push({x,z,sx:Math.min(5,Math.max(1.6,t[3]/14)),sz:Math.min(5,Math.max(1.6,t[4]/14)),h:2+t[2]/20*1.5,f:t[5]>0?Math.max(0,Math.min(yi0,t[5]-YR[0])):Math.max(c.f<999?c.f:yi0,UND)})});
 function stepTowers(k){let mv=false;const a=tMesh.instanceMatrix.array;
   for(let i=0;i<NT;i++){const T=TD[i],o=i*16;if(!T){a[o]=a[o+5]=a[o+10]=0;a[o+15]=1;continue}
     const d=TTg[i]-TC[i];if(d>.002||d<-.002){TC[i]+=d*k;mv=true}else TC[i]=TTg[i];
@@ -148,7 +149,7 @@ let airLang=()=>{},airOn=false,airV=null;
 const HZ_Y=[5,9.5,14,18.5],HZ_U={uT:UT,uA:{value:.02},uG:{value:.5},uS:{value:.7}};
 const hzMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:HZ_U,
   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-  fragmentShader:'varying vec2 vUv;uniform float uT,uA,uG,uS;void main(){float r=length(vUv-.5)*2.;float edge=1.-smoothstep(.8,1.,r);vec2 gq=floor(gl_FragCoord.xy*uS)+floor(uT*1.5)*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);gl_FragColor=vec4(.66,.66,.68,uA*edge*(1.-uG+uG*2.*gn));}'});
+  fragmentShader:'varying vec2 vUv;uniform float uT,uA,uG,uS;void main(){float r=length(vUv-.5)*2.;float edge=1.-smoothstep(.8,1.,r);vec2 gq=floor(gl_FragCoord.xy*uS)+floor(uT*1.5)*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);gl_FragColor=vec4(.42,.42,.44,uA*edge*(1.-uG+uG*2.*gn));}'});
 const haze=new THREE.Group();haze.visible=false;HZ_Y.forEach(y=>{const m=new THREE.Mesh(new THREE.CircleGeometry(RD*1.03,96).rotateX(-Math.PI/2),hzMat);m.position.y=y;m.renderOrder=8;m.frustumCulled=false;haze.add(m)});scene.add(haze);
 function hazeSet(){const who=(D.air&&D.air.who_pm25)||5,k=airV==null?0:Math.min(1,Math.max(0,(airV-who)/25));haze.visible=airOn&&airV!=null;
   const total=.07+.38*k;HZ_U.uA.value=1-Math.pow(1-total,1/HZ_Y.length);HZ_U.uG.value=.5+.45*k;HZ_U.uS.value=.75-.45*k}

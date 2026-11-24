@@ -36,7 +36,7 @@ import satellite_city as sc  # noqa: E402
 
 LABELS = {"pm25": ("PM2.5", "µg/m³"), "no2": ("NO₂", "µg/m³"), "o3": ("O₃", "µg/m³")}
 MIN_HOURS = 0.7 * 8760   # a year needs 70 % of the hours (or days) to count
-MIN_YEARS = 5            # a curve of fewer years says nothing about a trend: skip it
+MIN_YEARS = 3            # fewer years than this is not worth a card (Eilat and Dubai only have 2023 onwards: the viewer says "no data before 2023")
 MAX_STATION_KM = 25      # a live station farther than this does not describe the city
 YEARS = (2013, 2025)
 
