@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
-const CITIES=await getJSON(BASE+'cities.json'),HASH=decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split('?')[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+// Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
+const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
+if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug~token: open the path version
+  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?~]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
+  location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
+const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
+// city names in links are read with or without hyphens and case: ra-anana, raanana, Tel-Aviv, telaviv
+const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
 const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'},'ein-gedi':{fr:'Ein Gedi',en:'Ein Gedi',he:'עין גדי'},'modiin':{fr:'Modi\u2019in',en:'Modi\u2019in',he:'מודיעין'},'paris':{fr:'Paris',en:'Paris',he:'פריז'},'hod-hasharon':{fr:'Hod HaSharon',en:'Hod HaSharon',he:'הוד השרון'},'petah-tikva':{fr:'Petah Tikva',en:'Petah Tikva',he:'פתח תקווה'},'ramat-hasharon':{fr:'Ramat HaSharon',en:'Ramat HaSharon',he:'רמת השרון'},'holon':{fr:'Holon',en:'Holon',he:'חולון'},'bnei-brak':{fr:'Bnei Brak',en:'Bnei Brak',he:'בני ברק'},'netanya':{fr:'Netanya',en:'Netanya',he:'נתניה'},'ashkelon':{fr:'Ashkelon',en:'Ashkelon',he:'אשקלון'},'tiberias':{fr:'Tibériade',en:'Tiberias',he:'טבריה'},'harish':{fr:'Harish',en:'Harish',he:'חריש'},'amsterdam':{fr:'Amsterdam',en:'Amsterdam',he:'אמסטרדם'},'venice':{fr:'Venise',en:'Venice',he:'ונציה'},'karmiel':{fr:'Karmiel',en:'Karmiel',he:'כרמיאל'},'ashdod':{fr:'Ashdod',en:'Ashdod',he:'אשדוד'},'rishon-lezion':{fr:'Rishon LeZion',en:'Rishon LeZion',he:'ראשון לציון'},'rehovot':{fr:'Rehovot',en:'Rehovot',he:'רחובות'},'palma':{fr:'Palma de Majorque',en:'Palma de Mallorca',he:'פלמה דה מיורקה'},'ibiza':{fr:'Ibiza',en:'Ibiza',he:'איביזה'},'limassol':{fr:'Limassol',en:'Limassol',he:'לימסול'},'shenzhen':{fr:'Shenzhen',en:'Shenzhen',he:'שנג׳ן'},'singapore':{fr:'Singapour',en:'Singapore',he:'סינגפור'},'strasbourg':{fr:'Strasbourg',en:'Strasbourg',he:'שטרסבורג'},'metz':{fr:'Metz',en:'Metz',he:'מץ'},'kfar-saba':{fr:'Kfar Saba',en:'Kfar Saba',he:'כפר סבא'}};
@@ -44,14 +50,17 @@ const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new 
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#8a9a2c'),FIELD2=new THREE.Color('#c9d65a');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5f9d33'),FIELD2=new THREE.Color('#86b946');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
 const stBlocks=[];
 // static zones (water, bare ground, never-built green): merge 4x4 first, so they read as calm surfaces instead of a field of cubes
+// 8x8 first: big calm surfaces (water, meadows) with few cells and few seams
+for(let gy=0;gy<H-7;gy+=8)for(let gx=0;gx<W-7;gx+=8){const q=[];for(let dy=0;dy<8;dy++)for(let dx=0;dx<8;dx++){const j=idx[(gy+dy)*W+gx+dx];q.push(j<0?null:cells[j])}
+  if(q[0]&&q.every(c=>c&&c.st&&!c.sm&&c.lt===q[0].lt)){q.forEach(c=>c.sm=1);stBlocks.push({x:gx+4-W/2,z:gy+4-H/2,s:7.96,h:q[0].h,lt:q[0].lt})}}
 for(let gy=0;gy<H-3;gy+=4)for(let gx=0;gx<W-3;gx+=4){const q=[];for(let dy=0;dy<4;dy++)for(let dx=0;dx<4;dx++){const j=idx[(gy+dy)*W+gx+dx];q.push(j<0?null:cells[j])}
-  if(q[0]&&q.every(c=>c&&c.st&&c.lt===q[0].lt)){q.forEach(c=>c.sm=1);stBlocks.push({x:gx+2-W/2,z:gy+2-H/2,s:3.96,h:q[0].h,lt:q[0].lt})}}
+  if(q[0]&&q.every(c=>c&&c.st&&!c.sm&&c.lt===q[0].lt)){q.forEach(c=>c.sm=1);stBlocks.push({x:gx+2-W/2,z:gy+2-H/2,s:3.96,h:q[0].h,lt:q[0].lt})}}
 for(let gy=0;gy<H-1;gy+=2)for(let gx=0;gx<W-1;gx+=2){const q4=[[0,0],[1,0],[0,1],[1,1]].map(([dx,dy])=>{const j=idx[(gy+dy)*W+gx+dx];return j<0?null:cells[j]});
   if(q4.every(c=>c&&c.st&&!c.sm&&c.lt===q4[0].lt)){q4.forEach(c=>c.sm=1);stBlocks.push({x:gx+1-W/2,z:gy+1-H/2,s:1.96,h:q4[0].h,lt:q4[0].lt})}}
 cells.forEach(c=>{if(c.st&&!c.sm)stBlocks.push({x:c.x,z:c.z,s:.96,h:c.h,lt:c.lt})});
@@ -70,11 +79,11 @@ const smesh=new THREE.InstancedMesh(sgeo,mat,stBlocks.length);smesh.castShadow=f
 const UT={value:0};
 mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
   sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWP;attribute float aD;varying float vD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvD=aD;vWP=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;');
-  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uT;varying vec3 vWP;varying float vD;').replace('#include <color_fragment>','#include <color_fragment>\n float gk=step(max(diffuseColor.r,diffuseColor.b)+.04,diffuseColor.g);float tq=floor(uT*7.);vec2 gq=floor(gl_FragCoord.xy*.55)+tq*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);float wv=(sin(vWP.x*.11+vWP.z*.07+uT*1.1)*.5+.5)*(sin(vWP.z*.09-vWP.x*.05-uT*.8)*.5+.5);float wk=step(diffuseColor.r+.05,diffuseColor.b);float dk=step(.004,diffuseColor.r-diffuseColor.b)*step(diffuseColor.g,diffuseColor.r+.001)*(1.-gk)*(1.-wk);float sp=sin(vWP.x*.35+uT*1.6)*sin(vWP.z*.31-uT*1.2);diffuseColor.rgb*=(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.42*gk)*(1.+(gn-.5)*.1*wk)*(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.3*dk);float ws=(sin(vWP.x*.06+uT*.35)*sin(vWP.z*.055-uT*.28)+sin(vWP.x*.03-vWP.z*.04+uT*.22))*.3+.5;vec3 wa=diffuseColor.rgb*vec3(.5,.75,1.4),wb=diffuseColor.rgb*vec3(.9,1.6,1.25);diffuseColor.rgb=mix(diffuseColor.rgb,mix(wa,wb,clamp(ws,0.,1.)),wk);float rb=sin((vWP.x*.7-vWP.z*.5)*.18-uT*.5);diffuseColor.rgb*=1.+wk*.12*rb;float cw=sin(vD*.55+uT*.6);float cm=smoothstep(.45,1.,cw)*smoothstep(60.,4.,vD);float fo=smoothstep(2.4,0.,vD)*(.65+.35*sin(vWP.x*.4+vWP.z*.3+uT*.8));diffuseColor.rgb+=wk*(vec3(.07,.14,.2)*cm+vec3(.3,.34,.36)*fo);')};
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uT;varying vec3 vWP;varying float vD;').replace('#include <color_fragment>','#include <color_fragment>\n float gk=step(max(diffuseColor.r,diffuseColor.b)+.04,diffuseColor.g);float tq=floor(uT*7.);vec2 gq=floor(gl_FragCoord.xy*.55)+tq*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);float wv=(sin(vWP.x*.11+vWP.z*.07+uT*1.1)*.5+.5)*(sin(vWP.z*.09-vWP.x*.05-uT*.8)*.5+.5);float wk=step(diffuseColor.r+.05,diffuseColor.b);float dk=step(.004,diffuseColor.r-diffuseColor.b)*step(diffuseColor.g,diffuseColor.r+.001)*(1.-gk)*(1.-wk);float sp=sin(vWP.x*.35+uT*1.6)*sin(vWP.z*.31-uT*1.2);diffuseColor.rgb*=(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.42*gk)*(1.+(gn-.5)*.1*wk)*(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.3*dk);float gs=(sin(vWP.x*.08+uT*.25)*sin(vWP.z*.07-uT*.2)+sin(vWP.x*.034-vWP.z*.045+uT*.15))*.3+.5;vec3 ga=diffuseColor.rgb*vec3(.5,.78,.95),gb=diffuseColor.rgb*vec3(1.22,1.22,.62);float cn=fract(sin(dot(floor(vWP.xz/3.),vec2(12.9898,78.233)))*43758.5453),cs=.5+.5*sin(uT*.4+cn*6.2832);diffuseColor.rgb=mix(diffuseColor.rgb,mix(ga,gb,clamp(mix(gs,cs,.7),0.,1.)),gk);float ws=(sin(vWP.x*.06+uT*.35)*sin(vWP.z*.055-uT*.28)+sin(vWP.x*.03-vWP.z*.04+uT*.22))*.3+.5;vec3 wa=diffuseColor.rgb*vec3(.5,.75,1.4),wb=diffuseColor.rgb*vec3(.9,1.6,1.25);diffuseColor.rgb=mix(diffuseColor.rgb,mix(wa,wb,clamp(ws,0.,1.)),wk);float rb=sin((vWP.x*.7-vWP.z*.5)*.18-uT*.5);diffuseColor.rgb*=1.+wk*.12*rb;float cw=sin(vD*.55+uT*.6);float cm=smoothstep(.45,1.,cw)*smoothstep(60.,4.,vD);float fo=smoothstep(2.4,0.,vD)*(.65+.35*sin(vWP.x*.4+vWP.z*.3+uT*.8));diffuseColor.rgb+=wk*(vec3(.07,.14,.2)*cm+vec3(.3,.34,.36)*fo);')};
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
-const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1c9a4a'),G2=new THREE.Color('#86f08c');
-{const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#2aa854'),_b=new THREE.Color('#74dd7c');
-  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.2+b.h*.1:.3+b.h*.3,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,b.h);else _c.copy(_a).lerp(_b,b.h);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
+const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8a40'),G2=new THREE.Color('#2fa650');
+{const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
+  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.26:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
@@ -115,8 +124,8 @@ function stepTowers(k){let mv=false;const a=tMesh.instanceMatrix.array;
     const d=TTg[i]-TC[i];if(d>.002||d<-.002){TC[i]+=d*k;mv=true}else TC[i]=TTg[i];
     a[o]=T.sx;a[o+5]=Math.max(.001,T.h*TC[i]);a[o+10]=T.sz;a[o+12]=T.x;a[o+13]=0;a[o+14]=T.z;a[o+15]=1}
   tMesh.instanceMatrix.needsUpdate=true;return mv}
-function paintStatic(yi){const arr=HT&&heatOn?HY[hIdx(YR[yi])]:null,_c=new THREE.Color(),_a=new THREE.Color('#2aa854'),_b=new THREE.Color('#74dd7c');
-  stBlocks.forEach((b,i)=>{if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,b.h);else _c.copy(_a).lerp(_b,b.h);if(arr){const an=heatAt(arr,b.x+W/2,b.z+H/2);_c.lerp(heatCol(an,new THREE.Color()),heatMix(an))}smesh.setColorAt(i,_c)});smesh.instanceColor.needsUpdate=true}
+function paintStatic(yi){const arr=HT&&heatOn?HY[hIdx(YR[yi])]:null,_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
+  stBlocks.forEach((b,i)=>{if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);if(arr){const an=heatAt(arr,b.x+W/2,b.z+H/2);_c.lerp(heatCol(an,new THREE.Color()),heatMix(an))}smesh.setColorAt(i,_c)});smesh.instanceColor.needsUpdate=true}
 function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,n=0;for(let j=Math.max(0,i-2);j<=Math.min(HM.length-1,i+2);j++)if(HM[j]!=null){a+=HM[j];n++}return a/n},d=avg(k)-avg(Math.min(2,HM.length-1)),nf=new Intl.NumberFormat(LG,{maximumFractionDigits:1,minimumFractionDigits:1});
   document.getElementById('hvb').textContent=(k<=2?'':(d>=0?'+':'−')+nf.format(Math.abs(d))+' °C');document.getElementById('hvl').textContent=T('hv').replace('{y}',HT.years[Math.min(2,HT.years.length-1)]===YR[0]?YR[0]:HT.years[0])}
 const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=document.getElementById('tk'),tip=document.getElementById('tip');
@@ -135,7 +144,7 @@ function renderCities(){const q=nz(cms.value.trim()),by={},nmOf=c=>(NAMES[c.slug
   codes.forEach(k=>{const sec=document.createElement('section'),h=document.createElement('h4'),ul=document.createElement('ul');h.textContent=CTRY[LG][k]+' \u00b7 '+by[k].length;
     by[k].sort((a,b)=>nmOf(a).localeCompare(nmOf(b),LG)).forEach(c=>{const li=document.createElement('li'),n=document.createElement('span'),ly=document.createElement('i');li.dataset.slug=c.slug;li.setAttribute('role','option');if(c.slug===D.slug)li.className='on';
       n.className='cn2';n.textContent=nmOf(c);ly.className='ly';ly.innerHTML=(c.has||[]).map(x=>'<b title="'+T(LT[x])+'">'+IC[x]+'</b>').join('');li.append(n,ly);
-      li.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};ul.appendChild(li)});
+      li.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}if(PATHMODE){location.href=ROOTP+c.slug}else{location.hash=c.slug;location.reload()}};ul.appendChild(li)});
     sec.append(h,ul);cmg.appendChild(sec)})}
 cms.oninput=renderCities;cms.onkeydown=e=>{if(e.key==='Enter'){const f=cmg.querySelector('li');if(f)f.click()}};
 cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o);if(o){cms.value='';renderCities();if(matchMedia('(hover:hover)').matches)setTimeout(()=>cms.focus(),50)}};
@@ -181,7 +190,7 @@ function animHaze(tm){if(!haze.visible)return;haze.children.forEach((m,i)=>{m.po
 // ---------- air quality (air.json from scripts/air_quality.py): yearly PM2.5 curve that follows the timeline ----------
 const AIR=D.air&&D.air.series&&D.air.series.pm25,AIRL=D.air&&D.air.live;let airUpd=()=>{};
 if(AIR||AIRL){const el=document.createElement('div');el.className='air';document.body.appendChild(el);
-  const W_=104,H_=30,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
+  const W_=230,H_=48,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
     X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-v/vmax*(H_-8),br=AIR&&AIR.break_before;
   const pts=AIR?AIR.years.map((y,i)=>[y,AIR.values[i]]):[],line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
   const old=br?pts.filter(p=>p[0]<=br):[],cur=br?pts.filter(p=>p[0]>=br):pts;
@@ -383,23 +392,57 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 {const l=document.getElementById('ld');if(l){l.style.opacity=0;setTimeout(()=>l.remove(),600)}}
 
-// ---------- share / deep link: #slug?y=2010&l=heat,air&d=0&lg=fr (city, year, layers, language) ----------
-{const DLQ=new URLSearchParams(HASH.split('?')[1]||''),shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
-  const deepLink=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),L=[heatOn&&'heat',airOn&&'air'].filter(Boolean);
-    return location.origin+location.pathname+'#'+D.slug+'?y='+YR[yi]+(L.length?'&l='+L.join(','):'')+(hoodLabs.length&&!hoodsOn?'&d=0':'')+'&lg='+LG};
+// ---------- share / deep link: #slug?s=<token> ----------
+// The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
+// (explore mode), 11 more bytes: latitude, longitude (1e-5 degree), zoom (x10), azimuth and polar angle of the camera. About 15 characters. The address bar follows the session.
+// The older #slug?y=2010&l=heat,air&d=0&lg=fr and #slug~<token> are still read.
+{const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
+  const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
+    for(let k=0;k<2;k++){const [e,n]=utm(la,lo);la+=(N-n)/111000;lo+=(E-e)/kx}return [la,lo]};
+  // Flags, one bit each, in this order. Bits 0-6 are in the first flag byte, bit 7 of a flag byte says that another flag byte follows
+  // (7 more flags each), so new layers can be added at the end without breaking the links already shared.
+  const FLAGS=[
+    {get:()=>heatOn,set:v=>v&&on(btn('ht'))&&btn('ht').click()},                       // 0 heat layer
+    {get:()=>airOn,set:v=>v&&on(btn('ar'))&&btn('ar').click()},                        // 1 air layer
+    {get:()=>!!hoodLabs.length&&!hoodsOn,set:v=>v&&hoodLabs.length&&hdB.click()},      // 2 districts hidden
+    {get:()=>explore,set:()=>{}},                                                      // 3 a view is saved (explore mode)
+    {get:()=>lensOn,set:v=>v&&btn('bf').click()}];                                     // 4 "before" lens
+  const VIEW=3;
+  const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),bits=FLAGS.map(f=>f&&f.get()?1:0),fb=[];
+    for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)v|=(bits[k+j]||0)<<j;fb.push(v)}
+    while(fb.length>1&&fb[fb.length-1]===0)fb.pop();fb.forEach((v,i)=>{if(i<fb.length-1)fb[i]=v|128});
+    const b=[YR[yi]-1980,...fb];
+    if(bits[VIEW]){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z),dv=new DataView(new ArrayBuffer(9));dv.setUint32(0,Math.round((la+90)*1e5));dv.setUint32(4,Math.round((lo+180)*1e5));dv.setUint8(8,Math.max(1,Math.min(255,Math.round(cam.zoom*10))));
+      b.push(...new Uint8Array(dv.buffer),Math.round((ctl.getAzimuthalAngle()+Math.PI)/(2*Math.PI)*255),Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*100))))}
+    return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  const dec=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0));if(b.length<2)return null;
+    const bits=[];let p=1;for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
+    const o={y:1980+b[0],bits};
+    if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100}}
+    return o}catch(e){return null}};
+  const hashState=()=>{const rest=HASH.slice(SLUG.length);
+    if(rest[0]==='~')return dec(rest.slice(1));
+    if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));if(q.has('s'))return dec(q.get('s'));const L=(q.get('l')||'').split(',');   // older links: ?y=2010&l=heat,air&d=0
+      return{y:+q.get('y')||null,bits:[L.includes('heat')?1:0,L.includes('air')?1:0,q.get('d')==='0'?1:0],old:true,full:q.has('y')||q.has('l')}}
+    return null};
+  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+'?s='+enc():location.origin+location.pathname+'#'+D.slug+'?s='+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
   const share=async()=>{const url=deepLink();
     if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:document.title,url});return}catch(e){if(e&&e.name==='AbortError')return}}
     try{await navigator.clipboard.writeText(url);toast(T('shc'))}catch(e){toast(url)}};shB.onclick=share;
-  if(DLQ.has('y')||DLQ.has('l')||DLQ.has('lg')){
-    const lg=DLQ.get('lg');if(lg&&I18[lg]){LG=lg;try{localStorage.setItem('city_lang',lg)}catch(e){}applyLang()}
-    const i=YR.indexOf(+DLQ.get('y'));if(i>=0){tt=i;sl.value=i;DLY=i}
-    const L=(DLQ.get('l')||'').split(',');
-    if(L.includes('heat')&&on(btn('ht')))btn('ht').click();
-    if(L.includes('air')&&on(btn('ar')))btn('ar').click();
-    if(DLQ.get('d')==='0'&&hoodLabs.length)hdB.click();
+  const P=hashState();
+  if(P){
+    const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
+    FLAGS.forEach((f,k)=>f&&f.set(!!P.bits[k]));
     domYi=-1;update(tt);dirty=true;
-    if(DLQ.has('y')||DLQ.has('l'))setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400)}}
+    if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
+    if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true},1100)}
+  // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
+  if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
+  // the address bar follows the session: in explore mode it always holds a link that restores the view
+  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?'?s='+enc():'';
+    if(PATHMODE){if(decodeURIComponent(location.pathname+location.search)!==ROOTP+D.slug+st)history.replaceState(null,'',ROOTP+D.slug+st)}
+    else{const h='#'+D.slug+st;if(decodeURIComponent(location.hash)!==h)history.replaceState(null,'',location.pathname+location.search+h)}},800)}
 
 // ---------- mobile notice: the experience is much better on a desktop ----------
 {const m=document.getElementById('mob');let seen=false;try{seen=sessionStorage.getItem('mob')==='1'}catch(e){}

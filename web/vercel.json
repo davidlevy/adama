@@ -1,13 +1,33 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/data/:path*",
+      "destination": "https://me.selenium79.workers.dev/adama/data/:path*"
+    },
+    {
+      "source": "/:slug([A-Za-z0-9-]+)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/data/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/(.*)",
-      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
     }
   ]
 }
