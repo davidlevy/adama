@@ -112,6 +112,10 @@ Then add it to `web/cities.txt` and its name and country in `NAMES` and `CODE` i
 
 For a big city or a region, give the centre and a radius in km: `--center 25.2,55.27 --radius 7`.
 
+## Publishing
+
+`adama_site/publish.sh` rebuilds the site from the current code and data. `--deploy` publishes it on the Cloudflare worker of the personal site (`/adama/`). `--vercel` deploys only the page to Vercel (`web/vercel.json` rewrites `/data/*` to the Cloudflare copy, and `data/` is not uploaded), so the 100 MB upload limit of the free plan does not matter. It checks first that Cloudflare holds the same cities and stops otherwise: run `--deploy` first. First time: `npx vercel login` then `npx vercel link` in `adama_site/`.
+
 ## Data sources and licences
 
 The code is MIT (see `LICENSE`). The data it fetches has its own terms:
