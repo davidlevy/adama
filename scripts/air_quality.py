@@ -35,6 +35,8 @@ import satellite_city as sc  # noqa: E402
 
 LABELS = {"pm25": ("PM2.5", "µg/m³"), "no2": ("NO₂", "µg/m³"), "o3": ("O₃", "µg/m³")}
 MIN_HOURS = 0.7 * 8760   # a year needs 70 % of the hours (or days) to count
+MIN_YEARS = 5            # a curve of fewer years says nothing about a trend: skip it
+MAX_STATION_KM = 25      # a live station farther than this does not describe the city
 YEARS = (2013, 2025)
 
 
@@ -116,7 +118,10 @@ def live(lat, lon):
         return None
     d = j["data"]
     la, lo = d["city"]["geo"]
-    return {"aqi": d["aqi"], "station": d["city"]["name"].split(",")[0], "distance_km": round(km(lat, lon, la, lo), 1),
+    dist = km(lat, lon, la, lo)
+    if dist > MAX_STATION_KM:
+        return None
+    return {"aqi": d["aqi"], "station": d["city"]["name"].split(",")[0], "distance_km": round(dist, 1),
             "time": d["time"]["s"], "pm25": d["iaqi"].get("pm25", {}).get("v"), "no2": d["iaqi"].get("no2", {}).get("v"),
             "source": "WAQI"}
 
@@ -140,7 +145,7 @@ def main():
             print("  %s: %s" % (prov.__name__, type(ex).__name__))
             continue
         for k, v in got.items():
-            if k not in series and v["years"]:
+            if k not in series and len(v["years"]) >= MIN_YEARS:
                 series[k] = v
                 print("  %s from %s: %d-%d" % (k, prov.__name__, v["years"][0], v["years"][-1]))
     now = None
