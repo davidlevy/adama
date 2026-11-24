@@ -29,3 +29,6 @@
 ../city_palma/city_palma.json:39.5696,2.6502,400
 ../city_ibiza/city_ibiza.json:38.9150,1.4350,350
 ../city_limassol/city_limassol.json:34.6850,33.0450,400
+../city_shenzhen/city_shenzhen.json:22.5400,114.0500,600
+../city_singapore/city_singapore.json:1.3300,103.8300,500
+../city_strasbourg/city_strasbourg.json:48.5734,7.7521,350
