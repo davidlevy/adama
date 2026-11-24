@@ -50,7 +50,8 @@ for arg in args:
         d['hoods'] = json.load(open(np_, encoding='utf-8'))['hoods']
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
-    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0]})
+    has = [k for k in ('heat', 'air', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
