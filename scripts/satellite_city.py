@@ -371,6 +371,11 @@ def land_cells(w, B=2):
     return out
 
 
+def mask_water(first, land):
+    """Water is never built: the model takes dark water (canals, lagoons, sea) for built-up land. 255 = never built."""
+    return np.where(land[:first.shape[0], :first.shape[1]] == 1, 255, first).astype("uint8")
+
+
 def to_cells(k, Y, B=2, need=3):
     """k = number of years before construction (Y = never). Returns the index of the first built year."""
     H, W = k.shape
@@ -540,6 +545,8 @@ def main():
     years, first, ls_years = analyze(s2, ls, wc, sorted(s2), sorted(ls), rep)
 
     CH, CW = first.shape
+    land = (land_cells(wc[max(wc)]) if wc else np.zeros(first.shape, "uint8"))[:CH, :CW].astype("uint8")
+    first = mask_water(first, land)
     inside = inside_mask(geom, g10, CH, CW)
     stats = []
     for i, y in enumerate(years):
@@ -556,7 +563,7 @@ def main():
     json.dump({"name": name, "slug": slug(a.city), "crs": g10["crs"], "bounds": g10["bounds"], "bbox": bbox,
                "cell_m": 20, "w": CW, "h": CH, "years": years, "ls_years": ls_years, "stats": stats,
                "first": base64.b64encode(first.tobytes()).decode(),
-               "land": base64.b64encode((land_cells(wc[max(wc)]) if wc else np.zeros(first.shape, "uint8"))[:first.shape[0], :first.shape[1]].astype("uint8").tobytes()).decode(),
+               "land": base64.b64encode(land.tobytes()).decode(),
                "inside": base64.b64encode(inside.tobytes()).decode(), "osm": osm,
                "note": "first: 255 = never built, i = index in years of the first built year; row by row, north at the top"},
               open(fn, "w"))
