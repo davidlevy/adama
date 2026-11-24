@@ -9,6 +9,7 @@ raw/
 *.json
 !package.json
 !package-lock.json
+!web/vercel.json
 .venv/
 __pycache__/
 .DS_Store

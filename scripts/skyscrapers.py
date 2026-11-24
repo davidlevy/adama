@@ -8,6 +8,7 @@ Satellite images cannot give building heights, so this reads the height tags tha
 OpenStreetMap (height in metres, or building:levels). Buildings of at least --min-height metres
 (default 50) are kept. Writes city_<name>/towers.json, which the viewer draws as tall black towers.
 Run satellite_city.py first (the city bounding box is read from its JSON file).
+Then run tower_dates.py to fill the construction years (OpenStreetMap rarely has them).
 """
 import argparse
 import json
