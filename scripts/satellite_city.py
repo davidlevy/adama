@@ -371,12 +371,13 @@ def stepfit(P):
 
 
 def land_cells(w, B=2):
-    """Static land type per 20 m cell from WorldCover: 0 vegetation/other, 1 water, 2 bare ground or sand."""
+    """Static land type per 20 m cell from WorldCover: 0 vegetation/other, 1 water, 2 bare ground or sand, 3 cropland (fields)."""
     H, W = w.shape[0] // B * B, w.shape[1] // B * B
     w = w[:H, :W]
     def share(mask):
         return mask.reshape(H // B, B, W // B, B).sum((1, 3))
     out = np.zeros((H // B, W // B), "uint8")
+    out[share(w == 40) >= 3] = 3
     out[share(np.isin(w, (60, 70))) >= 3] = 2
     out[share(w == 80) >= 3] = 1
     return out
