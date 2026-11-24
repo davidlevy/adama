@@ -1,4 +1,4 @@
-import json,base64,math
+import json,base64,math,os
 def utm(lat,lon,zone=36):
     a=6378137;f=1/298.257223563;k0=.9996;n=f/(2-f);A=a/(1+n)*(1+n*n/4+n**4/64)
     al=[n/2-2*n*n/3+5*n**3/16,13*n*n/48-3*n**3/5,61*n**3/240]
@@ -36,4 +36,15 @@ def crop(d,lat=None,lon=None,R=None):
     osm['playgrounds']=[p for p in d['osm']['playgrounds'] if nl<=utm(p[0],p[1])[0]<=nr and nb<=utm(p[0],p[1])[1]<=nt]
     out['osm']=osm;out['center']=[lat,lon]
     return out
-def load(path,**kw):return crop(json.load(open(path,encoding='utf-8')),**kw)
+def greens(d,path):
+    """Cells almost entirely inside an OpenStreetMap park and without buildings (scripts/green_spaces.py) were never built: the model took them for built-up."""
+    g=os.path.join(os.path.dirname(path),'greens.json')
+    if not os.path.exists(g):return d
+    m=json.load(open(g));w,h=d['w'],d['h']
+    if (m['w'],m['h'])!=(w,h):return d
+    first=bytearray(base64.b64decode(d['first']));mask=base64.b64decode(m['mask'])
+    for i,v in enumerate(mask):
+        if v==1:first[i]=255
+    d=dict(d);d['first']=base64.b64encode(bytes(first)).decode()
+    return d
+def load(path,**kw):return crop(greens(json.load(open(path,encoding='utf-8')),path),**kw)
