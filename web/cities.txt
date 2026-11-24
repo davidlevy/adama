@@ -23,3 +23,9 @@
 ../city_amsterdam/city_amsterdam.json:52.3676,4.9041,350
 ../city_venice/city_venice.json:45.4375,12.3358,300
 ../city_karmiel/city_karmiel.json:32.9170,35.2950,200
+../city_ashdod/city_ashdod.json:31.8040,34.6550,300
+../city_rishon-lezion/city_rishon-lezion.json:31.9730,34.7925,300
+../city_rehovot/city_rehovot.json:31.8940,34.8130,250
+../city_palma/city_palma.json:39.5696,2.6502,400
+../city_ibiza/city_ibiza.json:38.9150,1.4350,350
+../city_limassol/city_limassol.json:34.6850,33.0450,400
