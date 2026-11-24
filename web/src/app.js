@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u);if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
+const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 const CITIES=await getJSON(BASE+'cities.json'),HASH=decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split('?')[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
@@ -29,7 +29,7 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;r
 wrap.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
 const cam=new THREE.OrthographicCamera(-100,100,100,-100,-1500,3000);cam.position.set(260,300,260);cam.lookAt(0,0,0);
-const ctl=new OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.minZoom=.7;ctl.maxZoom=12;ctl.maxPolarAngle=1.35;ctl.minPolarAngle=.3;ctl.screenSpacePanning=true;
+const ctl=new OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.minZoom=.7;ctl.maxZoom=12;ctl.maxPolarAngle=1.35;ctl.minPolarAngle=.087;ctl.screenSpacePanning=true;
 const hemi=new THREE.HemisphereLight(0xf2f4ff,0x3a3a3c,1.2);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(-120,260,80);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
 const sc=sun.shadow.camera;sc.left=-230;sc.right=230;sc.top=230;sc.bottom=-230;sc.near=1;sc.far=900;sun.shadow.bias=-.0004;sun.shadow.normalBias=.2;scene.add(sun);
