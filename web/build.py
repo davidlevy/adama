@@ -42,6 +42,9 @@ for arg in args:
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))
+    np_ = os.path.join(os.path.dirname(path), 'neighborhoods.json')
+    if os.path.exists(np_):
+        d['hoods'] = json.load(open(np_, encoding='utf-8'))['hoods']
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
     index.append({'slug': d['slug'], 'name': d['name'].split(',')[0]})
