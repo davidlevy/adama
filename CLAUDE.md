@@ -40,5 +40,6 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 
 - Work on a branch and open a PR; never push to `main` directly and never merge a PR. Ask before any push (public repo).
 - Commit as the GitHub noreply address (set in the repo config); do not put a personal email in commits or files.
-- Deploying is `adama_site/publish.sh --deploy` (publishes to the personal site). Only run it when explicitly asked.
+- Deploying is `adama_site/publish.sh --deploy` (personal site, served under `/adama/`) or `adama_site/publish.sh --vercel` (Vercel, domain root). Both rebuild from the repo first. Only run them when explicitly asked.
+- Vercel cannot build the site itself (the city data is not in git), so it receives the built folder `adama_site/` with `web/vercel.json` (data files revalidate on every load, so a new city never stays stale). First time: `cd adama_site && npx vercel login && npx vercel link`.
 - Generated data (`city_*`, `*.json`, `raw/`, `dist/`) is gitignored. Do not commit it.
