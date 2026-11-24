@@ -27,11 +27,14 @@ import statistics
 import sys
 from collections import defaultdict
 
+import numpy as np
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import satellite_city as sc  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "web"))
+import prep  # noqa: E402
 
 LABELS = {"pm25": ("PM2.5", "µg/m³"), "no2": ("NO₂", "µg/m³"), "o3": ("O₃", "µg/m³")}
 MIN_HOURS = 0.7 * 8760   # a year needs 70 % of the hours (or days) to count
@@ -126,6 +129,49 @@ def live(lat, lon):
             "source": "WAQI"}
 
 
+GRID_BLOCK = 10   # cells (20 m) per grid cell: 200 m
+GRID_R0 = 3000    # m: a station farther than this pulls the local value back to the regional one
+MIN_STATIONS = 3
+
+
+def station_grid(d, token_):
+    """Relative air quality pattern (1 = regional level) interpolated between the live stations of WAQI.
+
+    The pattern is today's snapshot, applied to every year (the viewer multiplies it by the regional
+    yearly PM2.5). Inverse-distance weighting; far from every station the value returns to 1."""
+    w, s, e, n = d["bbox"]
+    pad = 0.03
+    j = requests.get("https://api.waqi.info/map/bounds/", params={"latlng": "%f,%f,%f,%f" % (s - pad, w - pad, n + pad, e + pad), "token": token_}, timeout=30).json()
+    zone = int(d["crs"][-2:])
+    L, _, _, T = d["bounds"]
+    pts = []
+    for st in j.get("data", []) if j.get("status") == "ok" else []:
+        try:
+            aqi = float(st["aqi"])
+        except (TypeError, ValueError):
+            continue
+        E, N = prep.utm(st["lat"], st["lon"], zone)
+        pts.append((E, N, aqi))
+    if len(pts) < MIN_STATIONS:
+        return None
+    P = np.array(pts)
+    mean = P[:, 2].mean()
+    W, H = d["w"], d["h"]
+    gw, gh = -(-W // GRID_BLOCK), -(-H // GRID_BLOCK)
+    cx = L + (np.arange(gw) + .5) * GRID_BLOCK * 20
+    cy = T - (np.arange(gh) + .5) * GRID_BLOCK * 20
+    X, Y = np.meshgrid(cx, cy)
+    num = np.zeros_like(X)
+    den = np.zeros_like(X)
+    for E, N, aqi in pts:
+        wgt = 1.0 / (np.hypot(X - E, Y - N) ** 2 + 200.0 ** 2)
+        num += wgt * (aqi / mean)
+        den += wgt
+    w0 = 1.0 / GRID_R0 ** 2
+    rel = np.clip((num + w0 * 1.0) / (den + w0), 0.5, 1.6)
+    return {"block": GRID_BLOCK, "w": int(gw), "h": int(gh), "rel": [round(float(v), 2) for v in rel.ravel()], "stations": len(pts)}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--city", required=True)
@@ -135,7 +181,8 @@ def main():
     src = os.path.join(folder, "city_%s.json" % name)
     if not os.path.exists(src):
         sys.exit("Run satellite_city.py first: %s not found" % src)
-    w, s, e, n = json.load(open(src, encoding="utf-8"))["bbox"]
+    cj = json.load(open(src, encoding="utf-8"))
+    w, s, e, n = cj["bbox"]
     lat, lon = (s + n) / 2, (w + e) / 2
     series = {}
     for prov in PROVIDERS:
@@ -153,9 +200,16 @@ def main():
         now = live(lat, lon)
     except Exception as ex:
         print("  live: %s" % type(ex).__name__)
+    grid = None
+    try:
+        if token():
+            grid = station_grid(cj, token())
+            print("  local pattern: %s" % ("%d stations" % grid["stations"] if grid else "not enough stations (uniform)"))
+    except Exception as ex:
+        print("  grid: %s" % type(ex).__name__)
     if not series and not now:
         sys.exit("No air data found.")
-    json.dump({"location": [round(lat, 4), round(lon, 4)], "series": series, "live": now,
+    json.dump({"location": [round(lat, 4), round(lon, 4)], "series": series, "live": now, "grid": grid,
                "who_pm25": 5},  # WHO 2021 annual guideline, µg/m³
               open(os.path.join(folder, "air.json"), "w", encoding="utf-8"), ensure_ascii=False)
     print("wrote", os.path.join(folder, "air.json"))
