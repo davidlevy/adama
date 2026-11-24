@@ -33,6 +33,7 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 ## Conventions
 
 - Style: Geist for text, Caveat for the logo and city names, black and white UI. Playgrounds are violet (#a56bff).
+- Never-built surfaces (meadows, fields, water, bare ground) are drawn as merged static blocks (8x8, then 4x4, then 2x2 cells) with a colour mosaic computed in the shader (`gs` large drifting patches, `cs` per 3x3-cell patch, in the material patch of `app.js`). This mosaic is a deliberate look: do not break it. Do not give those blocks random heights or random colours per block, do not shrink the patches back to single cells, and do not add seams. Any change to it needs an explicit request from the user.
 - Stats that have no value (first year) are hidden, not shown as a dash.
 - Credits (Landsat, Sentinel-2, WorldCover, Planetary Computer, OpenStreetMap) must stay visible on the page: OSM requires attribution.
 
