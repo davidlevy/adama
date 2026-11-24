@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/data/:path*", "destination": "https://me.selenium79.workers.dev/adama/data/:path*" }
+  ],
   "headers": [
     {
       "source": "/data/(.*)",
