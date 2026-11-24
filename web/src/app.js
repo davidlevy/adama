@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
-const CITIES=await getJSON(BASE+'cities.json'),HASH=decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split('?')[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const CITIES=await getJSON(BASE+'cities.json'),HASH=decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
 const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'},'ein-gedi':{fr:'Ein Gedi',en:'Ein Gedi',he:'עין גדי'},'modiin':{fr:'Modi\u2019in',en:'Modi\u2019in',he:'מודיעין'},'paris':{fr:'Paris',en:'Paris',he:'פריז'},'hod-hasharon':{fr:'Hod HaSharon',en:'Hod HaSharon',he:'הוד השרון'},'petah-tikva':{fr:'Petah Tikva',en:'Petah Tikva',he:'פתח תקווה'},'ramat-hasharon':{fr:'Ramat HaSharon',en:'Ramat HaSharon',he:'רמת השרון'},'holon':{fr:'Holon',en:'Holon',he:'חולון'},'bnei-brak':{fr:'Bnei Brak',en:'Bnei Brak',he:'בני ברק'},'netanya':{fr:'Netanya',en:'Netanya',he:'נתניה'},'ashkelon':{fr:'Ashkelon',en:'Ashkelon',he:'אשקלון'},'tiberias':{fr:'Tibériade',en:'Tiberias',he:'טבריה'},'harish':{fr:'Harish',en:'Harish',he:'חריש'},'amsterdam':{fr:'Amsterdam',en:'Amsterdam',he:'אמסטרדם'},'venice':{fr:'Venise',en:'Venice',he:'ונציה'},'karmiel':{fr:'Karmiel',en:'Karmiel',he:'כרמיאל'},'ashdod':{fr:'Ashdod',en:'Ashdod',he:'אשדוד'},'rishon-lezion':{fr:'Rishon LeZion',en:'Rishon LeZion',he:'ראשון לציון'},'rehovot':{fr:'Rehovot',en:'Rehovot',he:'רחובות'},'palma':{fr:'Palma de Majorque',en:'Palma de Mallorca',he:'פלמה דה מיורקה'},'ibiza':{fr:'Ibiza',en:'Ibiza',he:'איביזה'},'limassol':{fr:'Limassol',en:'Limassol',he:'לימסול'},'shenzhen':{fr:'Shenzhen',en:'Shenzhen',he:'שנג׳ן'},'singapore':{fr:'Singapour',en:'Singapore',he:'סינגפור'},'strasbourg':{fr:'Strasbourg',en:'Strasbourg',he:'שטרסבורג'},'metz':{fr:'Metz',en:'Metz',he:'מץ'},'kfar-saba':{fr:'Kfar Saba',en:'Kfar Saba',he:'כפר סבא'}};
@@ -383,23 +383,38 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 {const l=document.getElementById('ld');if(l){l.style.opacity=0;setTimeout(()=>l.remove(),600)}}
 
-// ---------- share / deep link: #slug?y=2010&l=heat,air&d=0&lg=fr (city, year, layers, language) ----------
-{const DLQ=new URLSearchParams(HASH.split('?')[1]||''),shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
-  const deepLink=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),L=[heatOn&&'heat',airOn&&'air'].filter(Boolean);
-    return location.origin+location.pathname+'#'+D.slug+'?y='+YR[yi]+(L.length?'&l='+L.join(','):'')+(hoodLabs.length&&!hoodsOn?'&d=0':'')+'&lg='+LG};
+// ---------- share / deep link: #slug~<token> ----------
+// The token is base64url of 2 bytes (year - 1980; flags: heat, air, districts off, saved view) and, when a view is saved
+// (explore mode), 9 more bytes: latitude, longitude (1e-5 degree) and zoom (x10). About 15 characters. The address bar follows the session.
+// The older #slug?y=2010&l=heat,air&d=0&lg=fr is still read.
+{const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
+  const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
+    for(let k=0;k<2;k++){const [e,n]=utm(la,lo);la+=(N-n)/111000;lo+=(E-e)/kx}return [la,lo]};
+  const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),v=explore,b=[YR[yi]-1980,(heatOn?1:0)|(airOn?2:0)|(hoodLabs.length&&!hoodsOn?4:0)|(v?8:0)];
+    if(v){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z),dv=new DataView(new ArrayBuffer(9));dv.setUint32(0,Math.round((la+90)*1e5));dv.setUint32(4,Math.round((lo+180)*1e5));dv.setUint8(8,Math.max(1,Math.min(255,Math.round(cam.zoom*10))));b.push(...new Uint8Array(dv.buffer))}
+    return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  const dec=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0));if(b.length<2)return null;const f=b[1],o={y:1980+b[0],heat:!!(f&1),air:!!(f&2),hoodsOff:!!(f&4)};
+    if(f&8&&b.length>=11){const dv=new DataView(new Uint8Array(b.slice(2,11)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10}}return o}catch(e){return null}};
+  const hashState=()=>{const rest=HASH.slice(SLUG.length);
+    if(rest[0]==='~')return dec(rest.slice(1));
+    if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));return{y:+q.get('y')||null,heat:(q.get('l')||'').split(',').includes('heat'),air:(q.get('l')||'').split(',').includes('air'),hoodsOff:q.get('d')==='0',old:true,full:q.has('y')||q.has('l')}}
+    return null};
+  const deepLink=()=>location.origin+location.pathname+'#'+D.slug+'~'+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
   const share=async()=>{const url=deepLink();
     if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:document.title,url});return}catch(e){if(e&&e.name==='AbortError')return}}
     try{await navigator.clipboard.writeText(url);toast(T('shc'))}catch(e){toast(url)}};shB.onclick=share;
-  if(DLQ.has('y')||DLQ.has('l')||DLQ.has('lg')){
-    const lg=DLQ.get('lg');if(lg&&I18[lg]){LG=lg;try{localStorage.setItem('city_lang',lg)}catch(e){}applyLang()}
-    const i=YR.indexOf(+DLQ.get('y'));if(i>=0){tt=i;sl.value=i;DLY=i}
-    const L=(DLQ.get('l')||'').split(',');
-    if(L.includes('heat')&&on(btn('ht')))btn('ht').click();
-    if(L.includes('air')&&on(btn('ar')))btn('ar').click();
-    if(DLQ.get('d')==='0'&&hoodLabs.length)hdB.click();
+  const P=hashState();
+  if(P){
+    const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
+    if(P.heat&&on(btn('ht')))btn('ht').click();
+    if(P.air&&on(btn('ar')))btn('ar').click();
+    if(P.hoodsOff&&hoodLabs.length)hdB.click();
     domYi=-1;update(tt);dirty=true;
-    if(DLQ.has('y')||DLQ.has('l'))setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400)}}
+    if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
+    if(P.view)setTimeout(()=>{const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));cam.updateProjectionMatrix();ctl.update();dirty=true},1100)}
+  // the address bar follows the session: in explore mode it always holds a link that restores the view
+  setInterval(()=>{const h='#'+D.slug+(explore?'~'+enc():'');if(decodeURIComponent(location.hash)!==h&&!(P&&!explore&&performance.now()<1500))history.replaceState(null,'',location.pathname+location.search+h)},800)}
 
 // ---------- mobile notice: the experience is much better on a desktop ----------
 {const m=document.getElementById('mob');let seen=false;try{seen=sessionStorage.getItem('mob')==='1'}catch(e){}
