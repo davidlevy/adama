@@ -27,7 +27,13 @@ python adama/scripts/satellite_city.py --city "Ra'anana, Israel" --years-ls 1985
 # 2. Optional: summer surface temperature history (Landsat thermal band), adds a HEAT button
 python adama/scripts/surface_temperature.py --city "Ra'anana, Israel"
 
-# 3. List the cities in adama/web/cities.txt, then build and run the site
+# 3. Optional: neighbourhood names (DISTRICTS pills), tall towers, air quality (AIR button)
+python adama/scripts/neighborhoods.py --city "Ra'anana, Israel"
+python adama/scripts/skyscrapers.py   --city "Ra'anana, Israel"
+python adama/scripts/tower_dates.py   --city "Ra'anana, Israel"   # construction years of the towers
+python adama/scripts/air_quality.py   --city "Ra'anana, Israel"
+
+# 4. List the cities in adama/web/cities.txt, then build and run the site
 cd adama && npm install && npm run dev      # http://localhost:8000
 ```
 
@@ -52,11 +58,51 @@ Real tall buildings from OpenStreetMap, drawn as very tall black towers:
 
 It writes `city_<slug>/towers.json` next to the city data. `npm run dev` picks it up automatically.
 
+### Tower construction years
+
+OpenStreetMap rarely tells when a tower was built. Without a year, the viewer would draw a tower as soon as its
+20 m cell is "built" in the satellite model, often decades too early. So, after `skyscrapers.py`:
+
+    python scripts/tower_dates.py --city "Tel Aviv, Israel"
+
+It asks Wikidata for the buildings around the city that have a height and an inception or opening year, matches them
+to the towers (within 70 m, height within 35 %) and writes the year into `towers.json`. Only towers with no year yet
+are changed, so it can be run again. For Tel Aviv, 78 of 473 towers get a real year (the tallest ones); for Dubai,
+1 of 529.
+
+Towers that stay undated are drawn from 1990 at the earliest (`UNDATED_FROM` in `web/src/app.js`). This floor is an
+estimate: some towers of 50 to 100 m may be older.
+
+## Air quality (optional, AIR button)
+
+    python scripts/air_quality.py --city "Ra'anana, Israel"
+
+Writes `city_<slug>/air.json`: the yearly mean of fine particles (PM2.5) and ozone from the CAMS reanalysis through
+Open-Meteo (2013 to now, about 11 km grid, so it is regional, not street level). The viewer shows it as a card with a
+graph and a 3D haze above the city: the worse the air, the denser, coarser and more grainy the haze, and the more
+the colours are dulled. Cities with fewer than 3 years of data get no AIR button (Eilat and Dubai start in 2023).
+
+The sources are interchangeable: a station CSV (`city_<slug>/air_station.csv`, columns `date,pm25,no2,o3`) wins over the
+regional model, and a new source is one function added to `PROVIDERS` in `air_quality.py`. CAMS data before 2018 comes
+from another model version: that part of the curve is dashed in the viewer.
+
+Today's value of the nearest WAQI station is opt-in (`--waqi`, token in `WAQI_TOKEN` or in a `.env` file kept out of
+git). It is never spread across the city or across years: a snapshot of today would be false data for the past.
+
+## Neighbourhoods (optional, DISTRICTS button)
+
+    python scripts/neighborhoods.py --city "Ra'anana, Israel"
+
+Writes `city_<slug>/neighborhoods.json` (district names from OpenStreetMap); the viewer shows the yearly change of green
+for each district as a pill when you zoom in.
+
 ## Adding a city outside Israel
 
     python scripts/satellite_city.py --city "Grenoble, France"
     python scripts/surface_temperature.py --city "Grenoble, France"
     python scripts/skyscrapers.py --city "Grenoble, France"
+    python scripts/tower_dates.py --city "Grenoble, France"
+    python scripts/air_quality.py --city "Grenoble, France"
 
 Then add it to `web/cities.txt` and its name and country in `NAMES` and `CODE` in `web/src/app.js`. `npm run dev` rebuilds the site.
 
@@ -70,5 +116,7 @@ The code is MIT (see `LICENSE`). The data it fetches has its own terms:
 - Sentinel-2 (Copernicus/ESA): free and open, credit the Copernicus Sentinel data.
 - ESA WorldCover: CC BY 4.0.
 - Imagery access through Microsoft Planetary Computer.
+- Air quality: Copernicus Atmosphere Monitoring Service (CAMS) data through Open-Meteo.com (CC BY 4.0, credit both). WAQI, if used, requires crediting the World Air Quality Index Project.
+- Tower years: Wikidata (CC0).
 - Roads, playgrounds and tall buildings: © OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright). Keep the attribution if you publish a site built from it.
 - Fonts embedded in the page (Geist, Fraunces, Caveat): SIL Open Font License.

@@ -152,7 +152,9 @@ const hzMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms
   fragmentShader:'varying vec2 vUv;uniform float uT,uA,uG,uS;void main(){float r=length(vUv-.5)*2.;float edge=1.-smoothstep(.8,1.,r);vec2 gq=floor(gl_FragCoord.xy*uS)+floor(uT*1.5)*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);gl_FragColor=vec4(.42,.42,.44,uA*edge*(1.-uG+uG*2.*gn));}'});
 const haze=new THREE.Group();haze.visible=false;HZ_Y.forEach(y=>{const m=new THREE.Mesh(new THREE.CircleGeometry(RD*1.03,96).rotateX(-Math.PI/2),hzMat);m.position.y=y;m.renderOrder=8;m.frustumCulled=false;haze.add(m)});scene.add(haze);
 function hazeSet(){const who=(D.air&&D.air.who_pm25)||5,k=airV==null?0:Math.min(1,Math.max(0,(airV-who)/25));haze.visible=airOn&&airV!=null;
-  const total=.07+.38*k;HZ_U.uA.value=1-Math.pow(1-total,1/HZ_Y.length);HZ_U.uG.value=.5+.45*k;HZ_U.uS.value=.75-.45*k}
+  const total=.07+.38*k;HZ_U.uA.value=1-Math.pow(1-total,1/HZ_Y.length);HZ_U.uG.value=.5+.45*k;HZ_U.uS.value=.75-.45*k;
+  // bad air also dulls the colours (no tint, so it cannot be mistaken for desert)
+  renderer.domElement.style.filter=airOn&&airV!=null?'saturate('+(1-.6*k).toFixed(2)+') contrast('+(1-.14*k).toFixed(2)+') brightness('+(1-.1*k).toFixed(2)+')':''}
 function animHaze(tm){if(!haze.visible)return;haze.children.forEach((m,i)=>{m.position.y=HZ_Y[i]+(VX-1)*5*(i+1)/HZ_Y.length+Math.sin(tm*.12+i)*.2})}
 // ---------- air quality (air.json from scripts/air_quality.py): yearly PM2.5 curve that follows the timeline ----------
 const AIR=D.air&&D.air.series&&D.air.series.pm25,AIRL=D.air&&D.air.live;let airUpd=()=>{};
