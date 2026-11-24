@@ -144,14 +144,15 @@ function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.ins
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
 let airLang=()=>{},airOn=false,airV=null;
-// ---------- air haze: a 3D layer of particles above the city, denser and coarser when the air is worse ----------
-const HZ_N=7000,hzGeo=new THREE.BufferGeometry();
-{const p=new Float32Array(HZ_N*3);for(let i=0;i<HZ_N;i++){const r=Math.sqrt(Math.random())*RD*1.02,a=Math.random()*Math.PI*2;p[i*3]=Math.cos(a)*r;p[i*3+1]=Math.random()*20;p[i*3+2]=Math.sin(a)*r}hzGeo.setAttribute('position',new THREE.BufferAttribute(p,3))}
-const hzTex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),r=g.createRadialGradient(32,32,0,32,32,32);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.45,'rgba(255,255,255,.45)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
-const hzMat=new THREE.PointsMaterial({map:hzTex,color:0xd2d2d6,size:2,sizeAttenuation:false,transparent:true,opacity:.3,depthWrite:false});
-const haze=new THREE.Points(hzGeo,hzMat);haze.visible=false;haze.frustumCulled=false;haze.renderOrder=8;scene.add(haze);
-function hazeSet(){const who=(D.air&&D.air.who_pm25)||5,k=airV==null?0:Math.min(1,Math.max(0,(airV-who)/25));haze.visible=airOn&&airV!=null;hzGeo.setDrawRange(0,Math.round(1500+(HZ_N-1500)*k));hzMat.size=1.6+4.4*k;hzMat.opacity=.2+.4*k}
-function animHaze(tm){if(!haze.visible)return;haze.rotation.y=tm*.012;haze.position.y=3+(VX-1)*5+Math.sin(tm*.3)*.4}
+// ---------- air haze: stacked translucent veils above the city, grainy like the green; the grain gets coarser and stronger when the air is worse ----------
+const HZ_Y=[5,9.5,14,18.5],HZ_U={uT:UT,uA:{value:.02},uG:{value:.5},uS:{value:.7}};
+const hzMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:HZ_U,
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'varying vec2 vUv;uniform float uT,uA,uG,uS;void main(){float r=length(vUv-.5)*2.;float edge=1.-smoothstep(.8,1.,r);vec2 gq=floor(gl_FragCoord.xy*uS)+floor(uT*7.)*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);gl_FragColor=vec4(.66,.66,.68,uA*edge*(1.-uG+uG*2.*gn));}'});
+const haze=new THREE.Group();haze.visible=false;HZ_Y.forEach(y=>{const m=new THREE.Mesh(new THREE.CircleGeometry(RD*1.03,96).rotateX(-Math.PI/2),hzMat);m.position.y=y;m.renderOrder=8;m.frustumCulled=false;haze.add(m)});scene.add(haze);
+function hazeSet(){const who=(D.air&&D.air.who_pm25)||5,k=airV==null?0:Math.min(1,Math.max(0,(airV-who)/25));haze.visible=airOn&&airV!=null;
+  const total=.07+.38*k;HZ_U.uA.value=1-Math.pow(1-total,1/HZ_Y.length);HZ_U.uG.value=.5+.45*k;HZ_U.uS.value=.75-.45*k}
+function animHaze(tm){if(!haze.visible)return;haze.children.forEach((m,i)=>{m.position.y=HZ_Y[i]+(VX-1)*5*(i+1)/HZ_Y.length+Math.sin(tm*.3+i)*.25})}
 // ---------- air quality (air.json from scripts/air_quality.py): yearly PM2.5 curve that follows the timeline ----------
 const AIR=D.air&&D.air.series&&D.air.series.pm25,AIRL=D.air&&D.air.live;let airUpd=()=>{};
 if(AIR||AIRL){const el=document.createElement('div');el.className='air';document.body.appendChild(el);
