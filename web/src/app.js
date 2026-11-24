@@ -390,7 +390,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
 requestAnimationFrame(frame);
 story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
-{const l=document.getElementById('ld');if(l){l.style.opacity=0;setTimeout(()=>l.remove(),600)}}
+{const l=document.getElementById('ld');if(l)Promise.resolve(window.__logoDone).then(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)})}
 
 // ---------- share / deep link: #slug?s=<token> ----------
 // The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
