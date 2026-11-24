@@ -197,7 +197,7 @@ const bdot=new THREE.InstancedMesh(new THREE.CylinderGeometry(.55,.55,.05,20),ne
 {const m=new THREE.Matrix4();BP.forEach((b,i)=>{m.makeTranslation(b.x,.3,b.z);bdot.setMatrixAt(i,m)});bdot.instanceMatrix.needsUpdate=true}facG.add(bdot);
 const _bm=new THREE.Matrix4(),_bq=new THREE.Quaternion(),_bp=new THREE.Vector3(),_bs=new THREE.Vector3();
 function animBalloons(tm){if(!facG.visible)return;const pa=bline.geometry.attributes.position;
-  BP.forEach((b,i)=>{const y=7+Math.sin(tm*.9+b.ph)*.55,x=b.x+Math.sin(tm*.6+b.ph*1.7)*.35,z=b.z+Math.cos(tm*.5+b.ph)*.35;
+  BP.forEach((b,i)=>{const y=2+5*VX+Math.sin(tm*.9+b.ph)*.55,x=b.x+Math.sin(tm*.6+b.ph*1.7)*.35,z=b.z+Math.cos(tm*.5+b.ph)*.35;
     _bp.set(x,y,z);_bs.set(.9,1.1,.9);_bm.compose(_bp,_bq,_bs);bmesh.setMatrixAt(i,_bm);
     pa.setXYZ(i*2,b.x,.3,b.z);pa.setXYZ(i*2+1,x,y-1.05,z)});
   bmesh.instanceMatrix.needsUpdate=true;pa.needsUpdate=true}
