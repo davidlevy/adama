@@ -327,7 +327,8 @@ function story(){
     tt=t;sl.value=Math.round(t);dirty=true;lastY=y}
 }
 addEventListener('scroll',story,{passive:true});{const ab=v=>document.body.classList.toggle('ab-open',v);document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
-window.__lh=()=>{upB.textContent=ST[LG].back;cardKey=-1;story()};
+const RELOAD='<svg viewBox="0 0 15 15" width="14" height="14" style="stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px"><path d="M12.5 7.5a5 5 0 1 1-1.6-3.7M11.6 1.5v2.7H8.9"/></svg>',setUp=()=>{upB.innerHTML=RELOAD;upB.title=upB.ariaLabel=ST[LG].back.replace('↑ ','')};setUp();
+window.__lh=()=>{setUp();cardKey=-1;story()};
 upB.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
 function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
