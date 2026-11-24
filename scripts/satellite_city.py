@@ -261,6 +261,17 @@ def get_year(cat, kind, year, bbox, grid, season, per_group, cloud, raw_dir, rep
     return comp, float((n > 0).mean()), len(items)
 
 
+def fetch_years(cat, kind, years, bbox, grid, season, scenes, cloud, raw, rep, workers, t0):
+    """Download the years of one sensor in parallel (the time is spent waiting for the network, not computing).
+    Returns [(year, composite or None, coverage, n_scenes)] in the order of `years`."""
+    def one(y):
+        c, cv, n = get_year(cat, kind, y, bbox, grid, season, scenes, cloud, raw, rep)
+        log("  %d: %d scenes, coverage %.0f %%  (%.0f min elapsed)" % (y, n, cv * 100, (time.time() - t0) / 60), rep)
+        return y, c, cv, n
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
+        return list(ex.map(one, years))
+
+
 def get_wc(cat, year, bbox, grid, raw_dir):
     from rasterio.enums import Resampling
     fp = os.path.join(raw_dir, "wc_%d.npy" % year)
@@ -498,6 +509,7 @@ def main():
     ap.add_argument("--scenes", type=int, default=2, help="max scenes per tile and per year (best ones, least cloud)")
     ap.add_argument("--cloud", type=float, default=60)
     ap.add_argument("--no-landsat", action="store_true")
+    ap.add_argument("--workers", type=int, default=4, help="years downloaded at the same time (network bound); 1 = one after the other")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -519,22 +531,18 @@ def main():
 
     s2, ls, cov = {}, {}, []
     log("\n[1/4] Sentinel-2 (10 m)", rep)
-    for y in parse_years(a.years_s2):
-        c, cv, n = get_year(cat, "s2", y, bbox, g10, a.season_s2, a.scenes, a.cloud, raw, rep)
+    for y, c, cv, n in fetch_years(cat, "s2", parse_years(a.years_s2), bbox, g10, a.season_s2, a.scenes, a.cloud, raw, rep, a.workers, t0):
         if c is not None:
             s2[y] = c
         cov.append(("Sentinel-2", y, n, cv))
-        log("  %d: %d scenes, coverage %.0f %%  (%.0f min elapsed)" % (y, n, cv * 100, (time.time() - t0) / 60), rep)
     if not s2:
         sys.exit("No Sentinel-2 image downloaded. Check the connection and run again.")
     if not a.no_landsat:
         log("\n[2/4] Landsat (30 m)", rep)
-        for y in sorted(set(parse_years(a.years_ls)) | {2020, 2021}):
-            c, cv, n = get_year(cat, "ls", y, bbox, g30, a.season_ls, a.scenes, a.cloud, raw, rep)
+        for y, c, cv, n in fetch_years(cat, "ls", sorted(set(parse_years(a.years_ls)) | {2020, 2021}), bbox, g30, a.season_ls, a.scenes, a.cloud, raw, rep, a.workers, t0):
             if c is not None:
                 ls[y] = c
             cov.append(("Landsat", y, n, cv))
-            log("  %d: %d scenes, coverage %.0f %%  (%.0f min elapsed)" % (y, n, cv * 100, (time.time() - t0) / 60), rep)
 
     log("\n[3/4] Land cover and analysis", rep)
     wc = {}
