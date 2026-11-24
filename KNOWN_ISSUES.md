@@ -9,7 +9,9 @@ Check `city_<slug>/report.txt` and `coverage.csv` before adding any city to `web
 | Ofakim | Same desert confusion | Built goes 13 % to 53 % of the window for a town of about 30,000 people | Same as Las Vegas; also crop the window tighter around the town |
 | Hadera | Unstable model | Raw built is about 22 % in 2020/2021 (the training years) and about 40 % in other years; large farm fields labelled built, curve jumps from 26 % (2021) to 43 % (2024) | Train on several years instead of two; add a cropland class; mask fields with a vegetation-seasonality feature |
 | Venice | Lagoon and bad 2017 image | Water counted as built (fixed: WorldCover water is now masked, see `scripts/mask_water.py`). Sentinel-2 only, 2018-2026 | Check the dense old town (roofs vs canals) |
-| Singapore | Clouds / dense vegetation | Not validated, quality doubtful | More scenes (`--scenes 4`), check coverage per year |
+| Singapore (on the site, early years doubtful) | Clouds / dense vegetation | 15 of 47 years have under 85 % coverage; 1988 shows only 15 % built, far below reality | Sentinel-2 only (2017-2026), or a median over several months per year |
+| Shenzhen (on the site) | Clouds in the early Landsat years | 12 of 47 years under 85 % coverage; the curve (14 % to 53 %) is plausible but the early years are approximate | Same as Singapore |
+| Hong Kong, Macau, Santa Cruz de Tenerife | Clouds and steep terrain | Hong Kong starts at 9 ha built in 1986 and Tenerife at 23 ha in 1995 (wrong); Macau has 16 poorly covered years | Sentinel-2 only (`--no-landsat`), more scenes, dry-season window |
 | Paris, Venice and other very dense cities | Landsat 30 m mixes parks and buildings | Landsat years show 95-100 % built | Use `--no-landsat` (Paris is Sentinel-2 only, 2017-2026), or a fraction-based model instead of a binary one |
 
 ## General causes
