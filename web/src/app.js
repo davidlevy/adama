@@ -349,7 +349,7 @@ function story(){
   pb.onclick=()=>{if(window.__music&&!window.__music.on)window.__music(true);stop();const vh=vhpx(),end=SECH.slice(0,4).reduce((a,h)=>a+h,0)*vh,sp=end/40;let y=scrollY,last=performance.now();
     const step=t=>{y+=sp*Math.min(.05,(t-last)/1000);last=t;scrollTo(0,y);raf=y<end?requestAnimationFrame(step):0};raf=requestAnimationFrame(step)}}
 addEventListener('scroll',story,{passive:true});{const ab=v=>document.body.classList.toggle('ab-open',v);document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
-const RELOAD='<svg viewBox="0 0 15 15" width="14" height="14" style="stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px"><path d="M12.5 7.5a5 5 0 1 1-1.6-3.7M11.6 1.5v2.7H8.9"/></svg>',setUp=()=>{upB.innerHTML=RELOAD;upB.title=upB.ariaLabel=ST[LG].back.replace('↑ ','')};setUp();
+const RELOAD='<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',setUp=()=>{upB.innerHTML=RELOAD;upB.title=upB.ariaLabel=ST[LG].back.replace('↑ ','')};setUp();
 window.__lh=()=>{setUp();cardKey=-1;story()};
 upB.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
@@ -401,7 +401,13 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 // ---------- ambient synthwave that builds up with the story (Web Audio, nothing to download) ----------
 // A F C G in A minor, 100 BPM. Layers come in with the progress p of the story: pad, arpeggio, bass, kick, hats, snare.
-{const S=60/100/4,CH=[[57,0,3,7],[53,0,4,7],[48,0,4,7],[55,0,4,7]],hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
+{const S=60/100/4,
+    // two sections of 8 bars that alternate: A = Am F C G (open, rising), B = Am G F E (darker, Andalusian)
+    CHS=[[[57,0,3,7],[53,0,4,7],[48,0,4,7],[55,0,4,7]],[[57,0,3,7],[55,0,4,7],[53,0,4,7],[52,0,4,7]]],
+    // lead melodies, one note per 16th over 2 bars, as an index in the chord tones [root,3rd,5th,octave,oct+3rd,oct+5th] (-1 = rest)
+    MEL=[[3,-1,-1,-1,4,-1,3,-1,2,-1,-1,-1,1,-1,2,-1,3,-1,-1,-1,4,-1,5,-1,4,-1,3,-1,2,-1,1,-1],
+         [5,-1,4,-1,-1,-1,3,-1,-1,-1,2,-1,3,-1,-1,-1,5,-1,-1,4,-1,3,-1,-1,2,-1,-1,1,-1,2,-1,-1]],
+    ARP=[[0,1,2,3,2,1,3,2],[0,2,1,2,3,2,1,2]],hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
   let ac,mg,pad,arp,nb,an,timer=0,step=0,next=0,on=false;
   const prog=()=>explore?.5:Math.min(1,scrollY/Math.max(1,SECH.slice(0,4).reduce((a,h)=>a+h,0)*vhpx()));
   const lv=(p,a)=>Math.max(0,Math.min(1,(p-a)/.12));
@@ -414,16 +420,19 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const tone=(t,f,dur,type,vol,cut,dest,att=.01)=>{const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
   const noise=(t,dur,type,f,vol,dest)=>{const n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();n.buffer=nb;fl.type=type;fl.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(fl);fl.connect(g);g.connect(dest);n.start(t);n.stop(t+dur+.02)};
-  const play=(i,t,p)=>{const c=CH[Math.floor(i/32)%4],r=c[0],iv=c.slice(1);
+  const play=(i,t,p)=>{const sec=Math.floor(i/128)%2,c=CHS[sec][Math.floor(i/32)%4],r=c[0],iv=c.slice(1),ct=[0,iv[0],iv[1],12,12+iv[0],12+iv[1]];
     if(i%32===0)iv.concat(iv.map(x=>x+12)).forEach((x,k)=>{[-1,1].forEach(d=>tone(t,hz(r+x)*(1+d*.004),32*S,'sawtooth',.03,500+1600*p,pad,1.4))});
-    const a=lv(p,.12);if(a>0)tone(t,hz(r+12+[0,iv[0],iv[1],12,iv[1],iv[0],12,iv[1]][i%8]),S*1.7,'sawtooth',.05*a,900+2600*p,arp);
+    const a=lv(p,.12);if(a>0)tone(t,hz(r+12+[0,iv[0],iv[1],12][ARP[sec][i%8]]),S*1.7,'sawtooth',.05*a,900+2600*p,arp);
+    const ml=lv(p,.38),m=MEL[sec][i%32];if(ml>0&&m>=0)tone(t,hz(r+12+ct[m]),S*3.2,'square',.045*ml,2400,arp,.02);
     const b=lv(p,.3);if(b>0&&i%2===0)tone(t,hz(r-12),S*1.8,'sawtooth',.14*b,320+300*p,mg);
     const k=lv(p,.52);if(k>0&&i%4===0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);g.gain.setValueAtTime(.5*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.28);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.3)}
     const h=lv(p,.58);if(h>0&&(i%2===1||p>.85))noise(t,.04,'highpass',7000,.07*h,mg);
     const sn=lv(p,.68);if(sn>0&&i%8===4){noise(t,.16,'bandpass',1800,.2*sn,mg);tone(t,190,.09,'triangle',.1*sn,2000,mg,.002)}};
-  const tick=()=>{const p=prog();while(next<ac.currentTime+.15){play(step,next,p);next+=S;step++}};
+  // the music fades out when the timeline appears (explore mode) and comes back with the story
+  let ex=null;const vol=()=>explore?0:1.1;
+  const tick=()=>{if(explore!==ex){ex=explore;mg.gain.setTargetAtTime(vol(),ac.currentTime,ex?1.4:1.2)}const p=prog();while(next<ac.currentTime+.15){play(step,next,p);next+=S;step++}};
   const set=v=>{on=v;bt.classList.toggle('off',!v);bt.setAttribute('aria-pressed',v);bt.title=bt.ariaLabel=T('mus');
-    if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(1.1,ac.currentTime,1.2);if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
+    if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(vol(),ac.currentTime,1.2);ex=explore;if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
     else if(ac){mg.gain.setTargetAtTime(0,ac.currentTime,.3);setTimeout(()=>{if(!on){clearInterval(timer);timer=0;ac.suspend()}},1500)}};
   bt.onclick=e=>{e.stopPropagation();set(!on)};
   document.addEventListener('visibilitychange',()=>{if(ac&&on)document.hidden?ac.suspend():ac.resume()});
