@@ -15,8 +15,9 @@ Adama (אדמה) = earth. Site is a static Three.js scroll page; see README.md f
 
 1. `python adama/scripts/satellite_city.py --city "X" --center LAT,LON --radius KM [--scenes 4 for cloudy places]`
 2. Optional: `surface_temperature.py` (HEAT button), `skyscrapers.py` (towers), same `--city` string.
-3. Add it to `web/cities.txt`, and to `NAMES` (fr/en/he) and `CODE`/`CTRY` (country) in `web/src/app.js`.
-4. `python3 web/build.py`, then copy `dist/site/index.html` and `dist/site/data/` into `adama_site/`.
+3. Optional: `air_quality.py --city X` (AIR button: yearly PM2.5 + live WAQI value; needs `WAQI_TOKEN` in `satellite/.env`, never commit it). For a precise history, drop a station CSV (date,pm25,no2,o3) as `city_<slug>/air_station.csv`; it wins over the regional model. To add another source, add a provider function in `air_quality.py`.
+4. Add it to `web/cities.txt`, and to `NAMES` (fr/en/he) and `CODE`/`CTRY` (country) in `web/src/app.js`.
+5. `python3 web/build.py`, then copy `dist/site/index.html` and `dist/site/data/` into `adama_site/`.
 
 Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder can pick the wrong object (Las Vegas resolved to a casino of 0.5 km).
 

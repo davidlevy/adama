@@ -39,6 +39,9 @@ for arg in args:
     hp = os.path.join(os.path.dirname(path), 'heat.json')
     if os.path.exists(hp):
         d['heat'] = json.load(open(hp))
+    ap = os.path.join(os.path.dirname(path), 'air.json')
+    if os.path.exists(ap):
+        d['air'] = json.load(open(ap, encoding='utf-8'))
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))
