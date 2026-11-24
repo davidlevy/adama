@@ -29,7 +29,7 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;r
 wrap.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
 const cam=new THREE.OrthographicCamera(-100,100,100,-100,-1500,3000);cam.position.set(260,300,260);cam.lookAt(0,0,0);
-const ctl=new OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.minZoom=.7;ctl.maxZoom=12;ctl.maxPolarAngle=1.35;ctl.minPolarAngle=.3;ctl.screenSpacePanning=true;
+const ctl=new OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;ctl.minZoom=.7;ctl.maxZoom=12;ctl.maxPolarAngle=1.35;ctl.minPolarAngle=.087;ctl.screenSpacePanning=true;
 const hemi=new THREE.HemisphereLight(0xf2f4ff,0x3a3a3c,1.2);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(-120,260,80);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
 const sc=sun.shadow.camera;sc.left=-230;sc.right=230;sc.top=230;sc.bottom=-230;sc.near=1;sc.far=900;sun.shadow.bias=-.0004;sun.shadow.normalBias=.2;scene.add(sun);
