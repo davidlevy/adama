@@ -22,3 +22,4 @@
 ../city_tiberias/city_tiberias.json:32.7959,35.5310,200
 ../city_amsterdam/city_amsterdam.json:52.3676,4.9041,350
 ../city_venice/city_venice.json:45.4375,12.3358,300
+../city_karmiel/city_karmiel.json:32.9170,35.2950,200
