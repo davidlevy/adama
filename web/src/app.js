@@ -40,10 +40,8 @@ D.osm.arteries.forEach(wy=>{const P=wy.pts.map(p=>toXZ(p[0],p[1])),r=wy.c?.78:.6
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=gx+dx,Z=gy+dy;if(X<0||Z<0||X>=W||Z>=H)continue;const j=idx[Z*W+X];if(j<0)continue;const c=cells[j];if(Math.hypot(c.x-px,c.z-pz)<r)c.road=Math.max(c.road,v)}}}});
 const ground0=0;
 const PL=(r0,r1,h,y,c,rg)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r0,r1,h,160),new THREE.MeshStandardMaterial({color:c,roughness:rg,metalness:.1}));m.position.y=y;m.receiveShadow=true;m.castShadow=false;scene.add(m);return m};
-const ground=PL(RD+1.3,RD-14,22,-11,0x3a3a42,.35);ground.material.emissive=new THREE.Color(0x24242b);           // raised body
-PL(RD+1.5,RD+1.5,.6,-.3,0x6a6a72,.3);                        // bright rim at the top edge
-PL(RD+5,RD+6,1.6,-22.8,0x0d0d0f,.9);                           // lower stage
-const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xd4d4da}));rimLine.position.y=.02;scene.add(rimLine);
+const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new THREE.Color(0x8a8a92);           // simple light-grey slab
+const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
 const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45');
@@ -115,7 +113,7 @@ const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=doc
 sl.max=yi0;sl.value=yi0;
 const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
 const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות'}},CODE={grenoble:'FR',dubai:'AE',paris:'FR'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
-CITIES.forEach(c=>{const o=document.createElement('div');o.dataset.slug=c.slug;o.setAttribute('role','option');o.innerHTML='<span></span><small></small>';if(c.slug===D.slug)o.className='on';o.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};cml.appendChild(o)});
+[...CITIES].sort((a,b)=>CTRY.en[CODE[a.slug]||'IL'].localeCompare(CTRY.en[CODE[b.slug]||'IL'])||((NAMES[a.slug]||{}).en||a.name).localeCompare((NAMES[b.slug]||{}).en||b.name)).forEach(c=>{const o=document.createElement('div');o.dataset.slug=c.slug;o.setAttribute('role','option');o.innerHTML='<span></span><small></small>';if(c.slug===D.slug)o.className='on';o.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};cml.appendChild(o)});
 cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o)};
 addEventListener('click',()=>cmEl.classList.remove('open'));addEventListener('keydown',e=>{if(e.key==='Escape')cmEl.classList.remove('open')});
 function applyLang(){domYi=-1;document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
