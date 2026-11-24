@@ -96,6 +96,10 @@ git). It is never spread across the city or across years: a snapshot of today wo
 Writes `city_<slug>/neighborhoods.json` (district names from OpenStreetMap); the viewer shows the yearly change of green
 for each district as a pill when you zoom in.
 
+## Small parks (optional)
+
+At 20 m a small park between buildings is often classified as built. `python scripts/green_spaces.py --city "Ra'anana, Israel"` reads the park, garden, grass and wood polygons of OpenStreetMap and writes `city_<name>/greens.json`. `web/prep.py` then treats a cell as never built only if at least 90 % of it is inside such a polygon and at most 10 % of it is covered by an OpenStreetMap building (a 5 m raster is used), so streets and courtyards are not turned green. Run it after `satellite_city.py`; it needs the Overpass API, which is sometimes slow (run again later if it times out).
+
 ## Adding a city outside Israel
 
     python scripts/satellite_city.py --city "Grenoble, France"
