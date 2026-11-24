@@ -4,7 +4,7 @@ const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await f
 const CITIES=await getJSON(BASE+'cities.json'),SLUG=decodeURIComponent(location.hash.slice(1)),D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
-const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'}};
+const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'},'ein-gedi':{fr:'Ein Gedi',en:'Ein Gedi',he:'עין גדי'},'modiin':{fr:'Modi\u2019in',en:'Modi\u2019in',he:'מודיעין'},'paris':{fr:'Paris',en:'Paris',he:'פריז'}};
 // UTM projection (WGS84), zone from D.crs
 const ZONE=+D.crs.slice(-2),NORTH=D.crs.startsWith('EPSG:326');
 function utm(lat,lon){const a=6378137,f=1/298.257223563,k0=.9996,n=f/(2-f),A=a/(1+n)*(1+n*n/4+n**4/64);
@@ -114,7 +114,7 @@ function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,
 const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=document.getElementById('tk'),tip=document.getElementById('tip');
 sl.max=yi0;sl.value=yi0;
 const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
-const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות'}},CODE={grenoble:'FR',dubai:'AE'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
+const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות'}},CODE={grenoble:'FR',dubai:'AE',paris:'FR'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
 CITIES.forEach(c=>{const o=document.createElement('div');o.dataset.slug=c.slug;o.setAttribute('role','option');o.innerHTML='<span></span><small></small>';if(c.slug===D.slug)o.className='on';o.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};cml.appendChild(o)});
 cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o)};
 addEventListener('click',()=>cmEl.classList.remove('open'));addEventListener('keydown',e=>{if(e.key==='Escape')cmEl.classList.remove('open')});
