@@ -17,3 +17,6 @@
 ../city_holon/city_holon.json:32.0160,34.7870,200
 ../city_bnei-brak/city_bnei-brak.json:32.0840,34.8340,175
 ../city_harish/city_harish.json:32.4580,35.0450,175
+../city_netanya/city_netanya.json:32.3215,34.8532,250
+../city_ashkelon/city_ashkelon.json:31.6690,34.5715,275
+../city_tiberias/city_tiberias.json:32.7959,35.5310,200
