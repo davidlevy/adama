@@ -160,7 +160,7 @@ if(AIR||AIRL){const el=document.createElement('div');el.className='air';document
     const l=el.querySelector('#aml'),c=el.querySelector('#amc');l.style.display=c.style.display=v==null?'none':'';if(v!=null){l.setAttribute('x1',X(yr));l.setAttribute('x2',X(yr));c.setAttribute('cx',X(yr));c.setAttribute('cy',Y(v))}};
   const notes=()=>(AIRL?'<div>'+T('airnow').replace('{a}',AIRL.aqi).replace('{s}',AIRL.station).replace('{d}',AIRL.distance_km)+'</div>':'')+(AIR?'<div>'+(br?T('airbrk').replace('{y}',br)+' · ':'')+T('airsrc').replace('{s}',AIR.source).replace('{r}',AIR.res_km||'<1')+'</div>':'');
   const arB=document.getElementById('ar');arB.style.display='';arB.onclick=()=>{airOn=!airOn;arB.classList.toggle('on',airOn);document.body.classList.toggle('airon',airOn);airUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])};
-  airLang=()=>{el.innerHTML='<div class="ah"><div class="ax"><div class="at">'+T('air')+'</div><div class="av"></div></div>'+svg+'</div><div class="acr">'+(AIR?'<a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus CAMS</a> · <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>':'')+(AIRL?(AIR?' · ':'')+'<a href="https://waqi.info/" target="_blank" rel="noopener">WAQI</a>':'')+'</div>';airUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}}
+  airLang=()=>{el.innerHTML='<div class="ah"><div class="ax"><div class="at">'+T('air')+'</div><div class="av"></div></div>'+svg+'</div>';airUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}}
 let VX=1;// buildings grow taller when zoomed in, for contrast with the ground
 function update(t){
   const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);
