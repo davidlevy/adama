@@ -36,6 +36,12 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 - Stats that have no value (first year) are hidden, not shown as a dash.
 - Credits (Landsat, Sentinel-2, WorldCover, Planetary Computer, OpenStreetMap) must stay visible on the page: OSM requires attribution.
 
+## State in the URL
+
+- Any new filter, layer, toggle or other UI parameter that changes what the user sees must be kept in the address, so that a shared link restores the session. Add it to the `FLAGS` table above `enc()` in `web/src/app.js` (one bit per boolean, appended at the end; the flag bytes have a continuation bit, so links already shared keep working). Values that are not booleans (a position, a zoom, an angle, a number) go in the saved-view part of the token, appended after the existing fields, with a decoder that accepts the shorter older tokens.
+- Do not put the language in the link. Never change the meaning of an existing bit or the order of the existing fields.
+- When you add a parameter, test it end to end: change it, read the address, open that address in a fresh page, check the parameter is restored (see the "Share links" section of the README).
+
 ## Git and deploy
 
 - Work on a branch and open a PR; never push to `main` directly and never merge a PR. Ask before any push (public repo).
