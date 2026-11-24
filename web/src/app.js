@@ -439,3 +439,8 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   document.addEventListener('visibilitychange',()=>{if(ac&&on)document.hidden?ac.suspend():ac.resume()});
   window.__music=Object.assign(set,{peak:()=>{const d=new Float32Array(an.fftSize);an.getFloatTimeDomainData(d);return Math.max(...d.map(Math.abs))},state:()=>ac&&ac.state+' '+step+' sec='+SEC});
   bt.title=bt.ariaLabel=T('mus')}
+
+// clean screen: the legend and the language / share / sound buttons fade out when nobody touches the page for a few seconds
+// (the scroll of the Play button does not count as an interaction)
+{let idle=0;const wake=()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>document.body.classList.add('idle'),4000)};
+  ['mousemove','mousedown','pointerdown','touchstart','wheel','keydown'].forEach(e=>addEventListener(e,wake,{passive:true}));wake()}
