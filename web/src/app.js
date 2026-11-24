@@ -25,7 +25,7 @@ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(Math.hypot(x+.5-W/2,y+
 for(const c of cells){let n=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const gx=c.gx+dx,gy=c.gy+dy;if(gx<0||gy<0||gx>=W||gy>=H)continue;const j=idx[gy*W+gx];if(j>=0&&cells[j].f<999)n++}c.nb=n/25}
 const wrap=document.getElementById('v');const UIW=()=>innerWidth,UIH=()=>innerHeight;
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
 wrap.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
 const cam=new THREE.OrthographicCamera(-100,100,100,-100,-1500,3000);cam.position.set(260,300,260);cam.lookAt(0,0,0);
@@ -66,10 +66,10 @@ mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
   sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vWP;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWP=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uT;varying vec3 vWP;').replace('#include <color_fragment>','#include <color_fragment>\n float gk=step(max(diffuseColor.r,diffuseColor.b)+.04,diffuseColor.g);float tq=floor(uT*7.);vec2 gq=floor(gl_FragCoord.xy*.55)+tq*vec2(17.3,9.1);float gn=fract(sin(dot(gq,vec2(12.9898,78.233)))*43758.5453);float wv=(sin(vWP.x*.11+vWP.z*.07+uT*1.1)*.5+.5)*(sin(vWP.z*.09-vWP.x*.05-uT*.8)*.5+.5);float wk=step(diffuseColor.r+.05,diffuseColor.b);float dk=step(.004,diffuseColor.r-diffuseColor.b)*step(diffuseColor.g,diffuseColor.r+.001)*(1.-gk)*(1.-wk);float sp=sin(vWP.x*.35+uT*1.6)*sin(vWP.z*.31-uT*1.2);diffuseColor.rgb*=(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.42*gk)*(1.+(gn-.5)*.1*wk)*(1.+(fract(sin(dot(floor(gl_FragCoord.xy*.55),vec2(12.9898,78.233)))*43758.5453)-.5)*.3*dk);float ws=(sin(vWP.x*.045+uT*.45)*sin(vWP.z*.04-uT*.36)+sin(vWP.x*.021-vWP.z*.027+uT*.27))*.25+.5;vec3 wa=diffuseColor.rgb*vec3(.62,.8,1.25),wb=diffuseColor.rgb*vec3(.85,1.45,1.2);diffuseColor.rgb=mix(diffuseColor.rgb,mix(wa,wb,clamp(ws,0.,1.)),wk);')};
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
-const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1c9e4a'),G2=new THREE.Color('#52d977');
-{const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1c9e4a'),_b=new THREE.Color('#52d977');
+const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#2aa854'),G2=new THREE.Color('#74dd7c');
+{const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#2aa854'),_b=new THREE.Color('#74dd7c');
   stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:.3+b.h*.3,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else _c.copy(_a).lerp(_b,b.h);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
-const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.34,.035,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
+const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
   const list=Object.values(by).filter(e=>e.len>25).sort((a,b)=>b.len-a.len),kept=[];
@@ -107,7 +107,7 @@ function stepTowers(k){let mv=false;const a=tMesh.instanceMatrix.array;
     const d=TTg[i]-TC[i];if(d>.002||d<-.002){TC[i]+=d*k;mv=true}else TC[i]=TTg[i];
     a[o]=T.sx;a[o+5]=Math.max(.001,T.h*TC[i]);a[o+10]=T.sz;a[o+12]=T.x;a[o+13]=0;a[o+14]=T.z;a[o+15]=1}
   tMesh.instanceMatrix.needsUpdate=true;return mv}
-function paintStatic(yi){const arr=HT&&heatOn?HY[hIdx(YR[yi])]:null,_c=new THREE.Color(),_a=new THREE.Color('#1c9e4a'),_b=new THREE.Color('#52d977');
+function paintStatic(yi){const arr=HT&&heatOn?HY[hIdx(YR[yi])]:null,_c=new THREE.Color(),_a=new THREE.Color('#2aa854'),_b=new THREE.Color('#74dd7c');
   stBlocks.forEach((b,i)=>{if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else _c.copy(_a).lerp(_b,b.h);if(arr){const an=heatAt(arr,b.x+W/2,b.z+H/2);_c.lerp(heatCol(an,new THREE.Color()),heatMix(an))}smesh.setColorAt(i,_c)});smesh.instanceColor.needsUpdate=true}
 function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,n=0;for(let j=Math.max(0,i-2);j<=Math.min(HM.length-1,i+2);j++)if(HM[j]!=null){a+=HM[j];n++}return a/n},d=avg(k)-avg(Math.min(2,HM.length-1)),nf=new Intl.NumberFormat(LG,{maximumFractionDigits:1,minimumFractionDigits:1});
   document.getElementById('hvb').textContent=(k<=2?'':(d>=0?'+':'−')+nf.format(Math.abs(d))+' °C');document.getElementById('hvl').textContent=T('hv').replace('{y}',HT.years[Math.min(2,HT.years.length-1)]===YR[0]?YR[0]:HT.years[0])}
