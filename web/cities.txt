@@ -32,3 +32,5 @@
 ../city_shenzhen/city_shenzhen.json:22.5400,114.0500,600
 ../city_singapore/city_singapore.json:1.3300,103.8300,500
 ../city_strasbourg/city_strasbourg.json:48.5734,7.7521,350
+../city_metz/city_metz.json:49.1193,6.1757,350
+../city_kfar-saba/city_kfar-saba.json
