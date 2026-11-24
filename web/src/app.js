@@ -262,11 +262,15 @@ const place=(lat,lon,acc)=>{const [x,z]=toXZ(lat,lon);
 // no GPS (denied, unavailable): ask for an address. The text is sent to OpenStreetMap Nominatim, limited to the box of this city.
 const askAddr=why=>{msg.style.pointerEvents='auto';msg.style.maxWidth='none';msg.textContent=why+' ';
   const i=document.createElement('input'),g=document.createElement('button'),err=document.createElement('span');i.placeholder=T('addr');i.className='adr';g.className='pill';g.textContent=T('adrgo');
-  // OpenStreetMap often lacks the house number, and names are in the local language: try the full text, then without numbers
-  const find=async q=>{const [w,s,e,n]=D.bbox,r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
+  // Photon (OpenStreetMap, tolerant to typos and Latin spelling) first, then Nominatim; both limited to the box of this city.
+  // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
+  const [w,s,e,n]=D.bbox,city=nm0();
+  const photon=async q=>{const r=await fetch('https://photon.komoot.io/api/?limit=1&lang='+(LG==='fr'?'fr':'en')+'&bbox='+[w,s,e,n].join(',')+'&q='+encodeURIComponent(q+' '+city)),j=await r.json();return j.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}))};
+  const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
+  const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
   const go=async()=>{const q=i.value.trim();if(!q)return;err.textContent='';
-    try{let j=await find(q);const q2=q.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q)j=await find(q2);
-      if(j.length){msg.textContent='';msg.style.pointerEvents='none';msg.style.maxWidth='';place(+j[0].lat,+j[0].lon,0)}else err.textContent=T('adrnf')}catch(x){err.textContent=T('adrnf')}};
+    let j=await find(q);const q2=q.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q)j=await find(q2);
+    if(j.length){msg.textContent='';msg.style.pointerEvents='none';msg.style.maxWidth='';place(+j[0].lat,+j[0].lon,0)}else err.textContent=T('adrnf')};
   g.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};msg.append(i,g,err)};
 document.getElementById('gp').onclick=()=>{
   if(!navigator.geolocation){askAddr(T('nogeo'));return}
