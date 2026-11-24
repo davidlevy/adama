@@ -3,6 +3,7 @@
     python3 web/build.py [out_dir] [city.json[:LAT,LON,RADIUS_CELLS] ...]
 
 With no arguments it builds dist/site from the cities listed in web/cities.txt.
+Option --base=/adama/ (anywhere on the command line): path links instead of hash links.
 
 Result:
     out_dir/index.html
@@ -18,6 +19,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prep
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(here)
+# --base=/adama/ : links are paths (/adama/haifa?s=...) instead of hashes (#haifa?s=...). The host must serve index.html for /<base><slug>
+# (see web/vercel.json and the Cloudflare route of the personal site). Without it the site works from any static folder (hash links).
+base = None
+for a_ in list(sys.argv[1:]):
+    if a_.startswith('--base='):
+        base = a_[len('--base='):]
+        sys.argv.remove(a_)
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'dist', 'site')
 args = sys.argv[2:]
 if not args:
@@ -62,6 +70,8 @@ subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.j
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js
 head = open(os.path.join(here, 'src', 'template.html'), encoding='utf-8').read()
+if base:
+    head = head.replace('<head>', '<head><base href="%s"><meta name="adama-routing" content="path">' % base, 1)
 with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(head + '<script type="module">' + js + '</script></body></html>')
 print('wrote', out)

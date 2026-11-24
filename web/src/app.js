@@ -1,8 +1,13 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-const BASE=new URL('data/',location.href).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
+// Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
+const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
+if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug~token: open the path version
+  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?~]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
+  location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
+const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 // city names in links are read with or without hyphens and case: ra-anana, raanana, Tel-Aviv, telaviv
-const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
 const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'},'ein-gedi':{fr:'Ein Gedi',en:'Ein Gedi',he:'עין גדי'},'modiin':{fr:'Modi\u2019in',en:'Modi\u2019in',he:'מודיעין'},'paris':{fr:'Paris',en:'Paris',he:'פריז'},'hod-hasharon':{fr:'Hod HaSharon',en:'Hod HaSharon',he:'הוד השרון'},'petah-tikva':{fr:'Petah Tikva',en:'Petah Tikva',he:'פתח תקווה'},'ramat-hasharon':{fr:'Ramat HaSharon',en:'Ramat HaSharon',he:'רמת השרון'},'holon':{fr:'Holon',en:'Holon',he:'חולון'},'bnei-brak':{fr:'Bnei Brak',en:'Bnei Brak',he:'בני ברק'},'netanya':{fr:'Netanya',en:'Netanya',he:'נתניה'},'ashkelon':{fr:'Ashkelon',en:'Ashkelon',he:'אשקלון'},'tiberias':{fr:'Tibériade',en:'Tiberias',he:'טבריה'},'harish':{fr:'Harish',en:'Harish',he:'חריש'},'amsterdam':{fr:'Amsterdam',en:'Amsterdam',he:'אמסטרדם'},'venice':{fr:'Venise',en:'Venice',he:'ונציה'},'karmiel':{fr:'Karmiel',en:'Karmiel',he:'כרמיאל'},'ashdod':{fr:'Ashdod',en:'Ashdod',he:'אשדוד'},'rishon-lezion':{fr:'Rishon LeZion',en:'Rishon LeZion',he:'ראשון לציון'},'rehovot':{fr:'Rehovot',en:'Rehovot',he:'רחובות'},'palma':{fr:'Palma de Majorque',en:'Palma de Mallorca',he:'פלמה דה מיורקה'},'ibiza':{fr:'Ibiza',en:'Ibiza',he:'איביזה'},'limassol':{fr:'Limassol',en:'Limassol',he:'לימסול'},'shenzhen':{fr:'Shenzhen',en:'Shenzhen',he:'שנג׳ן'},'singapore':{fr:'Singapour',en:'Singapore',he:'סינגפור'},'strasbourg':{fr:'Strasbourg',en:'Strasbourg',he:'שטרסבורג'},'metz':{fr:'Metz',en:'Metz',he:'מץ'},'kfar-saba':{fr:'Kfar Saba',en:'Kfar Saba',he:'כפר סבא'}};
@@ -136,7 +141,7 @@ function renderCities(){const q=nz(cms.value.trim()),by={},nmOf=c=>(NAMES[c.slug
   codes.forEach(k=>{const sec=document.createElement('section'),h=document.createElement('h4'),ul=document.createElement('ul');h.textContent=CTRY[LG][k]+' \u00b7 '+by[k].length;
     by[k].sort((a,b)=>nmOf(a).localeCompare(nmOf(b),LG)).forEach(c=>{const li=document.createElement('li'),n=document.createElement('span'),ly=document.createElement('i');li.dataset.slug=c.slug;li.setAttribute('role','option');if(c.slug===D.slug)li.className='on';
       n.className='cn2';n.textContent=nmOf(c);ly.className='ly';ly.innerHTML=(c.has||[]).map(x=>'<b title="'+T(LT[x])+'">'+IC[x]+'</b>').join('');li.append(n,ly);
-      li.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}location.hash=c.slug;location.reload()};ul.appendChild(li)});
+      li.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}if(PATHMODE){location.href=ROOTP+c.slug}else{location.hash=c.slug;location.reload()}};ul.appendChild(li)});
     sec.append(h,ul);cmg.appendChild(sec)})}
 cms.oninput=renderCities;cms.onkeydown=e=>{if(e.key==='Enter'){const f=cmg.querySelector('li');if(f)f.click()}};
 cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o);if(o){cms.value='';renderCities();if(matchMedia('(hover:hover)').matches)setTimeout(()=>cms.focus(),50)}};
@@ -417,7 +422,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));if(q.has('s'))return dec(q.get('s'));const L=(q.get('l')||'').split(',');   // older links: ?y=2010&l=heat,air&d=0
       return{y:+q.get('y')||null,bits:[L.includes('heat')?1:0,L.includes('air')?1:0,q.get('d')==='0'?1:0],old:true,full:q.has('y')||q.has('l')}}
     return null};
-  const deepLink=()=>location.origin+location.pathname+'#'+D.slug+'?s='+enc();
+  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+'?s='+enc():location.origin+location.pathname+'#'+D.slug+'?s='+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
   const share=async()=>{const url=deepLink();
     if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:document.title,url});return}catch(e){if(e&&e.name==='AbortError')return}}
@@ -429,10 +434,12 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     domYi=-1;update(tt);dirty=true;
     if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
     if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true},1100)}
-  // a link pasted in an open tab only changes the hash: load it again
-  addEventListener('hashchange',()=>location.reload());
+  // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
+  if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
   // the address bar follows the session: in explore mode it always holds a link that restores the view
-  setInterval(()=>{const h='#'+D.slug+(explore?'?s='+enc():'');if(decodeURIComponent(location.hash)!==h&&!(P&&!explore&&performance.now()<1500))history.replaceState(null,'',location.pathname+location.search+h)},800)}
+  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?'?s='+enc():'';
+    if(PATHMODE){if(decodeURIComponent(location.pathname+location.search)!==ROOTP+D.slug+st)history.replaceState(null,'',ROOTP+D.slug+st)}
+    else{const h='#'+D.slug+st;if(decodeURIComponent(location.hash)!==h)history.replaceState(null,'',location.pathname+location.search+h)}},800)}
 
 // ---------- mobile notice: the experience is much better on a desktop ----------
 {const m=document.getElementById('mob');let seen=false;try{seen=sessionStorage.getItem('mob')==='1'}catch(e){}
