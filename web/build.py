@@ -71,6 +71,7 @@ subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.j
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js
 head = open(os.path.join(here, 'src', 'template.html'), encoding='utf-8').read()
+head = head.replace('__LOGO_STROKES__', open(os.path.join(here, 'src', 'logostrokes.json'), encoding='utf-8').read())   # pen strokes of the loader (scripts/logo_strokes.py)
 if base:
     head = head.replace('<head>', '<head><base href="%s"><meta name="adama-routing" content="path">' % base, 1)
 with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:
