@@ -102,8 +102,8 @@ const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
   stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.8:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 // roads are grey, never white (white is only for new buildings): main axes lighter, secondary streets darker
-// roads stay discreet but readable on the dark buildings: three greys, lighter for the main roads
-const ROAD_MAJ=new THREE.Color('#70757e'),ROAD_MIN=new THREE.Color('#5d626b'),ROAD_MIN3=new THREE.Color('#4e535c');
+// main roads stay white (they look good against the light plate); narrow roads and secondary streets are greys
+const ROAD_MAJ=new THREE.Color().setRGB(2.3,2.3,2.3,THREE.LinearSRGBColorSpace),ROAD_MIN=new THREE.Color('#5d626b'),ROAD_MIN3=new THREE.Color('#4e535c');
 // Road detail follows the zoom AND the road density of the city (km of road per km2), so that a dense city does not look cluttered and a small one is not bare:
 // wide main roads are always drawn; narrow primary roads and secondary streets join once the zoom allows that much road per km2.
 const rdOn=c=>c.road===2||(c.road===1?roadLv>=2:c.road===3&&roadLv>=3);
