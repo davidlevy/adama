@@ -48,6 +48,7 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 ## Git and deploy
 
 - Work on a branch and open a PR; never push to `main` directly and never merge a PR. Ask before any push (public repo).
+- Branch names say exactly what the branch does, in lower-case words separated by hyphens: `<kind>-<what>-<where>`, where kind is `feature`, `fix`, `refactor`, `migration`, `docs` or `chore`. Good: `migration-preact-city-menu`, `migration-preact-typescript-zustand`, `refactor-split-css-by-component`, `feature-ambient-trap-fourth-music`, `fix-position-buttons-not-clickable`. Bad: `site-update`, `fixes`, `wip`, `new-stuff`, `cleanup`. One topic per branch and per PR: do not mix a refactor with features (split them into separate branches, even if that means cherry-picking). Never commit on `main`, even locally: create the branch first.
 - Commit as the GitHub noreply address (set in the repo config); do not put a personal email in commits or files.
 - Deploying is `adama_site/publish.sh --deploy` (personal site, served under `/adama/`) or `adama_site/publish.sh --vercel` (Vercel, domain root). Both rebuild from the repo first. Only run them when explicitly asked.
 - Vercel cannot build the site itself (the city data is not in git), so it receives the built folder `adama_site/` with `web/vercel.json` (data files revalidate on every load, so a new city never stays stale). First time: `cd adama_site && npx vercel login && npx vercel link`.
