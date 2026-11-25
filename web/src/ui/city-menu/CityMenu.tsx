@@ -60,6 +60,12 @@ function CityMenu({ api }: { api: MenuApi }) {
     };
   }, []);
 
+  // the page behind must not scroll while the menu is open
+  useEffect(() => {
+    document.body.classList.toggle('cm-open', open);
+    return () => document.body.classList.remove('cm-open');
+  }, [open]);
+
   // opening: empty search, and the keyboard goes to it on devices with a mouse
   useEffect(() => {
     if (!open) return;
