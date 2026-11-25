@@ -1,4 +1,41 @@
-#tip{position:fixed;z-index:7;display:none;pointer-events:none;color:#fff;padding:10px 14px;font-size:13px;line-height:1.45;max-width:260px;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-left:2px solid #fff}
-#tip b{display:block;font-weight:400;font-size:14px}
-#tip span{display:block;color:#a8a8ae}
-.rl{position:fixed;transform:translate(-50%,-50%);font-size:12px;font-weight:400;color:#fff;letter-spacing:.04em;white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #000,0 0 3px #000,0 0 8px #000;z-index:4;opacity:.8}
+/* Hover tooltip with the year built and the green share around the pointer. */
+#tip {
+  position: fixed;
+  z-index: 7;
+  display: none;
+  pointer-events: none;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 260px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 2px solid #fff;
+}
+#tip b {
+  display: block;
+  font-weight: 400;
+  font-size: 14px;
+}
+#tip span {
+  display: block;
+  color: #a8a8ae;
+}
+.rl {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000,
+    0 0 8px #000;
+  z-index: 4;
+  opacity: 0.8;
+}

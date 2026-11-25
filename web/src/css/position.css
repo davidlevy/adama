@@ -1,5 +1,46 @@
-.me{position:fixed;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:7}
-.me i{position:relative;display:block;width:22px;height:22px;margin:0 auto;border-radius:50%;background:#4285f4;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.55)}
-.me i::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:#4285f4;opacity:.45;z-index:-1;animation:mepulse 2s ease-out infinite}
-@keyframes mepulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(3.4);opacity:0}}
-@media(prefers-reduced-motion:reduce){.me i::before{animation:none;transform:scale(2);opacity:.25}}
+/* The "you are here" marker on the map and its pulse (the Position control itself is in ui/Position.module.css). */
+.me {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+  z-index: 7;
+}
+.me i {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #4285f4;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+.me i::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: #4285f4;
+  opacity: 0.45;
+  z-index: -1;
+  animation: mepulse 2s ease-out infinite;
+}
+@keyframes mepulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me i::before {
+    animation: none;
+    transform: scale(2);
+    opacity: 0.25;
+  }
+}
