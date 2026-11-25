@@ -392,6 +392,20 @@ def mask_water(first, land):
     return np.where(land[:first.shape[0], :first.shape[1]] == 1, 255, first).astype("uint8")
 
 
+def mask_forest(first, wc, B=2):
+    """Option --mask-forest, for cities beside mountains or forests (Sapporo): the model takes dark forest for built-up land.
+    A cell that WorldCover (every available year) shows as tree cover in at least 3 of its 4 pixels is never built. 255 = never built."""
+    H, W = first.shape
+    tree = np.ones((H, W), bool)
+    for w in wc.values():
+        h, ww = H * B, W * B
+        t = np.zeros((h, ww), bool)
+        sub = (w == 10)[:h, :ww]
+        t[:sub.shape[0], :sub.shape[1]] = sub
+        tree &= t.reshape(H, B, W, B).sum((1, 3)) >= 3
+    return np.where(tree, 255, first).astype("uint8")
+
+
 def to_cells(k, Y, B=2, need=3):
     """k = number of years before construction (Y = never). Returns the index of the first built year."""
     H, W = k.shape
@@ -513,6 +527,7 @@ def main():
     ap.add_argument("--scenes", type=int, default=2, help="max scenes per tile and per year (best ones, least cloud)")
     ap.add_argument("--cloud", type=float, default=60)
     ap.add_argument("--no-landsat", action="store_true")
+    ap.add_argument("--mask-forest", action="store_true", help="never mark as built the cells that WorldCover shows as tree cover (mountains, forests; the model takes them for built-up land)")
     ap.add_argument("--workers", type=int, default=4, help="years downloaded at the same time (network bound); 1 = one after the other")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
@@ -560,6 +575,8 @@ def main():
     CH, CW = first.shape
     land = (land_cells(wc[max(wc)]) if wc else np.zeros(first.shape, "uint8"))[:CH, :CW].astype("uint8")
     first = mask_water(first, land)
+    if a.mask_forest and wc:
+        first = mask_forest(first, wc)
     inside = inside_mask(geom, g10, CH, CW)
     stats = []
     for i, y in enumerate(years):

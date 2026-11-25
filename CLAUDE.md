@@ -29,6 +29,7 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 
 - Desert cities are mislabeled as built by the Landsat model (Las Vegas shows 55-60 % built in 1985). Las Vegas is therefore NOT on the site until the model is fixed. Check the per-year built % in `city_<slug>/report.txt` before adding a city.
 - Overpass is slow for big cities: `overpass()` takes a `timeout` argument; `skyscrapers.py` uses 180 s, one try. The default 60 s with retries fails on large areas.
+- Cities beside mountains or forests (Sapporo): the model takes dark forest for built-up land. Re-run with `--mask-forest` (resumes from the cached images): cells that WorldCover shows as tree cover are never built. Off by default because it would lighten leafy built-up districts.
 - 2017 is the Landsat to Sentinel-2 switch (30 m to 10 m); a jump that year may come from the sensor, not the city.
 - Generation takes 10-20 min per city (Sentinel-2 years dominate); running several at once shares bandwidth.
 - Every user-visible string exists in 3 languages (fr, en, he) in the `I18` object in `app.ts`. Add all three.
