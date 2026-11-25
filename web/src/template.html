@@ -116,6 +116,13 @@ body.top #playw{opacity:1}body.top #play{pointer-events:auto}
 .cml .cmm canvas{display:block;border-radius:10px}
 .cml .cmm aside{position:absolute;z-index:3;transform:translate(-50%,calc(-100% - 14px));pointer-events:none;white-space:nowrap;padding:6px 12px;border-radius:12px;background:#fff;color:#000;font-family:'Caveat',cursive;font-weight:500;font-size:22px;line-height:1.1;box-shadow:0 10px 30px rgba(0,0,0,.6)}
 .cml .cmm aside[hidden]{display:none}
+/* list view: countries flow in columns so everything fits without scrolling; when it does not, the scrollbar is visible and a fade hints at what is below */
+.cml .cmg{columns:4 190px;column-gap:22px}
+.cml .cmg section{margin:0 0 12px;display:block}.cml .cmg section:first-child{margin-top:14px}
+.cml .cmg h4{break-after:avoid;margin-top:2px}.cml .cmg ul{display:block}.cml .cmg li{break-inside:avoid;margin:0 0 1px}
+.cml{scrollbar-width:thin;scrollbar-color:#fff #26262a}.cml::-webkit-scrollbar{width:9px}.cml::-webkit-scrollbar-track{background:#16161a;border-radius:9px}.cml::-webkit-scrollbar-thumb{background:#fff;border-radius:9px;border:2px solid #16161a}
+.cml .cmf{display:block;position:sticky;bottom:-18px;height:44px;margin:-26px -18px -18px;padding:0;pointer-events:none;border-radius:0 0 14px 14px;background:linear-gradient(180deg,rgba(10,10,12,0),#0a0a0c 85%);transition:opacity .2s;cursor:default}.cml .cmf:hover{background:linear-gradient(180deg,rgba(10,10,12,0),#0a0a0c 85%)}
+.cml[data-view=map] .cmf,.cml .cmf.end{opacity:0}
 .cml .cmm aside.lst{pointer-events:auto;display:grid;grid-template-columns:repeat(3,max-content);gap:2px 6px;max-width:calc(100% - 8px);max-height:176px;overflow-y:auto;transform:translate(-50%,16px);padding:8px;background:rgba(14,14,16,.96);color:#fff;border:1px solid #4a4a50}
 .cml .cmm aside.lst span{grid-column:1/-1;font:400 10.5px Geist,system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#b4b4ba;padding:2px 8px 4px}
 .cml .cmm aside.lst button{all:unset;box-sizing:border-box;cursor:pointer;padding:3px 10px;border-radius:9px;font:500 24px/1.1 Caveat,cursive;color:#e8e8ec}

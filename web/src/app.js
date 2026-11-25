@@ -134,7 +134,7 @@ sl.max=yi0;sl.value=yi0;
 const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
 const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis',NL:'Pays-Bas',IT:'Italie',ES:'Espagne',CY:'Chypre',CN:'Chine',SG:'Singapour',ZA:'Afrique du Sud',NG:'Nigéria',US:'États-Unis',MR:'Mauritanie',MX:'Mexique',HK:'Hong Kong',MO:'Macao'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates',NL:'Netherlands',IT:'Italy',ES:'Spain',CY:'Cyprus',CN:'China',SG:'Singapore',ZA:'South Africa',NG:'Nigeria',US:'United States',MR:'Mauritania',MX:'Mexico',HK:'Hong Kong',MO:'Macau'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות',NL:'הולנד',IT:'איטליה',ES:'ספרד',CY:'קפריסין',CN:'סין',SG:'סינגפור',ZA:'דרום אפריקה',NG:'ניגריה',US:'ארצות הברית',MR:'מאוריטניה',MX:'מקסיקו',HK:'הונג קונג',MO:'מקאו'}},CODE={grenoble:'FR',dubai:'AE',paris:'FR',amsterdam:'NL',venice:'IT',palma:'ES',ibiza:'ES',limassol:'CY',shenzhen:'CN',singapore:'SG',strasbourg:'FR',metz:'FR','cape-town':'ZA',lagos:'NG',miami:'US',nouakchott:'MR','mexico-city':'MX','hong-kong':'HK',macau:'MO','santa-cruz-de-tenerife':'ES','las-vegas':'US'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
 // city menu: search field + cities grouped by country, in columns
-const cms=document.createElement('input'),cmg=document.createElement('div');cms.className='cms';cms.type='search';cms.autocomplete='off';cms.spellcheck=false;cmg.className='cmg';const cmt=document.createElement('div'),cmm=document.createElement('div');cmt.className='cmt';cmm.className='cmm';cmt.append(cms);cml.append(cmt,cmm,cmg);cml.onclick=e=>e.stopPropagation();
+const cms=document.createElement('input'),cmg=document.createElement('div');cms.className='cms';cms.type='search';cms.autocomplete='off';cms.spellcheck=false;cmg.className='cmg';const cmt=document.createElement('div'),cmm=document.createElement('div');cmt.className='cmt';cmm.className='cmm';cmt.append(cms);const cmf=document.createElement('div');cmf.className='cmf';cmf.setAttribute('aria-hidden','true');cml.append(cmt,cmm,cmg,cmf);const fade=()=>cmf.classList.toggle('end',cml.scrollHeight-cml.scrollTop-cml.clientHeight<8);cml.addEventListener('scroll',fade);cml.onclick=e=>e.stopPropagation();
 const nz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 // a city matches when one of its names (or its country) has a word that starts with what was typed: "t" finds Tel Aviv and Tiberias, "ra" finds Ra'anana and Rafah...
 const cityMatch=(c,q)=>!q||[...['fr','en','he'].map(l=>(NAMES[c.slug]||{})[l]),c.name.split(',')[0],CO(c.slug)[LG]].some(n=>nz(n).split(/[\s\-\u2019'.]+/).some(w=>w.startsWith(q)));
@@ -195,8 +195,8 @@ let cmvLang=()=>{};
   cv.onpointerleave=()=>{hov=null;if(!pop.classList.contains('lst'))pop.hidden=true};
   cv.onclick=e=>{const k=near(e);if(!k){pop.hidden=true;pop.className='';return}if(k.m.length===1)goCity(k.m[0]);else{hov=k;show(k,true)}};
   bL.onclick=()=>setView('list');bM.onclick=()=>setView('map');
-  cms.oninput=()=>{if(view==='map')setView('list',true);renderCities()};
-  cmb.addEventListener('click',()=>setTimeout(()=>{if(cmEl.classList.contains('open')){setView(view,true);if(view==='map')pop.hidden=true}},0));
+  cms.oninput=()=>{if(view==='map')setView('list',true);renderCities();cml.scrollTop=0;fade()};
+  cmb.addEventListener('click',()=>setTimeout(()=>{fade();if(cmEl.classList.contains('open')){setView(view,true);if(view==='map')pop.hidden=true}},0));
   cmvLang=()=>{bL.title=bL.ariaLabel=T('vlist');bM.title=bM.ariaLabel=T('vmap');cv.setAttribute('aria-label',T('vmap'));pop.hidden=true;pop.className=''};
   cml.dataset.view=view;bL.setAttribute('aria-pressed',view==='list');bM.setAttribute('aria-pressed',view==='map')}
 
