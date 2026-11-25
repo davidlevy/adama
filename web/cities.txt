@@ -49,3 +49,6 @@
 ../city_new-administrative-capital/city_new-administrative-capital.json:30.0100,31.7600,400
 ../city_perth/city_perth.json:-31.9000,115.9000,600
 ../city_marrakech/city_marrakech.json:31.6300,-8.0000,450
+../city_yakutsk/city_yakutsk.json
+../city_novosibirsk/city_novosibirsk.json
+../city_sapporo/city_sapporo.json
