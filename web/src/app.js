@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {WORLD} from './worldmask.js';
+import {playPixelLogo} from './pixellogo.js';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
 const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
@@ -52,7 +53,7 @@ const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new 
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5f9d33'),FIELD2=new THREE.Color('#86b946');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#2e9645'),FIELD2=new THREE.Color('#44a64c');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
@@ -426,7 +427,7 @@ function story(){
   ['wheel','touchstart','keydown'].forEach(e=>addEventListener(e,stop,{passive:true}));
   pb.onclick=()=>{if(window.__music&&!window.__music.on)window.__music(true);stop();const vh=vhpx(),end=SECH.slice(0,4).reduce((a,h)=>a+h,0)*vh,sp=end/40;let y=scrollY,last=performance.now();
     const step=t=>{y+=sp*Math.min(.05,(t-last)/1000);last=t;scrollTo(0,y);raf=y<end?requestAnimationFrame(step):0};raf=requestAnimationFrame(step)}}
-addEventListener('scroll',story,{passive:true});{const ab=v=>document.body.classList.toggle('ab-open',v);document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
+addEventListener('scroll',story,{passive:true});{const ab=v=>{document.body.classList.toggle('ab-open',v);if(v)playPixelLogo(document.getElementById('abl'))};document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
 const RELOAD='<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',setUp=()=>{upB.innerHTML=RELOAD;upB.title=upB.ariaLabel=ST[LG].back.replace('↑ ','')};setUp();
 window.__lh=()=>{setUp();cardKey=-1;story()};
 upB.onclick=()=>scrollTo({top:0,behavior:'smooth'});
@@ -513,20 +514,24 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 // ---------- ambient music that slowly builds up with the story (Web Audio, nothing to download) ----------
 // A drone that never stops, soft chords and a slow pentatonic melody that enter as the story advances. No sequencer.
-// Two pieces: the other one is used each time the city changes (stored in localStorage), not during a visit.
-{const S=60/70/4,
-    PRG=[{d:45,ch:[[57,0,3,7,14],[53,0,4,7,11],[48,0,4,7,14],[55,0,4,7,14]],   // A minor: Am9 Fmaj7 Cadd9 Gadd9
+// Three pieces, taken in turn each time the city changes (stored in localStorage), not during a visit. The third one is the only one with
+// a beat (synthwave, 96 bpm: bass, lead, drums that come in as the story advances).
+{const PRG=[{bpm:70,d:45,ch:[[57,0,3,7,14],[53,0,4,7,11],[48,0,4,7,14],[55,0,4,7,14]],   // A minor: Am9 Fmaj7 Cadd9 Gadd9
           mel:[76,-1,72,-1,74,-1,69,-1,72,-1,76,-1,79,-1,76,74]},
-         {d:38,ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,14]],   // D dorian: Dm9 Bbmaj7 Fadd9 Cadd9
-          mel:[81,-1,77,-1,79,-1,74,-1,77,-1,72,-1,74,-1,69,72]}],
+         {bpm:70,d:38,ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,14]],   // D dorian: Dm9 Bbmaj7 Fadd9 Cadd9
+          mel:[81,-1,77,-1,79,-1,74,-1,77,-1,72,-1,74,-1,69,72]},
+         {bpm:96,syn:1,d:42,ch:[[54,0,3,7,14],[50,0,4,7,11],[57,0,4,7,14],[52,0,4,7,14]],   // F# minor: F#m9 Dmaj7 Aadd9 Eadd9
+          lead:[[85,-1,-1,83,81,-1,78,-1,81,-1,-1,-1,83,-1,81,-1],[83,-1,-1,81,78,-1,81,-1,83,-1,-1,-1,85,-1,83,-1],
+                [81,-1,-1,85,88,-1,85,-1,83,-1,-1,-1,81,-1,-1,-1],[80,-1,-1,83,85,-1,83,-1,80,-1,-1,-1,78,-1,76,-1]]}],
     hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
-  let SEC=0;try{const lc=localStorage.getItem('adama_mc'),ls=+localStorage.getItem('adama_ms')||0;SEC=lc===null?0:(lc===D.slug?ls:1-ls);localStorage.setItem('adama_mc',D.slug);localStorage.setItem('adama_ms',SEC)}catch(e){}
-  let ac,mg,pad,bell,nb,an,timer=0,step=0,next=0,on=false,ex=null;
+  let SEC=0;try{const lc=localStorage.getItem('adama_mc'),ls=+localStorage.getItem('adama_ms')||0;SEC=lc===null?0:(lc===D.slug?ls:(ls+1)%PRG.length);localStorage.setItem('adama_mc',D.slug);localStorage.setItem('adama_ms',SEC)}catch(e){}
+  const S=60/PRG[SEC].bpm/4;
+  let ac,mg,pad,bell,nb,an,vb,timer=0,step=0,next=0,on=false,ex=null;
   const prog=()=>explore?.5:Math.min(1,scrollY/Math.max(1,SECH.slice(0,4).reduce((a,h)=>a+h,0)*vhpx()));
   const lv=(p,a)=>Math.max(0,Math.min(1,(p-a)/.15)),vol=()=>explore?0:1.1;
   const mk=()=>{ac=new(window.AudioContext||window.webkitAudioContext)();mg=ac.createGain();mg.gain.value=0;an=ac.createAnalyser();mg.connect(an);an.connect(ac.destination);
     const len=ac.sampleRate*4,ib=ac.createBuffer(2,len,ac.sampleRate);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2)}
-    const verb=ac.createConvolver();verb.buffer=ib;const vg=ac.createGain();vg.gain.value=.7;verb.connect(vg);vg.connect(mg);
+    const verb=vb=ac.createConvolver();verb.buffer=ib;const vg=ac.createGain();vg.gain.value=.7;verb.connect(vg);vg.connect(mg);
     const dly=ac.createDelay(2);dly.delayTime.value=S*6;const fb=ac.createGain();fb.gain.value=.45;dly.connect(fb);fb.connect(dly);const dg=ac.createGain();dg.gain.value=.4;dly.connect(dg);dg.connect(mg);dg.connect(verb);
     pad=ac.createGain();pad.connect(mg);pad.connect(verb);bell=ac.createGain();bell.connect(mg);bell.connect(dly);bell.connect(verb);
     nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1};
@@ -537,12 +542,21 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.setValueAtTime(vol,t+dur-att);g.gain.linearRampToValueAtTime(0,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
   const swell=(t,dur,vol,dest)=>{const n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();n.buffer=nb;n.loop=true;fl.type='bandpass';fl.frequency.value=2200;fl.Q.value=.6;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.6);g.gain.linearRampToValueAtTime(0,t+dur);n.connect(fl);fl.connect(g);g.connect(dest);n.start(t);n.stop(t+dur+.05)};
+  // synthwave piece: pulsing bass, a clear lead, four-on-the-floor kick, snare with a short gated tail, hats; each enters at its own point of the story
+  const kick=(t,v)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.16);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.42);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.45)};
+  const noise=(t,v,dur,type,f,dest)=>{const n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();n.buffer=nb;fl.type=type;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(fl);fl.connect(g);g.connect(dest);n.start(t);n.stop(t+dur+.02)};
+  const beat=(P,i,t,p,r)=>{const j=i%16,bs=lv(p,.25),ld=lv(p,.2),ht=lv(p,.35),dr=lv(p,.5);
+    if(bs>0&&i%2===0)tone(t,hz(r-24+(((i/2)%4===3)?12:0)),S*1.7,'sawtooth',.07*bs,700+900*p,mg,.004);
+    if(ld>0&&i%2===0){const m=P.lead[Math.floor(i/32)%4][(i%32)/2];if(m>0){tone(t,hz(m),S*3.4,'sawtooth',.035*ld,2400,bell,.012);tone(t,hz(m)*1.004,S*3.4,'square',.014*ld,1800,bell,.012)}}
+    if(dr>0){if(j%4===0)kick(t,.17*dr);if(j===4||j===12){noise(t,.075*dr,.2,'bandpass',1900,mg);noise(t,.05*dr,.34,'bandpass',1900,vb);tone(t,185,.09,'triangle',.05*dr,900,mg,.002)}}
+    if(ht>0&&i%2===0)noise(t,(j%4===2?.03:.014)*ht,j%4===2?.12:.035,'highpass',7500,mg)};
   const play=(i,t,p)=>{const P=PRG[SEC],c=P.ch[Math.floor(i/32)%4],r=c[0],iv=c.slice(1);
     if(i%128===0)[[0,'sine',.09],[7,'triangle',.035],[12,'sine',.03]].forEach(([x,ty,v])=>[-1,1].forEach(d=>sus(t,hz(P.d+x)*(1+d*.002),128*S+6,ty,v,500,pad,6)));
     if(i%32===0){const pd=lv(p,.05);if(pd>0)iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>sus(t,hz(r+x)*(1+d*.003),32*S+4,'triangle',.02*pd,500+900*p,pad,4)));
       const a=lv(p,.45);if(a>0)swell(t,32*S,.025*a,pad);
-      const k=lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
-    if(i%8===0){const m=P.mel[(i/8)%16],ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
+      const k=P.syn?0:lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
+    if(P.syn)beat(P,i,t,p,r);
+    if(!P.syn&&i%8===0){const m=P.mel[(i/8)%16],ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
   const tick=()=>{if(explore!==ex){ex=explore;mg.gain.setTargetAtTime(vol(),ac.currentTime,ex?1.4:1.2)}const p=prog();while(next<ac.currentTime+.2){play(step,next,p);next+=S;step++}};
   const set=v=>{on=v;bt.classList.toggle('off',!v);bt.setAttribute('aria-pressed',v);bt.title=bt.ariaLabel=T('mus');
     if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(vol(),ac.currentTime,1.2);ex=explore;if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
