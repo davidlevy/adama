@@ -59,7 +59,8 @@ for arg in args:
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
     has = [k for k in ('heat', 'air', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
-    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has})
+    bb = d['bbox']   # [lon0, lat0, lon1, lat1]: centre of the city, for the world map
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has, 'll': [round((bb[1] + bb[3]) / 2, 2), round((bb[0] + bb[2]) / 2, 2)]})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
