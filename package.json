@@ -11,7 +11,8 @@
   "dependencies": {
     "esbuild": "^0.28.2",
     "preact": "^11.2.0",
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "typescript": "^7.0.2"

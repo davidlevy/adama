@@ -3,6 +3,7 @@ import {CTRY, CODE, CO} from '../../data/countries';
 import {IC, LT} from '../../data/icons';
 import {NAMES} from '../../data/names';
 import {LANGS} from '../../types';
+import {useLang, useT} from '../store';
 import type {CityEntry, MenuApi} from './types';
 
 /** Lower case and without accents, to compare what is typed with the names. */
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export function CityList({api, query, onPick}: Props) {
-  const lang = api.getLang(), T = api.T, q = normalize(query.trim());
+  const lang = useLang(), T = useT(), q = normalize(query.trim());
   const nameOf = (c: CityEntry) => NAMES[c.slug]?.[lang] || c.name.split(',')[0];
 
   const byCountry = new Map<string, CityEntry[]>();

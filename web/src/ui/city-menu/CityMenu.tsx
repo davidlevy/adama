@@ -6,6 +6,7 @@ import {CO} from '../../data/countries';
 import {NAMES} from '../../data/names';
 import {CityList, matches, normalize} from './CityList';
 import {WorldMap} from './WorldMap';
+import {useLang, useT} from '../store';
 import type {MenuApi} from './types';
 
 type View = 'list' | 'map';
@@ -19,15 +20,12 @@ function CityMenu({api}: {api: MenuApi}) {
   const [view, setView] = useState<View>(readView);
   const [query, setQuery] = useState('');
   const [atEnd, setAtEnd] = useState(true);
-  const [, setTick] = useState(0);
   const panel = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
-  const lang = api.getLang(), T = api.T;
+  const lang = useLang(), T = useT();
   // choosing the city already on screen only closes the menu
   const menuApi: MenuApi = {...api, go: slug => { if (slug === api.current.slug) setOpen(false); else api.go(slug); }};
   const name = NAMES[api.current.slug]?.[lang] || api.current.name.split(',')[0];
-
-  useEffect(() => api.subscribe(() => setTick(n => n + 1)), []);   // the language changed
 
   // a click anywhere else, or Escape, closes the menu
   useEffect(() => {

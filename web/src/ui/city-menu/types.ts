@@ -1,5 +1,3 @@
-import type {Lang} from '../../types';
-
 /** A city of the index (data/cities.json). `ll` is its centre [lat, lon]. */
 export interface CityEntry {
   slug: string;
@@ -10,9 +8,6 @@ export interface CityEntry {
 
 /** What the page gives the menu. The menu never touches the scene. */
 export interface MenuApi {
-  T(key: string): string;
-  getLang(): Lang;
-  subscribe(fn: () => void): () => void;   // called when the language changes
   cities: CityEntry[];
   current: CityEntry;                       // the city on screen
   go(slug: string): void;                   // opens a city

@@ -1,17 +1,16 @@
 // "My location | Address" control of the explore bar, as a Preact component.
 // States: nothing / busy (locating, searching) / on (the marker is on the map) + a field to type an address. A click on the active segment clears it.
 // The scene (app.js) gives the component a small api; the component never touches Three.js:
-//   T(key)               translated string          subscribe(fn) -> unsubscribe   called when the language changes
+//   (the texts come from the store: useT() in ui/store.ts)
 //   place(lat, lon)      -> {ok:true} | {ok:false, km}    moves the camera to the point and shows the marker
 //   clear()              hides the marker          find(text) -> Promise<[{lat, lon}]>   address search (OpenStreetMap)
 import {render} from 'preact';
 import {useState, useEffect, useRef} from 'preact/hooks';
 import css from './Position.module.css';
+import {useT} from './store';
 
 /** What the scene gives the component (see the comment above). */
 export interface PositionApi {
-  T(key: string): string;
-  subscribe(fn: () => void): () => void;
   place(lat: number, lon: number): {ok: true} | {ok: false; km: string};
   clear(): void;
   find(text: string): Promise<{lat: number | string; lon: number | string}[]>;
@@ -25,11 +24,9 @@ function Position({api}: {api: PositionApi}) {
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
   const [msg, setMsg] = useState('');
-  const [, setTick] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const T = api.T;
+  const T = useT();
 
-  useEffect(() => api.subscribe(() => setTick(n => n + 1)), []);                               // re-render on language change
   useEffect(() => { if (typing && input.current) input.current.focus(); }, [typing]);
   useEffect(() => { const m = document.getElementById('gm'); if (m) m.textContent = msg; }, [msg]);   // the message slot sits at the end of the bar
 

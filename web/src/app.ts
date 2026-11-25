@@ -9,7 +9,7 @@ import {IC,LT} from './data/icons';
 import {I18} from './i18n';
 import {initMusic} from './music';
 import {mountCityMenu} from './ui/city-menu/CityMenu';
-import {langBus} from './ui/langBus';
+import {ui} from './ui/store';
 
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
@@ -102,7 +102,7 @@ const roadLabs=[];
   const list=Object.values(by).filter(e=>e.len>25).sort((a,b)=>b.len-a.len),kept=[];
   for(const e of list){if(kept.length>=8)break;const m=e.pts[Math.floor(e.pts.length/2)];if(kept.every(k=>Math.hypot(k.x-m[0],k.z-m[1])>40))kept.push({nm:e.nm,x:m[0],z:m[1]})}
   kept.forEach(k=>{const d=document.createElement('div');d.className='rl';wrap.appendChild(d);roadLabs.push({d,nm:k.nm,v:new THREE.Vector3(k.x,3,k.z)})})}
-let LG=(()=>{try{const s=localStorage.getItem('city_lang');if(I18[s])return s}catch(e){}const n=(navigator.language||'en').slice(0,2);return I18[n]?n:'en'})();
+let LG=ui.getState().lang;   // the language lives in the Zustand store (ui/store.ts); LG mirrors it for the code of this file
 const T=k=>I18[LG][k];
 const YR=D.years,yi0=Y-1;let domYi=-1,lensOn=false,LR=9,tt=yi0,run=false,hp=null,dirty=true,facG=null;
 // Landsat surface temperature (optional layer): anomaly versus the city median, per 100 m block and year
@@ -140,12 +140,12 @@ sl.max=yi0;sl.value=yi0;
 // city menu (src/cityMenu.js)
 // the city menu of the top bar (src/ui/city-menu): a Preact component, it never touches the scene
 const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
-mountCityMenu(document.querySelector('.crumb'),{T,getLang:()=>LG,subscribe:langBus.subscribe,cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
+mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
 function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
   document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
-  zpLang();langBus.emit();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
+  zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
 bars.innerHTML=gy.map((v,i)=>'<div class="bar" data-i="'+i+'"><div style="height:'+Math.round(v/gmax*100)+'%"></div></div>').join('');
@@ -304,11 +304,12 @@ const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
   let j=await find(q0);const q2=q0.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q0)j=await find(q2);return j};
-mountPosition(document.getElementById('posroot'),{T:k=>T(k),subscribe:langBus.subscribe,place,clear:clearPos,find:findAddr});
+mountPosition(document.getElementById('posroot'),{place,clear:clearPos,find:findAddr});
 const hdB=document.getElementById('hdb');if(hoodLabs.length){/* the Districts button stays hidden (the pills already appear only when zoomed in); shared links that hide them still work through hdB.click() */hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
-document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{LG=b.dataset.l;applyLang()});
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>ui.getState().setLang(b.dataset.l));
+ui.subscribe(state=>{if(state.lang!==LG){LG=state.lang;applyLang()}});   // the language buttons only set the store; the page and the components follow
 const compass=document.getElementById('cp');
 function resize(){const w=wrap.clientWidth,h=wrap.clientHeight;renderer.setSize(w,h);const asp=w/h,wide=w>900,s=wide?RD*Math.max(.8,.98/asp):RD*.97/asp;cam.left=-s*asp;cam.right=s*asp;cam.top=s;cam.bottom=-s;if(wide)cam.setViewOffset(w,h,-w*.2,0,w,h);else cam.setViewOffset(w,h,0,-h*.09,w,h);cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();document.getElementById('lw').style.display=HASW?'':'none';document.getElementById('lb').style.display=HASB?'':'none';document.getElementById('lf').style.display=cells.some(c=>c.lt===3)?'':'none';applyLang();update(tt);ctl.enabled=false;renderer.domElement.style.pointerEvents='none';

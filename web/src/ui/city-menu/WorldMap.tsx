@@ -3,6 +3,7 @@ import {useEffect, useRef, useState} from 'preact/hooks';
 import {CTRY, CODE} from '../../data/countries';
 import {NAMES} from '../../data/names';
 import {cellSize, clusterCities, drawFrame, drawLand, mapHeight, nearestCluster, type Cluster} from './mapDrawing';
+import {useLang, useT} from '../store';
 import type {CityEntry, MenuApi} from './types';
 
 interface Props {
@@ -23,7 +24,7 @@ export function WorldMap({api, active}: Props) {
   const [width, setWidth] = useState(0);
   const clusters = useRef<Cluster[]>([]);
   if (!clusters.current.length) clusters.current = clusterCities(api.cities);
-  const lang = api.getLang(), T = api.T;
+  const lang = useLang(), T = useT();
   const nameOf = (c: CityEntry) => NAMES[c.slug]?.[lang] || c.name.split(',')[0];
   const countryOf = (k: Cluster) => CTRY[lang][CODE[k.members[0].slug] || 'IL'];
 
