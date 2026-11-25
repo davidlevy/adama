@@ -44,3 +44,7 @@
 ../city_santa-cruz-de-tenerife/city_santa-cruz-de-tenerife.json:28.4700,-16.3000,350
 ../city_hadera/city_hadera.json:32.4340,34.9190,300
 ../city_ofakim/city_ofakim.json:31.3140,34.6200,200
+../city_cairo/city_cairo.json:30.0500,31.3000,600
+../city_new-administrative-capital/city_new-administrative-capital.json:30.0100,31.7600,400
+../city_perth/city_perth.json:-31.9000,115.9000,600
+../city_marrakech/city_marrakech.json:31.6300,-8.0000,450
