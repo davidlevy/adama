@@ -14,7 +14,7 @@ A ":lat,lon,radius" suffix crops a very large or elongated city to a round windo
 (radius in 20 m cells) around the given point. Serve out_dir over HTTP (fetch does not
 work from file://), for example by copying it to public/adama/ in an Astro site.
 """
-import json, subprocess, sys, os
+import json, subprocess, sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prep
 here = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +75,13 @@ css_out = os.path.join(root, 'dist', 'bundle.css')
 subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'css', 'index.css'),
                 '--bundle', '--minify', '--outfile=' + css_out, '--log-level=warning'], check=True)
 head = open(os.path.join(here, 'src', 'index.html'), encoding='utf-8').read()
+# the markup is assembled from src/html/*.html (one fragment per component, in DOM order, see index.html); the loading screen script is src/loader.js
+head = re.sub(r'<!--include:([\w-]+)-->', lambda m: open(os.path.join(here, 'src', 'html', m.group(1) + '.html'), encoding='utf-8').read(), head)
+loader_out = os.path.join(root, 'dist', 'loader.js')
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'loader.js'),
+                '--bundle', '--minify', '--format=iife', '--outfile=' + loader_out, '--log-level=warning'], check=True)
+assert head.count('<!--script:loader-->') == 1
+head = head.replace('<!--script:loader-->', '<script>' + open(loader_out, encoding='utf-8').read().strip() + '</script>')
 assert head.count('/*CSS*/') == 1
 head = head.replace('/*CSS*/', open(css_out, encoding='utf-8').read())
 if base:
