@@ -75,4 +75,8 @@ if base:
     head = head.replace('<head>', '<head><base href="%s"><meta name="adama-routing" content="path">' % base, 1)
 with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(head + '<script type="module">' + js + '</script></body></html>')
+og = os.path.join(here, 'og.png')   # social share image (1200x630), served at /og.png
+if os.path.exists(og):
+    import shutil
+    shutil.copyfile(og, os.path.join(out, 'og.png'))
 print('wrote', out)

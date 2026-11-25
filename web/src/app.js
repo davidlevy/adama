@@ -523,15 +523,18 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 // ---------- ambient music that slowly builds up with the story (Web Audio, nothing to download) ----------
 // A drone that never stops, soft chords and a slow pentatonic melody that enter as the story advances. No sequencer.
-// Three pieces, taken in turn each time the city changes (stored in localStorage), not during a visit. The third one is the only one with
-// a beat (synthwave, 96 bpm: bass, lead, drums that come in as the story advances).
+// Four pieces, taken in turn each time the city changes (stored in localStorage), not during a visit. The third one is the only one with
+// a beat (synthwave, 96 bpm: bass, lead, drums that come in as the story advances). The fourth one is a calm D minor piece (74 bpm) with a drop near the end of the story.
 {const PRG=[{bpm:70,d:45,ch:[[57,0,3,7,14],[53,0,4,7,11],[48,0,4,7,14],[55,0,4,7,14]],   // A minor: Am9 Fmaj7 Cadd9 Gadd9
           mel:[76,-1,72,-1,74,-1,69,-1,72,-1,76,-1,79,-1,76,74]},
          {bpm:70,d:38,ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,14]],   // D dorian: Dm9 Bbmaj7 Fadd9 Cadd9
           mel:[81,-1,77,-1,79,-1,74,-1,77,-1,72,-1,74,-1,69,72]},
          {bpm:96,syn:1,d:42,ch:[[54,0,3,7,14],[50,0,4,7,11],[57,0,4,7,14],[52,0,4,7,14]],   // F# minor: F#m9 Dmaj7 Aadd9 Eadd9
           lead:[[85,-1,-1,83,81,-1,78,-1,81,-1,-1,-1,83,-1,81,-1],[83,-1,-1,81,78,-1,81,-1,83,-1,-1,-1,85,-1,83,-1],
-                [81,-1,-1,85,88,-1,85,-1,83,-1,-1,-1,81,-1,-1,-1],[80,-1,-1,83,85,-1,83,-1,80,-1,-1,-1,78,-1,76,-1]]}],
+                [81,-1,-1,85,88,-1,85,-1,83,-1,-1,-1,81,-1,-1,-1],[80,-1,-1,83,85,-1,83,-1,80,-1,-1,-1,78,-1,76,-1]]},
+         {bpm:74,drop:1,d:38,   // D minor, 8 chords (16 bars, about 52 s), then the drop
+          ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,11],[50,0,3,7,10],[43,0,3,7,14],[53,0,4,7,11],[45,0,3,7,10]],   // Dm9 Bbmaj7 Fadd9 Cmaj7 | Dm7 Gm9 Fmaj7 Am7
+          mels:[[74,77,72,-1],[69,-1,72,74],[77,-1,79,81],[76,72,-1,69],[74,-1,77,81],[79,77,-1,74],[81,-1,77,76],[74,72,69,-1]]}],
     hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
   let SEC=0;try{const lc=localStorage.getItem('adama_mc'),ls=+localStorage.getItem('adama_ms')||0;SEC=lc===null?0:(lc===D.slug?ls:(ls+1)%PRG.length);localStorage.setItem('adama_mc',D.slug);localStorage.setItem('adama_ms',SEC)}catch(e){}
   const S=60/PRG[SEC].bpm/4;
@@ -559,13 +562,21 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     if(ld>0&&i%2===0){const m=P.lead[Math.floor(i/32)%4][(i%32)/2];if(m>0){tone(t,hz(m),S*3.4,'sawtooth',.035*ld,2400,bell,.012);tone(t,hz(m)*1.004,S*3.4,'square',.014*ld,1800,bell,.012)}}
     if(dr>0){if(j%4===0)kick(t,.17*dr);if(j===4||j===12){noise(t,.075*dr,.2,'bandpass',1900,mg);noise(t,.05*dr,.34,'bandpass',1900,vb);tone(t,185,.09,'triangle',.05*dr,900,mg,.002)}}
     if(ht>0&&i%2===0)noise(t,(j%4===2?.03:.014)*ht,j%4===2?.12:.035,'highpass',7500,mg)};
-  const play=(i,t,p)=>{const P=PRG[SEC],c=P.ch[Math.floor(i/32)%4],r=c[0],iv=c.slice(1);
-    if(i%128===0)[[0,'sine',.09],[7,'triangle',.035],[12,'sine',.03]].forEach(([x,ty,v])=>[-1,1].forEach(d=>sus(t,hz(P.d+x)*(1+d*.002),128*S+6,ty,v,500,pad,6)));
-    if(i%32===0){const pd=lv(p,.05);if(pd>0)iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>sus(t,hz(r+x)*(1+d*.003),32*S+4,'triangle',.02*pd,500+900*p,pad,4)));
+  // the drop of the fourth piece: kick on every beat, claps, hats, a pulsing bass and a bright 16th arpeggio, in from the last part of the story
+  const dropBeat=(P,i,t,p,r,c)=>{const d=lv(p,.78);if(d<=0)return;const j=i%16;
+    if(j%4===0)kick(t,.5*d);
+    if(j===4||j===12){noise(t,.06*d,.2,'bandpass',1900,mg);noise(t,.05*d,.34,'bandpass',1900,vb)}
+    if(i%2===0)noise(t,(j%4===2?.03:.012)*d,j%4===2?.12:.04,'highpass',7500,mg);
+    if(i%2===0)tone(t,hz(r-12+[0,0,7,0,0,12,7,0][(i/2)%8]),S*3,'sawtooth',.14*d,330,mg,.004);
+    const n=[r+12,r+c[2]+12,r+c[3]+12,r+c[4]+12,r+c[3]+12,r+c[2]+12];tone(t,hz(n[i%6]+12*(((i/6)|0)%2)),S*1.8,'sawtooth',.03*d,4800,bell,.003)};
+  const play=(i,t,p)=>{const P=PRG[SEC],NC=P.ch.length,c=P.ch[Math.floor(i/32)%NC],r=c[0],iv=c.slice(1);
+    if(i%(NC*32)===0)[[0,'sine',.09],[7,'triangle',.035],[12,'sine',.03]].forEach(([x,ty,v])=>[-1,1].forEach(d=>sus(t,hz(P.d+x)*(1+d*.002),NC*32*S+6,ty,v*(P.drop?.5:1),500,pad,6)));
+    if(i%32===0){const pd=lv(p,.05);if(pd>0)iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>sus(t,hz(r+x)*(1+d*.003),32*S+4,'triangle',.02*pd*(P.drop?1.3:1),P.drop?800+1500*p:500+900*p,pad,4)));
       const a=lv(p,.45);if(a>0)swell(t,32*S,.025*a,pad);
-      const k=P.syn?0:lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
+      const k=P.syn||P.drop?0:lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
     if(P.syn)beat(P,i,t,p,r);
-    if(!P.syn&&i%8===0){const m=P.mel[(i/8)%16],ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
+    if(P.drop)dropBeat(P,i,t,p,r,c);
+    if(!P.syn&&i%8===0){let m=P.drop?P.mels[Math.floor(i/32)%NC][(i%32)/8]:P.mel[(i/8)%16];if(P.drop&&m>0){if(Math.random()<.14)m=-1;else if(Math.random()<.12)m+=12}const ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
   const tick=()=>{if(explore!==ex){ex=explore;mg.gain.setTargetAtTime(vol(),ac.currentTime,ex?1.4:1.2)}const p=prog();while(next<ac.currentTime+.2){play(step,next,p);next+=S;step++}};
   const set=v=>{on=v;bt.classList.toggle('off',!v);bt.setAttribute('aria-pressed',v);bt.title=bt.ariaLabel=T('mus');
     if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(vol(),ac.currentTime,1.2);ex=explore;if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
