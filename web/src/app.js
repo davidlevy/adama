@@ -350,9 +350,12 @@ addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();z
 let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
+// three states for the position control: nothing, busy (locating / searching) and on (the marker is on the map); a click on the active segment clears it
+let posMode='';const seg0=()=>document.getElementById('gp'),setPos=(m,st)=>{posMode=m;seg0().dataset.mode=m;seg0().dataset.st=st};
+const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';msg.textContent='';setPos('','');dirty=true};
 const place=(lat,lon,acc)=>{const [x,z]=toXZ(lat,lon);
-  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;msg.textContent=T('outside').replace('{d}',(Math.hypot(dx,dz)/1000).toFixed(1));meV=null;me.style.display='none';return}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';msg.textContent=acc?T('ok').replace('{a}',Math.round(acc)):'';
+  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){setPos('','');const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;msg.textContent=T('outside').replace('{d}',(Math.hypot(dx,dz)/1000).toFixed(1));meV=null;me.style.display='none';return}
+  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';setPos(posMode,'on');msg.textContent=acc?T('ok').replace('{a}',Math.round(acc)):'';
   hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true};
 // my position: a segmented control, "My location" (GPS) | "Address". Address turns into an input field in every case, not only when the GPS fails.
 // The text is sent to OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
@@ -368,14 +371,14 @@ const openAddr=why=>{msg.style.pointerEvents='none';msg.style.maxWidth='';msg.te
   const i=document.createElement('input');i.className='adr';i.type='text';i.autocomplete='off';i.spellcheck=false;i.placeholder=T('addr');i.setAttribute('aria-label',T('addr'));
   gpa.style.display='none';seg.classList.add('typing');seg.append(i);adr=i;i.focus();
   i.onkeydown=async ev=>{if(ev.key==='Escape'){closeAddr();msg.textContent='';return}if(ev.key!=='Enter')return;const q=i.value.trim();if(!q)return;
-    msg.textContent=T('loc');const j=await findAddr(q);if(j.length){msg.textContent='';closeAddr();place(+j[0].lat,+j[0].lon,0)}else msg.textContent=T('adrnf')};
+    msg.textContent=T('loc');setPos('addr','busy');const j=await findAddr(q);if(j.length){msg.textContent='';closeAddr();place(+j[0].lat,+j[0].lon,0)}else{setPos('','');msg.textContent=T('adrnf')}};
   i.onblur=()=>{if(!i.value.trim())setTimeout(()=>{if(adr===i&&document.activeElement!==i)closeAddr()},120)}};
-gpa.onclick=()=>openAddr('');
-gpm.onclick=()=>{closeAddr();
+gpa.onclick=()=>{if(posMode==='addr')clearPos();openAddr('')};
+gpm.onclick=()=>{closeAddr();if(posMode==='gps'){clearPos();return}
   if(!navigator.geolocation){openAddr(T('nogeo'));return}
-  msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=T('loc');
+  setPos('gps','busy');msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=T('loc');
   navigator.geolocation.getCurrentPosition(p=>place(p.coords.latitude,p.coords.longitude,p.coords.accuracy),
-    e=>openAddr(e.code===1?T('deny'):T('nf')),{enableHighAccuracy:true,timeout:15000})};
+    e=>{setPos('','');openAddr(e.code===1?T('deny'):T('nf'))},{enableHighAccuracy:true,timeout:15000})};
 const hdB=document.getElementById('hdb');if(hoodLabs.length){hdB.style.display='';hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
@@ -573,5 +576,5 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 // clean screen: the legend and the language / share / sound buttons fade out when nobody touches the page for a few seconds
 // (the scroll of the Play button does not count as an interaction)
-{let idle=0;const wake=()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>document.body.classList.add('idle'),4000)};
+{let idle=0;const wake=()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>{if(!document.querySelector('#gp input:focus'))document.body.classList.add('idle')},4000)};
   ['mousemove','mousedown','pointerdown','touchstart','wheel','keydown'].forEach(e=>addEventListener(e,wake,{passive:true}));wake()}
