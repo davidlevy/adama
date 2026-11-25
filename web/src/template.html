@@ -146,7 +146,20 @@ body.top #playw{opacity:1}body.top #play{pointer-events:auto}
 .seg button:first-child{background:#fff;color:#0a0a0c}.seg button:not(:first-child):hover{background:rgba(255,255,255,.16)}.seg button:focus-visible{outline:2px solid #fff;outline-offset:1px}
 .seg .adr{margin:0;width:200px;padding:7px 13px;border:0;border-radius:999px;background:#fff;color:#0a0a0c;font:500 12.5px/1 Geist,system-ui,sans-serif;animation:segin .25s ease-out}.seg .adr::placeholder{color:#76767b}.seg .adr:focus,.seg .adr:focus-visible{outline:0;box-shadow:0 0 0 1.5px #fff}
 @keyframes segin{from{width:70px;opacity:.4}to{width:200px;opacity:1}}
-.seg.typing button:first-child{background:transparent;color:#f2f2f4}.ldw{display:flex;flex-direction:column;align-items:center;gap:20px}.ldb{display:block;width:92px;height:2px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}.ldb b{display:block;height:100%;background:#e4e4e7;transform-origin:left center;transform:scaleX(0);transition:transform .5s cubic-bezier(.2,.7,.2,1)}</style></head><body><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KPLLFMGP" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><div id="ld">Adama</div><script>
+.seg.typing button:first-child{background:transparent;color:#f2f2f4}.ldw{display:flex;flex-direction:column;align-items:center;gap:20px}.ldb{display:block;width:92px;height:2px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}.ldb b{display:block;height:100%;background:#e4e4e7;transform-origin:left center;transform:scaleX(0);transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+/* timeline: more visible (brighter track and ticks, bigger Geist dates) in less height */
+.bottom{bottom:clamp(10px,1.8vh,20px)}.pb{width:40px;height:40px}
+.trk{height:46px}.trk input{height:24px}
+.trk input::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:linear-gradient(90deg,#fff var(--p,0%),#4b4b52 var(--p,0%))}
+.trk input::-moz-range-track{background:#4b4b52;height:3px;border-radius:3px}.trk input::-moz-range-progress{height:3px;border-radius:3px}
+.trk input::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8.5px;background:#fff;border:3px solid #0a0a0c;box-shadow:0 0 0 1.5px #fff}
+.trk input::-moz-range-thumb{width:14px;height:14px;background:#fff;border:3px solid #0a0a0c;box-shadow:0 0 0 1.5px #fff}
+.tk{top:20px;height:22px}
+.tk div{font:500 13.5px/1 Geist,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#a4a4ab;padding:0 3px}
+.tk div:before{height:5px;background:#5a5a61;margin:0 auto 5px}
+.tk div:hover{color:#e6e6e8}.tk div.on{color:#fff;font-weight:600}.tk div.on:before{background:#fff}
+.acts{bottom:clamp(70px,11vh,102px)}.zm{bottom:clamp(128px,19vh,172px)}
+</style></head><body><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KPLLFMGP" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><div id="ld">Adama</div><script>
 // loading screen: the name and a thin progress bar. It creeps while the data loads, app.js moves it forward (window.__ldp) and fades the screen out.
 (()=>{const ld=document.getElementById('ld');if(!ld)return;
  ld.innerHTML='<div class="ldw"><span>Adama</span><i class="ldb" role="progressbar" aria-label="Loading"><b></b></i></div>';
