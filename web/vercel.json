@@ -2,17 +2,17 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/data/:path*",
+      "source": "/place/data/:path*",
       "destination": "https://me.selenium79.workers.dev/adama/data/:path*"
     },
     {
-      "source": "/:slug([A-Za-z0-9-]+)",
+      "source": "/place/:slug([A-Za-z0-9-]+)",
       "destination": "/"
     }
   ],
   "headers": [
     {
-      "source": "/data/(.*)",
+      "source": "/place/data/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

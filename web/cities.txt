@@ -43,5 +43,4 @@
 ../city_macau/city_macau.json:22.1650,113.5600,250
 ../city_santa-cruz-de-tenerife/city_santa-cruz-de-tenerife.json:28.4700,-16.3000,350
 ../city_hadera/city_hadera.json:32.4340,34.9190,300
-../city_las-vegas/city_las-vegas.json:36.1700,-115.1400,350
 ../city_ofakim/city_ofakim.json:31.3140,34.6200,200
