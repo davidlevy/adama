@@ -142,7 +142,7 @@ body.top #playw{opacity:1}body.top #play{pointer-events:auto}
 .zm button[aria-pressed=true]{background:#fff;color:#0a0a0c;border-color:#fff}
 .zm button[data-tip]:hover::after,.zm button[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;inset-inline-end:48px;top:50%;transform:translateY(-50%);white-space:nowrap;font:500 11.5px/1 Geist,system-ui,sans-serif;color:#f2f2f4;background:rgba(14,14,16,.92);border:1px solid #3a3a40;border-radius:8px;padding:7px 10px;pointer-events:none}
 .zm button:focus-visible{outline:2px solid #fff;outline-offset:2px}.seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.seg button{all:unset;box-sizing:border-box;cursor:pointer;font:500 12.5px/1 Geist,system-ui,sans-serif;color:#f2f2f4;padding:7px 13px;border-radius:999px;transition:background .2s,color .2s}
+.seg button{all:unset;pointer-events:auto;box-sizing:border-box;cursor:pointer;font:500 12.5px/1 Geist,system-ui,sans-serif;color:#f2f2f4;padding:7px 13px;border-radius:999px;transition:background .2s,color .2s}
 .seg button:first-child{background:#fff;color:#0a0a0c}.seg button:not(:first-child):hover{background:rgba(255,255,255,.16)}.seg button:focus-visible{outline:2px solid #fff;outline-offset:1px}
 .seg .adr{margin:0;width:200px;padding:7px 13px;border:0;border-radius:999px;background:#fff;color:#0a0a0c;font:500 12.5px/1 Geist,system-ui,sans-serif;animation:segin .25s ease-out}.seg .adr::placeholder{color:#76767b}.seg .adr:focus,.seg .adr:focus-visible{outline:0;box-shadow:0 0 0 1.5px #fff}
 @keyframes segin{from{width:70px;opacity:.4}to{width:200px;opacity:1}}
