@@ -1,0 +1,5 @@
+.cr{position:fixed;left:clamp(18px,3vw,44px);bottom:clamp(14px,3vh,28px);z-index:20;max-width:min(520px,38vw);font-size:10px;line-height:1.6;color:#6d6d72;direction:ltr;pointer-events:none}
+.cr a{color:#8f8f94;text-decoration:none;pointer-events:auto;border-bottom:1px solid #3a3a40}
+.cr a:hover{color:#fff;border-color:#8f8f94}
+@media(max-width:700px){.cr{max-width:46vw;font-size:9px}}
+body.exp .cr{display:none}

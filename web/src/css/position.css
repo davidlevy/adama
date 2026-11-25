@@ -1,0 +1,17 @@
+.me{position:fixed;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:7}
+.me i{position:relative;display:block;width:22px;height:22px;margin:0 auto;border-radius:50%;background:#4285f4;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.55)}
+.me i::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:#4285f4;opacity:.45;z-index:-1;animation:mepulse 2s ease-out infinite}
+@keyframes mepulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(3.4);opacity:0}}
+@media(prefers-reduced-motion:reduce){.me i::before{animation:none;transform:scale(2);opacity:.25}}
+.seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.seg button{all:unset;pointer-events:auto;box-sizing:border-box;cursor:pointer;font:500 12.5px/1 Geist,system-ui,sans-serif;color:#f2f2f4;padding:7px 13px;border-radius:999px;transition:background .2s,color .2s}
+.seg button:hover{background:rgba(255,255,255,.16)}
+.seg[data-st=on][data-mode=gps] #gpm,.seg[data-st=on][data-mode=addr] #gpa{background:#fff;color:#0a0a0c}
+.seg[data-st=on][data-mode=gps] #gpm::before,.seg[data-st=on][data-mode=addr] #gpa::before{content:'';display:inline-block;width:6px;height:6px;margin-inline-end:7px;vertical-align:1px;border-radius:50%;background:#1f9d4b}
+.seg[data-st=busy][data-mode=gps] #gpm,.seg[data-st=busy][data-mode=addr] .adr{animation:segbusy 1s ease-in-out infinite}
+@keyframes segbusy{50%{opacity:.45}}
+.seg button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.seg .adr{margin:0;width:200px;padding:7px 13px;border:0;border-radius:999px;background:#fff;color:#0a0a0c;font:500 12.5px/1 Geist,system-ui,sans-serif;animation:segin .25s ease-out}
+.seg .adr::placeholder{color:#76767b}
+.seg .adr:focus,.seg .adr:focus-visible{outline:0;box-shadow:0 0 0 1.5px #fff}
+@keyframes segin{from{width:70px;opacity:.4}to{width:200px;opacity:1}}

@@ -70,7 +70,13 @@ subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.j
                 '--log-level=warning'], check=True)
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js
-head = open(os.path.join(here, 'src', 'template.html'), encoding='utf-8').read()
+# the stylesheet: src/css/*.css bundled by esbuild (index.css lists the files in cascade order) and inlined into the page
+css_out = os.path.join(root, 'dist', 'bundle.css')
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'css', 'index.css'),
+                '--bundle', '--minify', '--outfile=' + css_out, '--log-level=warning'], check=True)
+head = open(os.path.join(here, 'src', 'index.html'), encoding='utf-8').read()
+assert head.count('/*CSS*/') == 1
+head = head.replace('/*CSS*/', open(css_out, encoding='utf-8').read())
 if base:
     head = head.replace('<head>', '<head><base href="%s"><meta name="adama-routing" content="path">' % base, 1)
 with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:

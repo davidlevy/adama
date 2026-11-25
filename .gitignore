@@ -1,6 +1,6 @@
 # generated pages, data and caches stay local
 *.html
-!web/src/template.html
+!web/src/index.html
 dist/
 node_modules
 data/

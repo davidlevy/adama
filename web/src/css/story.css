@@ -1,0 +1,14 @@
+#story{position:relative;z-index:0;pointer-events:none}
+#story section{display:block}
+#card{position:fixed;left:clamp(18px,3vw,44px);bottom:clamp(40px,12vh,130px);max-width:min(460px,calc(100vw - 36px));z-index:6;pointer-events:none;opacity:0;transition:opacity .4s}
+#card.in{animation:cin .7s cubic-bezier(.2,.7,.2,1)}
+@keyframes cin{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+#card .kick{font-size:13px;letter-spacing:.2em;color:#8f8f94;margin-bottom:12px;font-weight:400}
+#card .cbig{font-size:clamp(54px,7vw,108px);font-weight:200;color:#fff;letter-spacing:-.04em;line-height:.95;margin-bottom:12px;direction:ltr;unicode-bidi:isolate}
+#card .cbig.g{color:#74dd7c}
+#card .cbig.sm{font-size:clamp(30px,3.6vw,54px);letter-spacing:-.025em;line-height:1.05}
+#card .cbig.sm{font-family:Geist,system-ui,sans-serif;font-weight:400;font-size:clamp(26px,2.9vw,42px);letter-spacing:-.03em;line-height:1.12;margin:0}
+#card .cbig.sm+p{font-family:Geist,system-ui,sans-serif;font-weight:400;font-size:clamp(26px,2.9vw,42px);letter-spacing:-.03em;line-height:1.12;color:#76767b;margin:0 0 14px}
+#card p{font-size:clamp(16px,1.35vw,20px);line-height:1.45;color:#d6d6da;margin:0 0 8px;font-weight:300}
+#card .note{font-size:clamp(14px,1.2vw,17px);color:#8f8f94}
+body.exp #card{opacity:0!important}
