@@ -1,0 +1,8 @@
+# base64 data, generated files and the scene (not formatted yet)
+dist
+node_modules
+web/src/css/fonts.css
+web/src/data/earthmask.ts
+web/src/worldmask.ts
+web/src/app.ts
+web/og.png

@@ -1,33 +1,197 @@
-.hero{left:clamp(18px,3vw,44px);top:clamp(104px,14vh,150px)}
-.y{font-size:clamp(60px,9.5vw,140px);line-height:.9;font-weight:200;letter-spacing:-.045em;color:#fff;margin:0}
-.sn{font-size:clamp(15px,1.3vw,19px);color:#8f8f94;margin:10px 0 0;min-height:20px;font-weight:300}
-.stats{display:flex;gap:clamp(20px,3.2vw,52px);margin-top:clamp(18px,3.4vh,40px)}
-.stats div{min-width:0}
-.stats b{display:block;font-size:clamp(26px,3.2vw,48px);font-weight:300;color:#fff;letter-spacing:-.02em;line-height:1.05;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
-.stats span{display:block;font-size:clamp(14px,1.2vw,17px);color:#8f8f94;margin-top:5px}
-.green{margin-top:clamp(16px,3vh,34px)}
-.green b{display:block;font-size:clamp(44px,6vw,92px);font-weight:300;color:#74dd7c;letter-spacing:-.035em;line-height:.95;direction:ltr;unicode-bidi:isolate}
-.green span{display:block;font-size:clamp(12px,1vw,14px);color:#8f8f94;margin-top:6px}
-.green em{direction:ltr;unicode-bidi:isolate;display:block;font-style:normal;font-size:clamp(13px,1.1vw,16px);color:#cfcfd3;margin-top:4px}
-.gb{display:flex;gap:1px;align-items:flex-end;height:38px;width:min(300px,60vw);margin-top:14px}
-.bar{flex:1;height:100%;display:flex;align-items:flex-end}
-.bar div{width:100%;background:#173324;border-radius:1px 1px 0 0}
-.bar.on div{background:#74dd7c}
-body:not(.exp) .green,body:not(.exp) .gb{display:none}
-@media(max-width:700px){body:not(.exp) .stats{display:none}#card{bottom:clamp(30px,9vh,90px)}#card .cbig{font-size:clamp(52px,16vw,80px)}}
-.heatv{display:none;margin-top:16px}
-.heatv b{display:block;font-size:clamp(44px,6vw,92px);font-weight:200;color:#ff7a2e;letter-spacing:-.035em;line-height:.95;direction:ltr;unicode-bidi:isolate}
-.heatv span{display:block;font-size:clamp(12px,1vw,14px);color:#8f8f94;margin-top:6px}
-.hleg{display:none;width:100%}
-.hleg i{display:block;width:150px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(242,128,26,0),#f2801a,#ff331a,#ffebb3)}
-.hleg .hl{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#8f8f94;width:150px}
-body.heat .heatv{display:block}
-body.heat .hleg{display:block}
-body.heat .green,body.heat .gb{display:none!important}
-body:not(.exp) .heatv{display:none!important}
-.hero{top:clamp(134px,19vh,180px)}
-@media(max-width:700px){.hero{top:62px}}
-.sn{pointer-events:auto;cursor:help;width:fit-content;border-bottom:1px dotted #55555b}
-.sn{pointer-events:auto;cursor:help;width:fit-content;border-bottom:1px dotted #55555b}
-.green em#gf{font-size:clamp(12px,1vw,14px);color:#8f8f94;margin-top:6px}
-.green em#gf::before{content:'';display:inline-block;width:7px;height:7px;margin-inline-end:7px;border-radius:2px;background:#6aa26e;vertical-align:1px}
+/* Left column: the year, the data source, the built / green figures, the heat legend. */
+.hero {
+  left: clamp(18px, 3vw, 44px);
+  top: clamp(104px, 14vh, 150px);
+}
+.y {
+  font-size: clamp(60px, 9.5vw, 140px);
+  line-height: 0.9;
+  font-weight: 200;
+  letter-spacing: -0.045em;
+  color: #fff;
+  margin: 0;
+}
+.sn {
+  font-size: clamp(15px, 1.3vw, 19px);
+  color: #8f8f94;
+  margin: 10px 0 0;
+  min-height: 20px;
+  font-weight: 300;
+}
+.stats {
+  display: flex;
+  gap: clamp(20px, 3.2vw, 52px);
+  margin-top: clamp(18px, 3.4vh, 40px);
+}
+.stats div {
+  min-width: 0;
+}
+.stats b {
+  display: block;
+  font-size: clamp(26px, 3.2vw, 48px);
+  font-weight: 300;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+.stats span {
+  display: block;
+  font-size: clamp(14px, 1.2vw, 17px);
+  color: #8f8f94;
+  margin-top: 5px;
+}
+.green {
+  margin-top: clamp(16px, 3vh, 34px);
+}
+.green b {
+  display: block;
+  font-size: clamp(44px, 6vw, 92px);
+  font-weight: 300;
+  color: #74dd7c;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.green span {
+  display: block;
+  font-size: clamp(12px, 1vw, 14px);
+  color: #8f8f94;
+  margin-top: 6px;
+}
+.green em {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: block;
+  font-style: normal;
+  font-size: clamp(13px, 1.1vw, 16px);
+  color: #cfcfd3;
+  margin-top: 4px;
+}
+.gb {
+  display: flex;
+  gap: 1px;
+  align-items: flex-end;
+  height: 38px;
+  width: min(300px, 60vw);
+  margin-top: 14px;
+}
+.bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.bar div {
+  width: 100%;
+  background: #173324;
+  border-radius: 1px 1px 0 0;
+}
+.bar.on div {
+  background: #74dd7c;
+}
+body:not(.exp) .green,
+body:not(.exp) .gb {
+  display: none;
+}
+@media (max-width: 700px) {
+  body:not(.exp) .stats {
+    display: none;
+  }
+  #card {
+    bottom: clamp(30px, 9vh, 90px);
+  }
+  #card .cbig {
+    font-size: clamp(52px, 16vw, 80px);
+  }
+}
+.heatv {
+  display: none;
+  margin-top: 16px;
+}
+.heatv b {
+  display: block;
+  font-size: clamp(44px, 6vw, 92px);
+  font-weight: 200;
+  color: #ff7a2e;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.heatv span {
+  display: block;
+  font-size: clamp(12px, 1vw, 14px);
+  color: #8f8f94;
+  margin-top: 6px;
+}
+.hleg {
+  display: none;
+  width: 100%;
+}
+.hleg i {
+  display: block;
+  width: 150px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(242, 128, 26, 0), #f2801a, #ff331a, #ffebb3);
+}
+.hleg .hl {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #8f8f94;
+  width: 150px;
+}
+body.heat .heatv {
+  display: block;
+}
+body.heat .hleg {
+  display: block;
+}
+body.heat .green,
+body.heat .gb {
+  display: none !important;
+}
+body:not(.exp) .heatv {
+  display: none !important;
+}
+.hero {
+  top: clamp(134px, 19vh, 180px);
+}
+@media (max-width: 700px) {
+  .hero {
+    top: 62px;
+  }
+}
+.sn {
+  pointer-events: auto;
+  cursor: help;
+  width: fit-content;
+  border-bottom: 1px dotted #55555b;
+}
+.sn {
+  pointer-events: auto;
+  cursor: help;
+  width: fit-content;
+  border-bottom: 1px dotted #55555b;
+}
+.green em#gf {
+  font-size: clamp(12px, 1vw, 14px);
+  color: #8f8f94;
+  margin-top: 6px;
+}
+.green em#gf::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 7px;
+  border-radius: 2px;
+  background: #6aa26e;
+  vertical-align: 1px;
+}

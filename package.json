@@ -6,7 +6,9 @@
     "build": "python3 web/build.py",
     "start": "python3 -m http.server 8000 -d dist/site",
     "dev": "npm run build && npm run start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"web/src/css/*.css\" \"web/src/ui/**/*.{css,ts,tsx}\" \"web/src/data/*.ts\" web/src/i18n.ts web/src/types.ts web/src/music.ts web/src/pixellogo.ts web/src/loader.ts",
+    "format:check": "prettier --check \"web/src/css/*.css\" \"web/src/ui/**/*.{css,ts,tsx}\" \"web/src/data/*.ts\" web/src/i18n.ts web/src/types.ts web/src/music.ts web/src/pixellogo.ts web/src/loader.ts"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
@@ -15,6 +17,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "prettier": "^3.10.1",
     "typescript": "^7.0.2"
   }
 }

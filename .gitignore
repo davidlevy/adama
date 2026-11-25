@@ -12,6 +12,7 @@ raw/
 !package.json
 !package-lock.json
 !tsconfig.json
+!.prettierrc.json
 !web/vercel.json
 .venv/
 __pycache__/

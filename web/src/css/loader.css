@@ -1,10 +1,70 @@
-#ld{position:fixed;inset:0;z-index:200;background:#000;display:flex;align-items:center;justify-content:center;font-family:'Caveat',cursive;font-size:44px;color:#e4e4e7;transition:opacity .5s}
-#ld{gap:16px}
-#ld::after{content:'';width:20px;height:20px;margin-top:6px;border:2px solid #2c2c31;border-top-color:#e4e4e7;border-radius:50%;animation:ldspin .8s linear infinite}
-@keyframes ldspin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#ld::after{animation:none}}
-#ld::after{position:absolute;left:50%;top:calc(50% + 78px);margin:0 0 0 -10px;opacity:0;transition:opacity .4s}
-#ld.slow::after{opacity:1}
-.ldw{display:flex;flex-direction:column;align-items:center;gap:20px}
-.ldb{display:block;width:92px;height:2px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}
-.ldb b{display:block;height:100%;background:#e4e4e7;transform-origin:left center;transform:scaleX(0);transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+/* Loading screen: the name and the thin progress bar. */
+#ld {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Caveat', cursive;
+  font-size: 44px;
+  color: #e4e4e7;
+  transition: opacity 0.5s;
+}
+#ld {
+  gap: 16px;
+}
+#ld::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-top: 6px;
+  border: 2px solid #2c2c31;
+  border-top-color: #e4e4e7;
+  border-radius: 50%;
+  animation: ldspin 0.8s linear infinite;
+}
+@keyframes ldspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #ld::after {
+    animation: none;
+  }
+}
+#ld::after {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 78px);
+  margin: 0 0 0 -10px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+#ld.slow::after {
+  opacity: 1;
+}
+.ldw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.ldb {
+  display: block;
+  width: 92px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+.ldb b {
+  display: block;
+  height: 100%;
+  background: #e4e4e7;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}

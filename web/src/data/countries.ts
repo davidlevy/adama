@@ -1,5 +1,105 @@
 // Country names of the cities and the country of each city (default Israel). CO(slug) gives the name in each language.
-import type {Lang, PerLang} from '../types';
-export const CTRY: Record<Lang, Record<string, string>> = {fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis',NL:'Pays-Bas',IT:'Italie',ES:'Espagne',CY:'Chypre',CN:'Chine',SG:'Singapour',ZA:'Afrique du Sud',NG:'Nigéria',US:'États-Unis',MR:'Mauritanie',MX:'Mexique',HK:'Hong Kong',MO:'Macao',EG:'Égypte',AU:'Australie',MA:'Maroc'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates',NL:'Netherlands',IT:'Italy',ES:'Spain',CY:'Cyprus',CN:'China',SG:'Singapore',ZA:'South Africa',NG:'Nigeria',US:'United States',MR:'Mauritania',MX:'Mexico',HK:'Hong Kong',MO:'Macau',EG:'Egypt',AU:'Australia',MA:'Morocco'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות',NL:'הולנד',IT:'איטליה',ES:'ספרד',CY:'קפריסין',CN:'סין',SG:'סינגפור',ZA:'דרום אפריקה',NG:'ניגריה',US:'ארצות הברית',MR:'מאוריטניה',MX:'מקסיקו',HK:'הונג קונג',MO:'מקאו',EG:'מצרים',AU:'אוסטרליה',MA:'מרוקו'}}
-export const CODE: Record<string, string> = {grenoble:'FR',dubai:'AE',paris:'FR',amsterdam:'NL',venice:'IT',palma:'ES',ibiza:'ES',limassol:'CY',shenzhen:'CN',singapore:'SG',strasbourg:'FR',metz:'FR','cape-town':'ZA',lagos:'NG',miami:'US',nouakchott:'MR','mexico-city':'MX','hong-kong':'HK',macau:'MO','santa-cruz-de-tenerife':'ES','las-vegas':'US',cairo:'EG','new-administrative-capital':'EG',perth:'AU',marrakech:'MA'}
-export const CO = (s: string): PerLang => ({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});
+import type { Lang, PerLang } from '../types';
+export const CTRY: Record<Lang, Record<string, string>> = {
+  fr: {
+    IL: 'Israël',
+    FR: 'France',
+    AE: 'Émirats arabes unis',
+    NL: 'Pays-Bas',
+    IT: 'Italie',
+    ES: 'Espagne',
+    CY: 'Chypre',
+    CN: 'Chine',
+    SG: 'Singapour',
+    ZA: 'Afrique du Sud',
+    NG: 'Nigéria',
+    US: 'États-Unis',
+    MR: 'Mauritanie',
+    MX: 'Mexique',
+    HK: 'Hong Kong',
+    MO: 'Macao',
+    EG: 'Égypte',
+    AU: 'Australie',
+    MA: 'Maroc',
+  },
+  en: {
+    IL: 'Israel',
+    FR: 'France',
+    AE: 'United Arab Emirates',
+    NL: 'Netherlands',
+    IT: 'Italy',
+    ES: 'Spain',
+    CY: 'Cyprus',
+    CN: 'China',
+    SG: 'Singapore',
+    ZA: 'South Africa',
+    NG: 'Nigeria',
+    US: 'United States',
+    MR: 'Mauritania',
+    MX: 'Mexico',
+    HK: 'Hong Kong',
+    MO: 'Macau',
+    EG: 'Egypt',
+    AU: 'Australia',
+    MA: 'Morocco',
+  },
+  he: {
+    IL: 'ישראל',
+    FR: 'צרפת',
+    AE: 'איחוד האמירויות',
+    NL: 'הולנד',
+    IT: 'איטליה',
+    ES: 'ספרד',
+    CY: 'קפריסין',
+    CN: 'סין',
+    SG: 'סינגפור',
+    ZA: 'דרום אפריקה',
+    NG: 'ניגריה',
+    US: 'ארצות הברית',
+    MR: 'מאוריטניה',
+    MX: 'מקסיקו',
+    HK: 'הונג קונג',
+    MO: 'מקאו',
+    EG: 'מצרים',
+    AU: 'אוסטרליה',
+    MA: 'מרוקו',
+  },
+};
+export const CODE: Record<string, string> = {
+  grenoble: 'FR',
+  dubai: 'AE',
+  paris: 'FR',
+  amsterdam: 'NL',
+  venice: 'IT',
+  palma: 'ES',
+  ibiza: 'ES',
+  limassol: 'CY',
+  shenzhen: 'CN',
+  singapore: 'SG',
+  strasbourg: 'FR',
+  metz: 'FR',
+  'cape-town': 'ZA',
+  lagos: 'NG',
+  miami: 'US',
+  nouakchott: 'MR',
+  'mexico-city': 'MX',
+  'hong-kong': 'HK',
+  macau: 'MO',
+  'santa-cruz-de-tenerife': 'ES',
+  'las-vegas': 'US',
+  cairo: 'EG',
+  'new-administrative-capital': 'EG',
+  perth: 'AU',
+  marrakech: 'MA',
+};
+export const CO = (s: string): PerLang => ({
+  get fr() {
+    return CTRY.fr[CODE[s] || 'IL'];
+  },
+  get en() {
+    return CTRY.en[CODE[s] || 'IL'];
+  },
+  get he() {
+    return CTRY.he[CODE[s] || 'IL'];
+  },
+});

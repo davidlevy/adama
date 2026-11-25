@@ -1,34 +1,199 @@
-#ab{position:fixed;inset:0;z-index:300;background:#0b0b0c;overflow:auto;display:none;font-family:Geist,system-ui,sans-serif}
-body.ab-open #ab{display:block}
-body.ab-open{overflow:hidden}
-#ab .abc{max-width:760px;margin:0 auto;padding:clamp(90px,16vh,170px) clamp(22px,5vw,48px) 80px}
-#ab .abl{min-height:80px;margin:0 0 22px}
-#ab .abk{font-size:14px;color:#76767b;margin:0 0 28px}
-#ab h2{margin:0;font-weight:400;font-size:clamp(28px,3.6vw,50px);letter-spacing:-.03em;line-height:1.12}
-#ab h2 .w{color:#fff}
-#ab h2 .g{color:#76767b}
-#ab ul{list-style:none;margin:44px 0 0;padding:0;display:grid;gap:14px}
-#ab li{font-size:clamp(16px,1.35vw,19px);line-height:1.5;color:#8f8f94}
-#ab li::before{content:'\2192';color:#55555b;margin-inline-end:12px}
-#ab .aby{display:block;margin-top:48px;padding-top:28px;border-top:1px solid #222226;font-size:clamp(16px,1.35vw,19px);line-height:1.5;color:#8f8f94;text-decoration:none}
-#ab .aby b{display:block;color:#fff;font-weight:400;margin-top:4px}
-#ab .aby:hover b{text-decoration:underline;text-underline-offset:4px}
-#ab .abf{display:flex;gap:24px;flex-wrap:wrap;margin-top:44px;font-size:15px}
-#ab .abf a,#ab .abf button{all:unset;cursor:pointer;color:#8f8f94;border-bottom:1px solid #3a3a40}
-#ab .abf button{color:#fff;border-color:#8f8f94}
-#ab .abf a:hover,#ab .abf button:hover{color:#fff}
-#ab .abx{all:unset;cursor:pointer;position:fixed;top:clamp(14px,2.4vw,30px);inset-inline-end:clamp(18px,3vw,44px);font-size:30px;line-height:1;color:#8f8f94;padding:6px 10px}
-#ab .abx:hover{color:#fff}
-#ab .abme{margin:44px 0 0;font-size:clamp(18px,1.6vw,23px);line-height:1.4;letter-spacing:-.01em;color:#fff}
-#ab .abme b{color:#a56bff;font-weight:400}
-#ab .abct{margin-top:48px;padding-top:28px;border-top:1px solid #222226;font-size:clamp(16px,1.35vw,19px);line-height:1.5;color:#8f8f94}
-#ab .abk2{display:flex;gap:28px;flex-wrap:wrap;margin-top:18px}
-#ab .abk2 a{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:16px}
-#ab .abk2 a:hover span{text-decoration:underline;text-underline-offset:4px}
-#ab .abk2 svg{width:20px;height:20px;fill:#8f8f94;flex:none}
-#ab .abk2 a:hover svg{fill:#fff}
-#ab .abheat{margin-top:36px}
-#ab .abheat p{margin:0;font-size:clamp(16px,1.35vw,19px);line-height:1.5;background:linear-gradient(180deg,#ffebb3 0%,#f2801a 45%,#ff331a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-#abt{position:fixed;right:clamp(18px,3vw,44px);bottom:clamp(14px,3vh,28px);z-index:21;font:inherit;font-size:13px;font-weight:500;color:#000;background:#fff;border:0;border-radius:999px;padding:10px 22px;cursor:pointer;transition:background .2s,transform .2s}
-#abt:hover{background:#e4e4e7}
-body.exp #abt{display:none}
+/* About dialog. */
+#ab {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #0b0b0c;
+  overflow: auto;
+  display: none;
+  font-family: Geist, system-ui, sans-serif;
+}
+body.ab-open #ab {
+  display: block;
+}
+body.ab-open {
+  overflow: hidden;
+}
+#ab .abc {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(90px, 16vh, 170px) clamp(22px, 5vw, 48px) 80px;
+}
+#ab .abl {
+  min-height: 80px;
+  margin: 0 0 22px;
+}
+#ab .abk {
+  font-size: 14px;
+  color: #76767b;
+  margin: 0 0 28px;
+}
+#ab h2 {
+  margin: 0;
+  font-weight: 400;
+  font-size: clamp(28px, 3.6vw, 50px);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+#ab h2 .w {
+  color: #fff;
+}
+#ab h2 .g {
+  color: #76767b;
+}
+#ab ul {
+  list-style: none;
+  margin: 44px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+#ab li {
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.5;
+  color: #8f8f94;
+}
+#ab li::before {
+  content: '\2192';
+  color: #55555b;
+  margin-inline-end: 12px;
+}
+#ab .aby {
+  display: block;
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid #222226;
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.5;
+  color: #8f8f94;
+  text-decoration: none;
+}
+#ab .aby b {
+  display: block;
+  color: #fff;
+  font-weight: 400;
+  margin-top: 4px;
+}
+#ab .aby:hover b {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+#ab .abf {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 44px;
+  font-size: 15px;
+}
+#ab .abf a,
+#ab .abf button {
+  all: unset;
+  cursor: pointer;
+  color: #8f8f94;
+  border-bottom: 1px solid #3a3a40;
+}
+#ab .abf button {
+  color: #fff;
+  border-color: #8f8f94;
+}
+#ab .abf a:hover,
+#ab .abf button:hover {
+  color: #fff;
+}
+#ab .abx {
+  all: unset;
+  cursor: pointer;
+  position: fixed;
+  top: clamp(14px, 2.4vw, 30px);
+  inset-inline-end: clamp(18px, 3vw, 44px);
+  font-size: 30px;
+  line-height: 1;
+  color: #8f8f94;
+  padding: 6px 10px;
+}
+#ab .abx:hover {
+  color: #fff;
+}
+#ab .abme {
+  margin: 44px 0 0;
+  font-size: clamp(18px, 1.6vw, 23px);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+#ab .abme b {
+  color: #a56bff;
+  font-weight: 400;
+}
+#ab .abct {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid #222226;
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.5;
+  color: #8f8f94;
+}
+#ab .abk2 {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+#ab .abk2 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+}
+#ab .abk2 a:hover span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+#ab .abk2 svg {
+  width: 20px;
+  height: 20px;
+  fill: #8f8f94;
+  flex: none;
+}
+#ab .abk2 a:hover svg {
+  fill: #fff;
+}
+#ab .abheat {
+  margin-top: 36px;
+}
+#ab .abheat p {
+  margin: 0;
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.5;
+  background: linear-gradient(180deg, #ffebb3 0%, #f2801a 45%, #ff331a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+#abt {
+  position: fixed;
+  right: clamp(18px, 3vw, 44px);
+  bottom: clamp(14px, 3vh, 28px);
+  z-index: 21;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #000;
+  background: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+#abt:hover {
+  background: #e4e4e7;
+}
+body.exp #abt {
+  display: none;
+}
