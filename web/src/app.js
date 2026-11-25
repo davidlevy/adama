@@ -86,7 +86,7 @@ mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
 const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8a40'),G2=new THREE.Color('#2fa650');
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
-  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.26:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
+  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.36:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
@@ -234,7 +234,7 @@ function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.ins
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
   if(LODm>1)for(const g of lodGroups(LODm)){const n=g.length;if(n<2)continue;let h=0,r=0,gg=0,b=0,x=0,z=0;
     for(const i of g){h+=Ch[i];r+=Cc[i*3];gg+=Cc[i*3+1];b+=Cc[i*3+2];x+=DX[i];z+=DZ[i]}
-    const o=g[0]*16,s=Math.sqrt(n)*.97;ma[o]=s;ma[o+5]=Math.max(.05,h/n);ma[o+10]=s;ma[o+12]=x/n;ma[o+14]=z/n;ca[g[0]*3]=r/n;ca[g[0]*3+1]=gg/n;ca[g[0]*3+2]=b/n;
+    const o=g[0]*16,s=Math.sqrt(n)*(.94+.06*Math.max(0,Math.min(1,(.7-h/n)/.3)));   // same gap as the single cells: low green stays seamlessma[o]=s;ma[o+5]=Math.max(.05,h/n);ma[o+10]=s;ma[o+12]=x/n;ma[o+14]=z/n;ca[g[0]*3]=r/n;ca[g[0]*3+1]=gg/n;ca[g[0]*3+2]=b/n;
     for(let q=1;q<n;q++){const p=g[q]*16;ma[p]=0;ma[p+5]=0;ma[p+10]=0}}
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
 let airLang=()=>{},airOn=false,airV=null;
@@ -277,7 +277,7 @@ function update(t){
     else if(c.f<999&&(c.lt===0||c.lt===3)&&c.f-1<ye){const k=ye-c.f+1,hb=(.8+c.nb*1.1+hv*.9)*VX,hg=.42;h=hg+(hb-hg)*k;color=col.copy(WH)}
     else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
     else if(c.lt===2){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}
-    else if(c.lt===3){h=.26;color=col.copy(FIELD).lerp(FIELD2,.5)}
+    else if(c.lt===3){h=.36;color=col.copy(FIELD).lerp(FIELD2,.5)}
     else{h=.42;color=col.copy(G1).lerp(G2,.5)}
     if(heatOn&&HT&&!(c.road&&(built||c.f===999))){{const an=heatAt(HYc,c.gx+.5,c.gy+.5);color=color.clone().lerp(heatCol(an,hCol),heatMix(an))}}
     if(c.in&&c.f<=yi){bt++;if(c.lt===0)gv++;if(c.f===yi&&yi>0)nw++}
