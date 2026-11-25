@@ -20,6 +20,8 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     MO: 'Macao',
     EG: 'Égypte',
     AU: 'Australie',
+    RU: 'Russie',
+    JP: 'Japon',
     MA: 'Maroc',
   },
   en: {
@@ -41,6 +43,8 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     MO: 'Macau',
     EG: 'Egypt',
     AU: 'Australia',
+    RU: 'Russia',
+    JP: 'Japan',
     MA: 'Morocco',
   },
   he: {
@@ -62,6 +66,8 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     MO: 'מקאו',
     EG: 'מצרים',
     AU: 'אוסטרליה',
+    RU: 'רוסיה',
+    JP: 'יפן',
     MA: 'מרוקו',
   },
 };
@@ -91,6 +97,9 @@ export const CODE: Record<string, string> = {
   'new-administrative-capital': 'EG',
   perth: 'AU',
   marrakech: 'MA',
+  yakutsk: 'RU',
+  novosibirsk: 'RU',
+  sapporo: 'JP',
 };
 export const CO = (s: string): PerLang => ({
   get fr() {

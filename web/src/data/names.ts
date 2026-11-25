@@ -53,5 +53,8 @@ export const NAMES: Record<string, PerLang> = {
     he: 'הבירה המנהלית החדשה',
   },
   perth: { fr: 'Perth', en: 'Perth', he: 'פרת׳' },
+  yakutsk: { fr: 'Iakoutsk', en: 'Yakutsk', he: 'יקוטסק' },
+  novosibirsk: { fr: 'Novossibirsk', en: 'Novosibirsk', he: 'נובוסיבירסק' },
+  sapporo: { fr: 'Sapporo', en: 'Sapporo', he: 'סאפורו' },
   marrakech: { fr: 'Marrakech', en: 'Marrakesh', he: 'מרקש' },
 };
