@@ -16,6 +16,7 @@ export const NAMES: Record<string, PerLang> = {
   'petah-tikva': { fr: 'Petah Tikva', en: 'Petah Tikva', he: 'פתח תקווה' },
   'ramat-hasharon': { fr: 'Ramat HaSharon', en: 'Ramat HaSharon', he: 'רמת השרון' },
   holon: { fr: 'Holon', en: 'Holon', he: 'חולון' },
+  'bat-yam': { fr: 'Bat Yam', en: 'Bat Yam', he: 'בת ים' },
   'bnei-brak': { fr: 'Bnei Brak', en: 'Bnei Brak', he: 'בני ברק' },
   netanya: { fr: 'Netanya', en: 'Netanya', he: 'נתניה' },
   ashkelon: { fr: 'Ashkelon', en: 'Ashkelon', he: 'אשקלון' },

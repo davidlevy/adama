@@ -15,6 +15,7 @@
 ../city_petah-tikva/city_petah-tikva.json:32.0880,34.8870,275
 ../city_ramat-hasharon/city_ramat-hasharon.json:32.1460,34.8390,200
 ../city_holon/city_holon.json:32.0160,34.7870,200
+../city_bat-yam/city_bat-yam.json
 ../city_bnei-brak/city_bnei-brak.json:32.0840,34.8340,175
 ../city_harish/city_harish.json:32.4580,35.0450,175
 ../city_netanya/city_netanya.json:32.3215,34.8532,250
