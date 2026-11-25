@@ -53,7 +53,7 @@ const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new 
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#2e9645'),FIELD2=new THREE.Color('#44a64c');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5e9a63'),FIELD2=new THREE.Color('#76ab76');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
@@ -86,7 +86,7 @@ mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
 const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8a40'),G2=new THREE.Color('#2fa650');
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
-  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.64:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
+  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.8:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
@@ -278,7 +278,7 @@ function update(t){
     else if(c.f<999&&(c.lt===0||c.lt===3)&&c.f-1<ye){const k=ye-c.f+1,hb=(.8+c.nb*1.1+hv*.9)*VX,hg=.42;h=hg+(hb-hg)*k;color=col.copy(WH)}
     else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
     else if(c.lt===2){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}
-    else if(c.lt===3){h=.64;color=col.copy(FIELD).lerp(FIELD2,.5)}
+    else if(c.lt===3){h=.8;color=col.copy(FIELD).lerp(FIELD2,.5)}
     else{h=.42;color=col.copy(G1).lerp(G2,.5)}
     if(heatOn&&HT&&!(c.road&&(built||c.f===999))){{const an=heatAt(HYc,c.gx+.5,c.gy+.5);color=color.clone().lerp(heatCol(an,hCol),heatMix(an))}}
     if(c.in&&c.f<=yi){bt++;if(c.lt===0)gv++;if(c.f===yi&&yi>0)nw++}
