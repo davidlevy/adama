@@ -34,3 +34,14 @@
 ../city_strasbourg/city_strasbourg.json:48.5734,7.7521,350
 ../city_metz/city_metz.json:49.1193,6.1757,350
 ../city_kfar-saba/city_kfar-saba.json
+../city_cape-town/city_cape-town.json:-33.9249,18.4241,400
+../city_lagos/city_lagos.json:6.5244,3.3792,400
+../city_miami/city_miami.json:25.7617,-80.1918,400
+../city_nouakchott/city_nouakchott.json:18.0735,-15.9582,350
+../city_mexico-city/city_mexico-city.json:19.4326,-99.1332,450
+../city_hong-kong/city_hong-kong.json:22.3100,114.1200,400
+../city_macau/city_macau.json:22.1650,113.5600,250
+../city_santa-cruz-de-tenerife/city_santa-cruz-de-tenerife.json:28.4700,-16.3000,350
+../city_hadera/city_hadera.json:32.4340,34.9190,300
+../city_las-vegas/city_las-vegas.json:36.1700,-115.1400,350
+../city_ofakim/city_ofakim.json:31.3140,34.6200,200
