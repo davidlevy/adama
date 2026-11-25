@@ -123,8 +123,16 @@ body.top .sh {
   color: #74dd7c;
 }
 .hd b svg {
-  fill: currentColor;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   flex: none;
+}
+/* growth points up-right, loss down-right */
+.hd b.dn svg {
+  transform: rotate(90deg);
 }
 .hd b i {
   font-style: normal;

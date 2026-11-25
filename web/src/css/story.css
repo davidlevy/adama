@@ -37,6 +37,18 @@
   margin-bottom: 12px;
   font-weight: 400;
 }
+/* rounded arrow between two years, same family as the district trend arrow */
+#card .ra {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0 0.35em;
+  vertical-align: -0.2em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 #card .cbig {
   font-size: clamp(54px, 7vw, 108px);
   font-weight: 200;
