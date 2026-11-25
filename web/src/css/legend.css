@@ -1,0 +1,11 @@
+.lg{right:clamp(18px,3vw,44px);top:clamp(64px,9vh,104px);display:flex;flex-direction:column;gap:9px;font-size:12px;color:#9a9aa0;align-items:flex-start}
+.lg span{display:flex;align-items:center;gap:9px;white-space:nowrap}
+.lg i{display:inline-block;width:12px;height:12px;flex:none}
+.lg i.c{background:linear-gradient(90deg,#c8c8c8,#222)}
+.lg i.gn{background:#26994a}
+.lg i.nw{background:#fff}
+.lg i.ar{height:2px;width:12px;background:#fff}
+.lg i.wt{background:#2f86d8}
+.lg i.bg{background:#6b5c45}
+.fd{background:#6aa26e}
+.lg i.kd1{background:#a56bff;border-radius:4px}

@@ -1,0 +1,8 @@
+*{box-sizing:border-box}
+.ui{position:fixed;z-index:5;pointer-events:none}
+canvas{transition:filter .5s}
+html,body{margin:0;background:#000;color:#ededed;font-family:Geist,Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+#v{position:fixed;inset:0;direction:ltr;background:radial-gradient(ellipse at 50% 46%,#101012,#000 70%)}
+#v canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.shade{position:fixed;inset:0;z-index:3;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.9) 0,rgba(0,0,0,.62) 24%,transparent 50%),linear-gradient(180deg,rgba(0,0,0,.75),transparent 22%),linear-gradient(0deg,rgba(0,0,0,.9),transparent 28%),linear-gradient(270deg,rgba(0,0,0,.65),transparent 17%)}
+@media(max-width:700px){.shade{background:linear-gradient(180deg,rgba(0,0,0,.95) 0,rgba(0,0,0,.75) 32%,transparent 48%),linear-gradient(0deg,rgba(0,0,0,.95),transparent 26%)}.brand .tg{display:none}.lg{display:none}.hero{top:92px}.stats{gap:20px}.acts{bottom:96px;flex-wrap:wrap}.rt{display:none}#cp{display:none}.pill{padding:10px 14px}}

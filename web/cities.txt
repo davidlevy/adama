@@ -1,6 +1,6 @@
 # One city per line: path to the city JSON (relative to the repo root), optionally
 # followed by :LAT,LON,RADIUS_CELLS to crop a large or elongated city to a round window.
-../city_ra-anana/city_ra-anana.json
+../city_raanana/city_raanana.json
 ../city_eilat/city_eilat.json:29.5577,34.9519,170
 ../city_jerusalem/city_jerusalem.json:31.7767,35.2345,230
 ../city_haifa/city_haifa.json:32.8000,34.9900,250
@@ -34,3 +34,17 @@
 ../city_strasbourg/city_strasbourg.json:48.5734,7.7521,350
 ../city_metz/city_metz.json:49.1193,6.1757,350
 ../city_kfar-saba/city_kfar-saba.json
+../city_cape-town/city_cape-town.json:-33.9249,18.4241,400
+../city_lagos/city_lagos.json:6.5244,3.3792,400
+../city_miami/city_miami.json:25.7617,-80.1918,400
+../city_nouakchott/city_nouakchott.json:18.0735,-15.9582,350
+../city_mexico-city/city_mexico-city.json:19.4326,-99.1332,450
+../city_hong-kong/city_hong-kong.json:22.3100,114.1200,400
+../city_macau/city_macau.json:22.1650,113.5600,250
+../city_santa-cruz-de-tenerife/city_santa-cruz-de-tenerife.json:28.4700,-16.3000,350
+../city_hadera/city_hadera.json:32.4340,34.9190,300
+../city_ofakim/city_ofakim.json:31.3140,34.6200,200
+../city_cairo/city_cairo.json:30.0500,31.3000,600
+../city_new-administrative-capital/city_new-administrative-capital.json:30.0100,31.7600,400
+../city_perth/city_perth.json:-31.9000,115.9000,600
+../city_marrakech/city_marrakech.json:31.6300,-8.0000,450

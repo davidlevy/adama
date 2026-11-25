@@ -1,0 +1,7 @@
+#mob{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#mob.on{display:flex}
+.mobc{max-width:340px;text-align:center;color:#e6e6e8;padding:28px 24px 22px;border:1px solid #2c2c31;border-radius:18px;background:rgba(14,14,16,.9)}
+.mobc svg{color:#8f8f94}
+.mobc h2{font:inherit;font-size:20px;font-weight:500;color:#fff;margin:14px 0 8px}
+.mobc p{font-size:14px;line-height:1.5;color:#a0a0a6;margin:0 0 20px}
+#mobok{font:inherit;font-size:13px;font-weight:500;color:#000;background:#fff;border:0;border-radius:999px;padding:11px 22px;cursor:pointer}

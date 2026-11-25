@@ -1,4 +1,16 @@
+// @ts-nocheck
+// TODO(ts): this file is not type-checked yet. The scene, the story, the share links and the air / heat / tower layers are still
+// to be split out of it into typed modules (as music.ts, pixellogo.ts and ui/Position.tsx were), and then this line goes away.
 import * as THREE from 'three';
+import {playPixelLogo} from './pixellogo';
+import {mountPosition} from './ui/Position';
+import {NAMES} from './data/names';
+import {IC,LT} from './data/icons';
+import {I18} from './i18n';
+import {initMusic} from './music';
+import {mountCityMenu} from './ui/city-menu/CityMenu';
+import {ui} from './ui/store';
+
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
 const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
@@ -6,11 +18,11 @@ if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug
   const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?~]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
   location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
 const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
-// city names in links are read with or without hyphens and case: ra-anana, raanana, Tel-Aviv, telaviv
+// city names in links are read with or without hyphens and case: raanana, raanana, Tel-Aviv, telaviv
 const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+window.__ldp&&window.__ldp(.7);   // loading bar: data is here, the build follows
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
-const NAMES={'ra-anana':{fr:"Ra'anana",en:"Ra'anana",he:'רעננה'},'eilat':{fr:'Eilat',en:'Eilat',he:'אילת'},'jerusalem':{fr:'Jérusalem',en:'Jerusalem',he:'ירושלים'},'tel-aviv':{fr:'Tel Aviv',en:'Tel Aviv',he:'תל אביב'},'haifa':{fr:'Haïfa',en:'Haifa',he:'חיפה'},'grenoble':{fr:'Grenoble',en:'Grenoble',he:'גרנובל'},'beer-sheva':{fr:'Beer-Sheva',en:'Beer Sheva',he:'באר שבע'},'dubai':{fr:'Dubaï',en:'Dubai',he:'דובאי'},'ein-gedi':{fr:'Ein Gedi',en:'Ein Gedi',he:'עין גדי'},'modiin':{fr:'Modi\u2019in',en:'Modi\u2019in',he:'מודיעין'},'paris':{fr:'Paris',en:'Paris',he:'פריז'},'hod-hasharon':{fr:'Hod HaSharon',en:'Hod HaSharon',he:'הוד השרון'},'petah-tikva':{fr:'Petah Tikva',en:'Petah Tikva',he:'פתח תקווה'},'ramat-hasharon':{fr:'Ramat HaSharon',en:'Ramat HaSharon',he:'רמת השרון'},'holon':{fr:'Holon',en:'Holon',he:'חולון'},'bnei-brak':{fr:'Bnei Brak',en:'Bnei Brak',he:'בני ברק'},'netanya':{fr:'Netanya',en:'Netanya',he:'נתניה'},'ashkelon':{fr:'Ashkelon',en:'Ashkelon',he:'אשקלון'},'tiberias':{fr:'Tibériade',en:'Tiberias',he:'טבריה'},'harish':{fr:'Harish',en:'Harish',he:'חריש'},'amsterdam':{fr:'Amsterdam',en:'Amsterdam',he:'אמסטרדם'},'venice':{fr:'Venise',en:'Venice',he:'ונציה'},'karmiel':{fr:'Karmiel',en:'Karmiel',he:'כרמיאל'},'ashdod':{fr:'Ashdod',en:'Ashdod',he:'אשדוד'},'rishon-lezion':{fr:'Rishon LeZion',en:'Rishon LeZion',he:'ראשון לציון'},'rehovot':{fr:'Rehovot',en:'Rehovot',he:'רחובות'},'palma':{fr:'Palma de Majorque',en:'Palma de Mallorca',he:'פלמה דה מיורקה'},'ibiza':{fr:'Ibiza',en:'Ibiza',he:'איביזה'},'limassol':{fr:'Limassol',en:'Limassol',he:'לימסול'},'shenzhen':{fr:'Shenzhen',en:'Shenzhen',he:'שנג׳ן'},'singapore':{fr:'Singapour',en:'Singapore',he:'סינגפור'},'strasbourg':{fr:'Strasbourg',en:'Strasbourg',he:'שטרסבורג'},'metz':{fr:'Metz',en:'Metz',he:'מץ'},'kfar-saba':{fr:'Kfar Saba',en:'Kfar Saba',he:'כפר סבא'}};
 // UTM projection (WGS84), zone from D.crs
 const ZONE=+D.crs.slice(-2),NORTH=D.crs.startsWith('EPSG:326');
 function utm(lat,lon){const a=6378137,f=1/298.257223563,k0=.9996,n=f/(2-f),A=a/(1+n)*(1+n*n/4+n**4/64);
@@ -50,7 +62,7 @@ const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new 
 const rimLine=new THREE.Mesh(new THREE.TorusGeometry(RD+1.5,.12,8,200).rotateX(Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));rimLine.position.y=.02;scene.add(rimLine);
 const geo=new THREE.BoxGeometry(1,1,1);geo.translate(0,.5,0);
 const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
-const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5f9d33'),FIELD2=new THREE.Color('#86b946');
+const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5e9a63'),FIELD2=new THREE.Color('#76ab76');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
 cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
@@ -83,19 +95,14 @@ mat.onBeforeCompile=sh=>{sh.uniforms.uT=UT;
 const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scl=new THREE.Vector3();
 const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8a40'),G2=new THREE.Color('#2fa650');
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
-  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.26:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
+  stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.8:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
   const list=Object.values(by).filter(e=>e.len>25).sort((a,b)=>b.len-a.len),kept=[];
   for(const e of list){if(kept.length>=8)break;const m=e.pts[Math.floor(e.pts.length/2)];if(kept.every(k=>Math.hypot(k.x-m[0],k.z-m[1])>40))kept.push({nm:e.nm,x:m[0],z:m[1]})}
   kept.forEach(k=>{const d=document.createElement('div');d.className='rl';wrap.appendChild(d);roadLabs.push({d,nm:k.nm,v:new THREE.Vector3(k.x,3,k.z)})})}
-const IC={heat:'<svg viewBox="0 0 15 15"><path d="M5.5 9V3.2a2 2 0 014 0V9a3.2 3.2 0 11-4 0z"/><path d="M7.5 5.5v5"/></svg>',air:'<svg viewBox="0 0 15 15"><path d="M1.5 5h7a2 2 0 10-2-2"/><path d="M1.5 8h10a2 2 0 11-2 2"/><path d="M1.5 11h4"/></svg>',hoods:'<svg viewBox="0 0 15 15"><path d="M7.5 13.5s4-3.6 4-7a4 4 0 10-8 0c0 3.4 4 7 4 7z"/><circle cx="7.5" cy="6.5" r="1.4"/></svg>',towers:'<svg viewBox="0 0 15 15"><path d="M3 13.5V2.5h6v11M9 6.5h3v7M5 5h2M5 7.5h2M5 10h2"/></svg>',share:'<svg viewBox="0 0 15 15"><path d="M7.5 9.5v-8M4.8 4.2L7.5 1.5l2.7 2.7M3 7.5v5h9v-5"/></svg>'},LT={heat:'heat',air:'airb',hoods:'hoods',towers:'twr'};
-const I18={
-fr:{heat:'Chaleur',hv:'chaleur de surface en été, depuis {y}',hl:'normal',hh:'plus chaud',pts:'pts',since:'depuis {y}',sinceb:'plus bâti depuis {y}',newy:'nouveau cette année',tag:'40 ans de villes qui s\u2019étendent, vues de l\u2019espace',scr:'Défiler',mus:'Musique',find:'Chercher une ville',nocity:'Aucune ville',play:'Lancer',pyr:'pts/an',hoods:'Quartiers',mobt:'Mieux sur ordinateur',mobp:'Adama est une expérience 3D faite pour la souris ou le trackpad. Elle fonctionne sur mobile, mais elle est beaucoup plus agréable sur un écran d\u2019ordinateur.',mobok:'Continuer quand même',shr:'Partager',shc:'Lien copié',twr:'Tours',airb:'Air',air:'Qualité de l\u2019air',airu:'µg/m³',airwho:'seuil OMS 5',airnow:'Aujourd\u2019hui : indice {a}, station {s} à {d} km',airno:'pas de donnée avant {y}',airwhat:'Moyenne annuelle des particules fines (PM2.5). Pointillé horizontal : limite de l\u2019OMS (5 µg/m³). Trait vertical : l\u2019année affichée.',airx:'{x}× la limite de l\u2019OMS',airok:'sous la limite de l\u2019OMS',airsub:'particules fines dans l\u2019air, moyenne {y}',airbrk:'avant {y}: autre modèle, tendance moins sûre',airsrc:'Source : {s}, ~{r} km',about:'À propos',abh:'Adama montre sur quoi nos villes ont grandi.',abp:'Depuis 1984, des images satellites gratuites suivent chaque ville. Fais défiler les années et regarde le vert laisser place au béton.',ab1:'Images Landsat (30 m) puis Sentinel-2 (10 m), une composition par an.',ab2:'Un modèle appris sur ESA WorldCover estime le bâti par zones de 20 m, pas bâtiment par bâtiment.',ab3:'Les routes, les aires de jeux et les tours viennent d\u2019OpenStreetMap.',aby:'Pour voir la Terre du ciel, découvrez le travail de Yann Arthus-Bertrand',abmap:'Voir la carte',ab4:'Le bouton CHALEUR montre la température de surface en été (bande thermique Landsat, 100 m), comparée à la médiane de la ville : sans couleur, normal ; orange, plus chaud ; rouge, très chaud ; jaune pâle, le plus chaud. Disponible pour certaines villes.',abme:'Je l\u2019ai développé en pensant à ma ville, Ra\u2019anana : ses espaces verts et ses <b>aires de jeux</b>.',abc:'Adama est open source. Ajoute ta ville, corrige un bug, améliore le modèle : les contributions sont les bienvenues.',abback:'Retour au site',cr:'Données satellite',built:'bâti',green:'vert',neu:'nouveau',art:'axes principaux',kids:'aires de jeux',bf:'Avant',lens:'Cercle : {a} · Autour : {b}',pgs:'Aires de jeux : {n} (OpenStreetMap)',pc:'de la ville encore vert',wat:'eau',bare:'sol nu / désert',field:'champs',pcr:'du rayon de {r} km encore vert',pos:'Zoom sur mon quartier',rot:'Rotation',w:'400 m : {p} % de vert',n:'Vert à {d} m',on:'Tu es sur du vert',b0:'Déjà bâti en ',b1:'Bâti en ',g:'Non bâti',gf:'Vert jusqu’en ',s30:'Landsat, 30 m par pixel (moins précis)',s10:'Sentinel-2, 10 m par pixel',sb:'Landsat + Sentinel-2',note:'Images satellites gratuites (Landsat depuis 1984, Sentinel-2 depuis 2017), un composite par an. Estimation par modèle : des zones de 20 m, pas des bâtiments. Avant 2017 la résolution est plus grossière.',outside:'Tu es à {d} km de la ville, hors de la carte.',loc:'Recherche de ta position...',nogeo:'Géolocalisation indisponible.',deny:'Position refusée.',addr:'Ou tape une adresse',adrgo:'Aller',adrnf:'Adresse introuvable. Essaie sans le numéro, ou le nom de la rue dans la langue locale (hébreu, par ex.).',nf:'Position introuvable.',ok:'Position affichée (±{a} m).'},
-en:{heat:'Heat',hv:'summer surface heat since {y}',hl:'normal',hh:'hotter',pts:'pts',since:'since {y}',sinceb:'more built since {y}',newy:'new this year',tag:'40 years of cities spreading, seen from space',scr:'Scroll',mus:'Music',find:'Search a city',nocity:'No city',play:'Play',pyr:'pts/yr',hoods:'Districts',mobt:'Best on desktop',mobp:'Adama is a 3D experience made for a mouse or trackpad. It works on mobile, but it is much better on a computer screen.',mobok:'Continue anyway',shr:'Share',shc:'Link copied',twr:'Towers',airb:'Air',air:'Air quality',airu:'µg/m³',airwho:'WHO limit 5',airnow:'Today: index {a}, {s} station {d} km away',airno:'no data before {y}',airwhat:'Yearly average of fine particles (PM2.5). Horizontal dashes: WHO limit (5 µg/m³). Vertical line: the year shown.',airx:'{x}× the WHO limit',airok:'under the WHO limit',airsub:'fine particles in the air, {y} average',airbrk:'before {y}: different model, less reliable trend',airsrc:'Source: {s}, ~{r} km',about:'About',abh:'Adama shows what our cities grew over.',abp:'Since 1984, free satellite images have followed every city. Scroll through the years and watch the green give way to concrete.',ab1:'Landsat (30 m) then Sentinel-2 (10 m) images, one composite per year.',ab2:'A model trained on ESA WorldCover estimates what is built in 20 m areas, not building by building.',ab3:'Roads, playgrounds and towers come from OpenStreetMap.',aby:'To see the Earth from above, discover the work of Yann Arthus-Bertrand',abmap:'See the map',ab4:'The HEAT button shows summer surface temperature (Landsat thermal band, 100 m) against the city median: no colour is normal, orange is warmer, red is hot, pale yellow is the hottest. Available for some cities.',abme:'I built it thinking of my city, Ra\u2019anana: its green spaces and its <b>playgrounds</b>.',abc:'Adama is open source. Add your city, fix a bug, improve the model: contributions are welcome.',abback:'Back to the site',cr:'Satellite data',built:'built',green:'green',neu:'new',art:'main roads',kids:'playgrounds',bf:'Before',lens:'Circle: {a} · Around: {b}',pgs:'Playgrounds: {n} (OpenStreetMap)',pc:'of the city still green',wat:'water',bare:'bare ground / desert',field:'fields',pcr:'of the {r} km radius still green',pos:'Zoom my neighbourhood',rot:'Rotate',w:'400 m: {p}% green',n:'Green at {d} m',on:'You are on green',b0:'Already built in ',b1:'Built in ',g:'Not built',gf:'Green until ',s30:'Landsat, 30 m per pixel (less precise)',s10:'Sentinel-2, 10 m per pixel',sb:'Landsat + Sentinel-2',note:'Free satellite imagery (Landsat since 1984, Sentinel-2 since 2017), one composite per year. Model estimate: 20 m areas, not individual buildings. Before 2017 the resolution is coarser.',outside:'You are {d} km from the city, outside the map.',loc:'Finding your position...',nogeo:'Geolocation unavailable.',deny:'Location denied.',addr:'Or type an address',adrgo:'Go',adrnf:'Address not found. Try without the number, or the street name in the local language (Hebrew, for example).',nf:'Position not found.',ok:'Position shown (±{a} m).'},
-he:{heat:'חום',hv:'חום פני השטח בקיץ מאז {y}',hl:'רגיל',hh:'חם יותר',pts:'pts',since:'מאז {y}',sinceb:'בנוי יותר מאז {y}',newy:'חדש השנה',tag:'40 שנות התפשטות של ערים, מהחלל',scr:'גלול',mus:'מוזיקה',find:'חיפוש עיר',nocity:'אין עיר',play:'הפעל',pyr:'נק׳/שנה',hoods:'שכונות',mobt:'עדיף במחשב',mobp:'אדמה היא חוויה תלת־ממדית שנועדה לעכבר או לטרקפד. היא עובדת גם בנייד, אבל הרבה יותר נעים במסך מחשב.',mobok:'להמשיך בכל זאת',shr:'שיתוף',shc:'הקישור הועתק',twr:'מגדלים',airb:'אוויר',air:'איכות האוויר',airu:'µg/m³',airwho:'סף WHO 5',airnow:'היום: מדד {a}, תחנה {s} במרחק {d} ק״מ',airno:'אין נתונים לפני {y}',airwhat:'ממוצע שנתי של חלקיקים עדינים (PM2.5). קו מקווקו אופקי: מגבלת WHO‏ (5 µg/m³). קו אנכי: השנה המוצגת.',airx:'פי {x} ממגבלת WHO',airok:'מתחת למגבלת WHO',airsub:'חלקיקים עדינים באוויר, ממוצע {y}',airbrk:'לפני {y}: מודל אחר, מגמה פחות אמינה',airsrc:'מקור: {s}, ~{r} ק״מ',about:'אודות',abh:'אדמה מראה על חשבון מה הערים שלנו גדלו.',abp:'מאז 1984 תמונות לוויין חינמיות עוקבות אחרי כל עיר. גללו בין השנים וראו את הירוק מפנה מקום לבטון.',ab1:'תמונות Landsat (30 מ׳) ואחר כך Sentinel-2 (10 מ׳), הרכב אחד בשנה.',ab2:'מודל שאומן על ESA WorldCover מעריך את הבנוי באזורים של 20 מ׳, לא בניין אחר בניין.',ab3:'כבישים, מגרשי משחקים ומגדלים מגיעים מ־OpenStreetMap.',aby:'כדי לראות את כדור הארץ מלמעלה, גלו את עבודתו של Yann Arthus-Bertrand',abmap:'לצפייה במפה',ab4:'כפתור החום מציג את טמפרטורת פני השטח בקיץ (ערוץ תרמי של Landsat, 100 מ׳) ביחס לחציון העיר: בלי צבע – רגיל, כתום – חם יותר, אדום – חם מאוד, צהוב בהיר – החם ביותר. זמין בחלק מהערים.',abme:'פיתחתי את זה מתוך מחשבה על העיר שלי, רעננה: המרחבים הירוקים שלה ו<b>מגרשי המשחקים</b> שלה.',abc:'אדמה היא קוד פתוח. הוסיפו את העיר שלכם, תקנו באג, שפרו את המודל: תרומות יתקבלו בברכה.',abback:'חזרה לאתר',cr:'נתוני לוויין',built:'בנוי',green:'ירוק',neu:'חדש',art:'צירים ראשיים',kids:'מגרשי משחקים',bf:'לפני',lens:'עיגול: {a} · מסביב: {b}',pgs:'מגרשי משחקים: {n} (OpenStreetMap)',pc:'מהעיר עדיין ירוק',wat:'מים',bare:'קרקע חשופה / מדבר',field:'שדות',pcr:'מהרדיוס של {r} ק״מ עדיין ירוק',pos:'התמקד בשכונה שלי',rot:'סיבוב',w:'400 מ׳: {p}% ירוק',n:'ירוק במרחק {d} מ׳',on:'אתה על שטח ירוק',b0:'בנוי כבר ב־',b1:'נבנה ב־',g:'לא בנוי',gf:'ירוק עד ',s30:'Landsat, 30 מ׳ לפיקסל (פחות מדויק)',s10:'Sentinel-2, 10 מ׳ לפיקסל',sb:'Landsat + Sentinel-2',note:'תמונות לוויין חינמיות (Landsat מ־1984, Sentinel-2 מ־2017), הרכב אחד לשנה. אומדן של מודל: אזורים של 20 מ׳, לא בניינים. לפני 2017 הרזולוציה גסה יותר.',outside:'אתה {d} ק״מ מהעיר, מחוץ למפה.',loc:'מחפש מיקום...',nogeo:'מיקום לא זמין.',deny:'המיקום נדחה.',addr:'או הקלידו כתובת',adrgo:'עבור',adrnf:'הכתובת לא נמצאה. נסו בלי המספר.',nf:'המיקום לא נמצא.',ok:'המיקום מוצג (±{a} מ׳).'}};
-let LG=(()=>{try{const s=localStorage.getItem('city_lang');if(I18[s])return s}catch(e){}const n=(navigator.language||'en').slice(0,2);return I18[n]?n:'en'})();
+let LG=ui.getState().lang;   // the language lives in the Zustand store (ui/store.ts); LG mirrors it for the code of this file
 const T=k=>I18[LG][k];
 const YR=D.years,yi0=Y-1;let domYi=-1,lensOn=false,LR=9,tt=yi0,run=false,hp=null,dirty=true,facG=null;
 // Landsat surface temperature (optional layer): anomaly versus the city median, per 100 m block and year
@@ -130,29 +137,15 @@ function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,
   document.getElementById('hvb').textContent=(k<=2?'':(d>=0?'+':'−')+nf.format(Math.abs(d))+' °C');document.getElementById('hvl').textContent=T('hv').replace('{y}',HT.years[Math.min(2,HT.years.length-1)]===YR[0]?YR[0]:HT.years[0])}
 const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=document.getElementById('tk'),tip=document.getElementById('tip');
 sl.max=yi0;sl.value=yi0;
-const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
-const CTRY={fr:{IL:'Israël',FR:'France',AE:'Émirats arabes unis',NL:'Pays-Bas',IT:'Italie',ES:'Espagne',CY:'Chypre',CN:'Chine',SG:'Singapour'},en:{IL:'Israel',FR:'France',AE:'United Arab Emirates',NL:'Netherlands',IT:'Italy',ES:'Spain',CY:'Cyprus',CN:'China',SG:'Singapore'},he:{IL:'ישראל',FR:'צרפת',AE:'איחוד האמירויות',NL:'הולנד',IT:'איטליה',ES:'ספרד',CY:'קפריסין',CN:'סין',SG:'סינגפור'}},CODE={grenoble:'FR',dubai:'AE',paris:'FR',amsterdam:'NL',venice:'IT',palma:'ES',ibiza:'ES',limassol:'CY',shenzhen:'CN',singapore:'SG',strasbourg:'FR',metz:'FR'},CO=s=>({get fr(){return CTRY.fr[CODE[s]||'IL']},get en(){return CTRY.en[CODE[s]||'IL']},get he(){return CTRY.he[CODE[s]||'IL']}});const COUNTRY=CO(D.slug);
-// city menu: search field + cities grouped by country, in columns
-const cms=document.createElement('input'),cmg=document.createElement('div');cms.className='cms';cms.type='search';cms.autocomplete='off';cms.spellcheck=false;cmg.className='cmg';cml.append(cms,cmg);cml.onclick=e=>e.stopPropagation();
-const nz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-// a city matches when one of its names (or its country) has a word that starts with what was typed: "t" finds Tel Aviv and Tiberias, "ra" finds Ra'anana and Rafah...
-const cityMatch=(c,q)=>!q||[...['fr','en','he'].map(l=>(NAMES[c.slug]||{})[l]),c.name.split(',')[0],CO(c.slug)[LG]].some(n=>nz(n).split(/[\s\-\u2019'.]+/).some(w=>w.startsWith(q)));
-function renderCities(){const q=nz(cms.value.trim()),by={},nmOf=c=>(NAMES[c.slug]||{})[LG]||c.name.split(',')[0];
-  CITIES.forEach(c=>{if(cityMatch(c,q)){const k=CODE[c.slug]||'IL';(by[k]=by[k]||[]).push(c)}});
-  cmg.innerHTML='';const codes=Object.keys(by).sort((a,b)=>CTRY[LG][a].localeCompare(CTRY[LG][b],LG));
-  if(!codes.length){const p=document.createElement('p');p.className='cmn0';p.textContent=T('nocity');cmg.appendChild(p);return}
-  codes.forEach(k=>{const sec=document.createElement('section'),h=document.createElement('h4'),ul=document.createElement('ul');h.textContent=CTRY[LG][k]+' \u00b7 '+by[k].length;
-    by[k].sort((a,b)=>nmOf(a).localeCompare(nmOf(b),LG)).forEach(c=>{const li=document.createElement('li'),n=document.createElement('span'),ly=document.createElement('i');li.dataset.slug=c.slug;li.setAttribute('role','option');if(c.slug===D.slug)li.className='on';
-      n.className='cn2';n.textContent=nmOf(c);ly.className='ly';ly.innerHTML=(c.has||[]).map(x=>'<b title="'+T(LT[x])+'">'+IC[x]+'</b>').join('');li.append(n,ly);
-      li.onclick=()=>{if(c.slug===D.slug){cmEl.classList.remove('open');return}if(PATHMODE){location.href=ROOTP+c.slug}else{location.hash=c.slug;location.reload()}};ul.appendChild(li)});
-    sec.append(h,ul);cmg.appendChild(sec)})}
-cms.oninput=renderCities;cms.onkeydown=e=>{if(e.key==='Enter'){const f=cmg.querySelector('li');if(f)f.click()}};
-cmb.onclick=e=>{e.stopPropagation();const o=cmEl.classList.toggle('open');cmb.setAttribute('aria-expanded',o);if(o){cms.value='';renderCities();if(matchMedia('(hover:hover)').matches)setTimeout(()=>cms.focus(),50)}};
-addEventListener('click',()=>cmEl.classList.remove('open'));addEventListener('keydown',e=>{if(e.key==='Escape')cmEl.classList.remove('open')});
-function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
+// city menu (src/cityMenu.js)
+// the city menu of the top bar (src/ui/city-menu): a Preact component, it never touches the scene
+const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
+mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
+let zpLang=()=>{};   // set by the hand tool below, called when the language changes
+function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
-  const nm=(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];cmn.innerHTML='<span class="cn"></span> <span class="cc"></span>';cmn.firstChild.textContent=nm;cmn.lastChild.textContent=COUNTRY[LG];cms.placeholder=T('find');renderCities();document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
-  window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
+  document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
+  zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
 bars.innerHTML=gy.map((v,i)=>'<div class="bar" data-i="'+i+'"><div style="height:'+Math.round(v/gmax*100)+'%"></div></div>').join('');
@@ -170,9 +163,16 @@ const hoodTxt=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt)));hoodYi=yi;h
   const b=l.d.lastChild,dv=yi>0?l.g[yi]-l.g[yi-1]:0;b.style.display=Math.abs(dv)<HOOD_MIN?'none':'';b.lastChild.textContent=(dv>0?'▲ +':'▼ −')+Math.abs(dv).toFixed(1)+' '+T('pts');l.d.title=YR[Math.max(0,yi-1)]+' → '+YR[yi]})};
 if(D.hoods)makeHoods(D.hoods);   // pre-generated by scripts/neighborhoods.py; cities without the file simply have no pills
 const NIN=cells.reduce((a,c)=>a+(c.in&&c.lt!==1?1:0),0),OUTL=cells.some(c=>!c.in);const NV=cells.reduce((a,c)=>a+(c.in&&c.lt===0?1:0),0);const BP0=cells.reduce((a,c)=>a+(c.in&&c.f<=0?1:0),0)/NIN*100,GP0=(NV-cells.reduce((a,c)=>a+(c.in&&c.lt===0&&c.f<=0?1:0),0))/NIN*100;const HASW=cells.some(c=>c.lt===1),HASB=cells.some(c=>c.lt===2);const RKM=(RD*CM/1000).toFixed(1);
+const fArr=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===3&&c.f>y)n++});return n/NIN*100});   // fields still unbuilt, counted apart from the green
+// Zoomed out (below zoom 1.2, the story included) the cells touch instead of keeping a 6 % gap: no speckle of gaps at about one pixel per cell.
+// Merging cells into bigger blocks was tried (2x2, 4x4, 8x8): it gave dotted greens, white stripes and lattices, so cells stay single.
+let LODm=1;   // 2 when zoomed out
+// zoom thresholds with a 6% hysteresis so the level does not flicker at the edge
+function lodFor(z){return z>=(LODm===1?1.2*.94:1.2*1.06)?1:2}
 function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.instanceColor.array;
   for(let i=0;i<ND;i++){let d=Tg[i]-Ch[i];if(d>.002||d<-.002){Ch[i]+=d*k;mv=true}else Ch[i]=Tg[i];
-    const o=i*16;const sc=.94+.06*Math.max(0,Math.min(1,(.7-Ch[i])/.3));ma[o]=sc;ma[o+5]=Math.max(.05,Ch[i]);ma[o+10]=sc;ma[o+12]=DX[i];ma[o+14]=DZ[i];ma[o+15]=1;
+    const o=i*16;const sc=LODm>1?1:.94+.06*Math.max(0,Math.min(1,(.7-Ch[i])/.3));   // zoomed out the cells touch: no speckle of gaps
+    ma[o]=sc;ma[o+5]=Math.max(.05,Ch[i]);ma[o+10]=sc;ma[o+12]=DX[i];ma[o+14]=DZ[i];ma[o+15]=1;
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
 let airLang=()=>{},airOn=false,airV=null;
@@ -215,7 +215,7 @@ function update(t){
     else if(c.f<999&&(c.lt===0||c.lt===3)&&c.f-1<ye){const k=ye-c.f+1,hb=(.8+c.nb*1.1+hv*.9)*VX,hg=.42;h=hg+(hb-hg)*k;color=col.copy(WH)}
     else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
     else if(c.lt===2){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}
-    else if(c.lt===3){h=.26;color=col.copy(FIELD).lerp(FIELD2,.5)}
+    else if(c.lt===3){h=.8;color=col.copy(FIELD).lerp(FIELD2,.5)}
     else{h=.42;color=col.copy(G1).lerp(G2,.5)}
     if(heatOn&&HT&&!(c.road&&(built||c.f===999))){{const an=heatAt(HYc,c.gx+.5,c.gy+.5);color=color.clone().lerp(heatCol(an,hCol),heatMix(an))}}
     if(c.in&&c.f<=yi){bt++;if(c.lt===0)gv++;if(c.f===yi&&yi>0)nw++}
@@ -235,10 +235,10 @@ function update(t){
   document.getElementById('f2').textContent=yi===0?'\u2014':sg(Math.round(bp-bp0))+' '+T('pts');document.getElementById('l2').textContent=T('sinceb').replace('{y}',YR[0]);
   
   document.getElementById('f3').textContent=yi===0?'\u2014':sg(Math.round(dNew*10)/10)+' '+T('pts');document.getElementById('l3').textContent=T('newy');['f2','f3'].forEach(k=>document.getElementById(k).parentElement.style.display=yi===0?'none':'');
-  const gp=(NV-gv)/NIN*100;document.getElementById('pc').textContent=Math.round(gp)+' %';document.getElementById('gt').textContent=yi===0?'':(gp<GP0?'\u25BC ':'\u25B2 ')+P(Math.abs(Math.round(gp-GP0)))+' '+T('pts')+' '+T('since').replace('{y}',YR[0]);
+  const gp=(NV-gv)/NIN*100;document.getElementById('pc').textContent=Math.round(gp)+' %';{const fe=document.getElementById('gf'),fv=Math.round(fArr[yi]);fe.textContent=fv>=1?T('fieldsl').replace('{n}',P(fv)):'';fe.style.display=fv>=1?'':'none'}document.getElementById('gt').textContent=yi===0?'':(gp<GP0?'\u25BC ':'\u25B2 ')+P(Math.abs(Math.round(gp-GP0)))+' '+T('pts')+' '+T('since').replace('{y}',YR[0]);
   refreshTip(yi)}
 // timeline ticks every 5 years
-YR.forEach((y,i)=>{if(i===0||i===yi0||(y%5===0&&yi0-i>2)){const d=document.createElement('div');d.dataset.idx=i;d.style.left=(i/yi0*100)+'%';d.textContent=y;d.onclick=()=>{stop();tt=i;sl.value=i;update(i)};tkEl.appendChild(d)}});
+YR.forEach((y,i)=>{if(i===0||i===yi0||(y%5===0&&i>2&&yi0-i>2)){const d=document.createElement('div');d.dataset.idx=i;d.style.left=(i/yi0*100)+'%';d.textContent=y;d.onclick=()=>{stop();tt=i;sl.value=i;update(i)};tkEl.appendChild(d)}});
 function stop(){run=false;pl.innerHTML='&#9664;';}
 sl.oninput=()=>{stop();tt=+sl.value;update(tt)};
 pl.onclick=()=>{run=!run;pl.innerHTML=run?'&#10074;&#10074;':'&#9664;';if(run&&tt<=0)tt=yi0};
@@ -282,37 +282,34 @@ renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerType==='mouse
 renderer.domElement.addEventListener('click',aim);
 renderer.domElement.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){hp=null;lastE=null;dirty=true}});
 {const zoomBy=f=>{cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,cam.zoom*f));cam.updateProjectionMatrix();dirty=true};document.getElementById('zi').onclick=()=>zoomBy(1.4);document.getElementById('zo').onclick=()=>zoomBy(1/1.4);
+// hand tool: the usual way to move around, next to the zoom buttons. Left drag pans instead of rotating (right-click or Shift + drag always pan).
+const zp=document.getElementById('zp');let hand=false;
+const setHand=v=>{hand=v;zp.setAttribute('aria-pressed',v);ctl.mouseButtons={LEFT:v?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:v?THREE.MOUSE.ROTATE:THREE.MOUSE.PAN};ctl.touches={ONE:v?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE,TWO:v?THREE.TOUCH.DOLLY_ROTATE:THREE.TOUCH.DOLLY_PAN};renderer.domElement.style.cursor=v?'grab':''};
+zp.onclick=()=>setHand(!hand);zpLang=()=>{zp.dataset.tip=zp.ariaLabel=T('pan')};zpLang();
 // trackpad pinch: Chrome sends ctrl+wheel (which would zoom the page), Safari sends gesture events
 addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();zoomBy(Math.exp(-e.deltaY*.01))},{passive:false});
 let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
-const place=(lat,lon,acc)=>{const [x,z]=toXZ(lat,lon);
-  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;msg.textContent=T('outside').replace('{d}',(Math.hypot(dx,dz)/1000).toFixed(1));meV=null;me.style.display='none';return}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';msg.textContent=acc?T('ok').replace('{a}',Math.round(acc)):'';
-  hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true};
-// no GPS (denied, unavailable): ask for an address. The text is sent to OpenStreetMap Nominatim, limited to the box of this city.
-const askAddr=why=>{msg.style.pointerEvents='auto';msg.style.maxWidth='none';msg.textContent=why+' ';
-  const i=document.createElement('input'),g=document.createElement('button'),err=document.createElement('span');i.placeholder=T('addr');i.className='adr';g.className='pill';g.textContent=T('adrgo');
-  // Photon (OpenStreetMap, tolerant to typos and Latin spelling) first, then Nominatim; both limited to the box of this city.
-  // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
-  const [w,s,e,n]=D.bbox,city=nm0();
+// my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
+const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
+const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
+  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
+  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
+  hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
+// Address search for the Position component: OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
+// OpenStreetMap often lacks the house number, so the search is repeated without numbers.
+const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
   const photon=async q=>{const r=await fetch('https://photon.komoot.io/api/?limit=1&lang='+(LG==='fr'?'fr':'en')+'&bbox='+[w,s,e,n].join(',')+'&q='+encodeURIComponent(q+' '+city)),j=await r.json();return j.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}))};
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
-  const go=async()=>{const q=i.value.trim();if(!q)return;err.textContent='';
-    let j=await find(q);const q2=q.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q)j=await find(q2);
-    if(j.length){msg.textContent='';msg.style.pointerEvents='none';msg.style.maxWidth='';place(+j[0].lat,+j[0].lon,0)}else err.textContent=T('adrnf')};
-  g.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};msg.append(i,g,err)};
-document.getElementById('gp').onclick=()=>{
-  if(!navigator.geolocation){askAddr(T('nogeo'));return}
-  msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=T('loc');
-  navigator.geolocation.getCurrentPosition(p=>place(p.coords.latitude,p.coords.longitude,p.coords.accuracy),
-    e=>askAddr(e.code===1?T('deny'):T('nf')),{enableHighAccuracy:true,timeout:15000})};
-const hdB=document.getElementById('hdb');if(hoodLabs.length){hdB.style.display='';hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
+  let j=await find(q0);const q2=q0.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q0)j=await find(q2);return j};
+mountPosition(document.getElementById('posroot'),{place,clear:clearPos,find:findAddr});
+const hdB=document.getElementById('hdb');if(hoodLabs.length){/* the Districts button stays hidden (the pills already appear only when zoomed in); shared links that hide them still work through hdB.click() */hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
-document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{LG=b.dataset.l;applyLang()});
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>ui.getState().setLang(b.dataset.l));
+ui.subscribe(state=>{if(state.lang!==LG){LG=state.lang;applyLang()}});   // the language buttons only set the store; the page and the components follow
 const compass=document.getElementById('cp');
 function resize(){const w=wrap.clientWidth,h=wrap.clientHeight;renderer.setSize(w,h);const asp=w/h,wide=w>900,s=wide?RD*Math.max(.8,.98/asp):RD*.97/asp;cam.left=-s*asp;cam.right=s*asp;cam.top=s;cam.bottom=-s;if(wide)cam.setViewOffset(w,h,-w*.2,0,w,h);else cam.setViewOffset(w,h,0,-h*.09,w,h);cam.updateProjectionMatrix()}
 addEventListener('resize',resize);resize();document.getElementById('lw').style.display=HASW?'':'none';document.getElementById('lb').style.display=HASB?'':'none';document.getElementById('lf').style.display=cells.some(c=>c.lt===3)?'':'none';applyLang();update(tt);ctl.enabled=false;renderer.domElement.style.pointerEvents='none';
@@ -365,7 +362,7 @@ function story(){
   ['wheel','touchstart','keydown'].forEach(e=>addEventListener(e,stop,{passive:true}));
   pb.onclick=()=>{if(window.__music&&!window.__music.on)window.__music(true);stop();const vh=vhpx(),end=SECH.slice(0,4).reduce((a,h)=>a+h,0)*vh,sp=end/40;let y=scrollY,last=performance.now();
     const step=t=>{y+=sp*Math.min(.05,(t-last)/1000);last=t;scrollTo(0,y);raf=y<end?requestAnimationFrame(step):0};raf=requestAnimationFrame(step)}}
-addEventListener('scroll',story,{passive:true});{const ab=v=>document.body.classList.toggle('ab-open',v);document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
+addEventListener('scroll',story,{passive:true});{const ab=v=>{document.body.classList.toggle('ab-open',v);if(v)playPixelLogo(document.getElementById('abl'))};document.getElementById('logo').onclick=e=>{e.preventDefault();ab(true)};document.getElementById('abt').onclick=()=>ab(true);['abx','abm'].forEach(i=>document.getElementById(i).onclick=()=>ab(false));addEventListener('keydown',e=>{if(e.key==='Escape')ab(false)})}addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>40),{passive:true});addEventListener('resize',story);
 const RELOAD='<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',setUp=()=>{upB.innerHTML=RELOAD;upB.title=upB.ariaLabel=ST[LG].back.replace('↑ ','')};setUp();
 window.__lh=()=>{setUp();cardKey=-1;story()};
 upB.onclick=()=>scrollTo({top:0,behavior:'smooth'});
@@ -378,7 +375,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   animBalloons(n/1000);animHaze(n/1000);
   if(explore&&roEl.checked&&!ctl.autoRotate){idleT+=d;if(idleT>8){ctl.autoRotate=true;ctl.autoRotateSpeed=.3}}
   if(ctl.autoRotate&&lastE&&!lensOn&&!run)aim(lastE);
-  if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}renderer.render(scene,cam);
+  if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}{const m=lodFor(cam.zoom);if(m!==LODm){LODm=m;animating=true}}renderer.render(scene,cam);
   const w=wrap.clientWidth,h=wrap.clientHeight;
   const hoodsShow=explore&&hoodsOn&&cam.zoom>=HOOD_ZOOM;if(hoodsShow&&Math.min(yi0,Math.max(0,Math.round(tt)))!==hoodYi)hoodTxt();
   hoodLabs.forEach(l=>{const p=l.v.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;l.d.style.display=(hoodsShow&&x>0&&x<w&&y>0&&y<h)?'block':'none';l.d.style.left=x+'px';l.d.style.top=y+'px'});
@@ -390,7 +387,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
 requestAnimationFrame(frame);
 story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
-{const l=document.getElementById('ld');if(l){l.style.opacity=0;setTimeout(()=>l.remove(),600)}}
+{const l=document.getElementById('ld');if(l){window.__ldp&&window.__ldp(1);setTimeout(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)},350)}}
 
 // ---------- share / deep link: #slug?s=<token> ----------
 // The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
@@ -450,48 +447,10 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     const close=()=>{m.classList.remove('on');try{sessionStorage.setItem('mob','1')}catch(e){}};
     m.classList.add('on');document.getElementById('mobok').onclick=close;addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('on'))close()})}}
 
-// ---------- ambient music that slowly builds up with the story (Web Audio, nothing to download) ----------
-// A drone that never stops, soft chords and a slow pentatonic melody that enter as the story advances. No sequencer.
-// Two pieces: the other one is used each time the city changes (stored in localStorage), not during a visit.
-{const S=60/70/4,
-    PRG=[{d:45,ch:[[57,0,3,7,14],[53,0,4,7,11],[48,0,4,7,14],[55,0,4,7,14]],   // A minor: Am9 Fmaj7 Cadd9 Gadd9
-          mel:[76,-1,72,-1,74,-1,69,-1,72,-1,76,-1,79,-1,76,74]},
-         {d:38,ch:[[50,0,3,7,14],[46,0,4,7,11],[53,0,4,7,14],[48,0,4,7,14]],   // D dorian: Dm9 Bbmaj7 Fadd9 Cadd9
-          mel:[81,-1,77,-1,79,-1,74,-1,77,-1,72,-1,74,-1,69,72]}],
-    hz=m=>440*Math.pow(2,(m-69)/12),bt=document.getElementById('mus');
-  let SEC=0;try{const lc=localStorage.getItem('adama_mc'),ls=+localStorage.getItem('adama_ms')||0;SEC=lc===null?0:(lc===D.slug?ls:1-ls);localStorage.setItem('adama_mc',D.slug);localStorage.setItem('adama_ms',SEC)}catch(e){}
-  let ac,mg,pad,bell,nb,an,timer=0,step=0,next=0,on=false,ex=null;
-  const prog=()=>explore?.5:Math.min(1,scrollY/Math.max(1,SECH.slice(0,4).reduce((a,h)=>a+h,0)*vhpx()));
-  const lv=(p,a)=>Math.max(0,Math.min(1,(p-a)/.15)),vol=()=>explore?0:1.1;
-  const mk=()=>{ac=new(window.AudioContext||window.webkitAudioContext)();mg=ac.createGain();mg.gain.value=0;an=ac.createAnalyser();mg.connect(an);an.connect(ac.destination);
-    const len=ac.sampleRate*4,ib=ac.createBuffer(2,len,ac.sampleRate);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2)}
-    const verb=ac.createConvolver();verb.buffer=ib;const vg=ac.createGain();vg.gain.value=.7;verb.connect(vg);vg.connect(mg);
-    const dly=ac.createDelay(2);dly.delayTime.value=S*6;const fb=ac.createGain();fb.gain.value=.45;dly.connect(fb);fb.connect(dly);const dg=ac.createGain();dg.gain.value=.4;dly.connect(dg);dg.connect(mg);dg.connect(verb);
-    pad=ac.createGain();pad.connect(mg);pad.connect(verb);bell=ac.createGain();bell.connect(mg);bell.connect(dly);bell.connect(verb);
-    nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1};
-  const tone=(t,f,dur,type,vol,cut,dest,att=.01)=>{const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
-  // a held note: rises over `att`, stays, fades over `att` (notes that follow each other cross-fade)
-  const sus=(t,f,dur,type,vol,cut,dest,att)=>{const o=ac.createOscillator(),g=ac.createGain(),fl=ac.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+att);g.gain.setValueAtTime(vol,t+dur-att);g.gain.linearRampToValueAtTime(0,t+dur);o.connect(fl);fl.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05)};
-  const swell=(t,dur,vol,dest)=>{const n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();n.buffer=nb;n.loop=true;fl.type='bandpass';fl.frequency.value=2200;fl.Q.value=.6;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.6);g.gain.linearRampToValueAtTime(0,t+dur);n.connect(fl);fl.connect(g);g.connect(dest);n.start(t);n.stop(t+dur+.05)};
-  const play=(i,t,p)=>{const P=PRG[SEC],c=P.ch[Math.floor(i/32)%4],r=c[0],iv=c.slice(1);
-    if(i%128===0)[[0,'sine',.09],[7,'triangle',.035],[12,'sine',.03]].forEach(([x,ty,v])=>[-1,1].forEach(d=>sus(t,hz(P.d+x)*(1+d*.002),128*S+6,ty,v,500,pad,6)));
-    if(i%32===0){const pd=lv(p,.05);if(pd>0)iv.concat(iv.map(x=>x+12)).forEach(x=>[-1,1].forEach(d=>sus(t,hz(r+x)*(1+d*.003),32*S+4,'triangle',.02*pd,500+900*p,pad,4)));
-      const a=lv(p,.45);if(a>0)swell(t,32*S,.025*a,pad);
-      const k=lv(p,.78);if(k>0){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);g.gain.setValueAtTime(.16*k,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.75)}}
-    if(i%8===0){const m=P.mel[(i/8)%16],ml=lv(p,.2);if(ml>0&&m>0){tone(t,hz(m),S*22,'sine',.06*ml,2600,bell,.3);const sh=lv(p,.5);if(sh>0)tone(t+S*2,hz(m+12),S*16,'sine',.02*sh,3500,bell,.3)}}};
-  const tick=()=>{if(explore!==ex){ex=explore;mg.gain.setTargetAtTime(vol(),ac.currentTime,ex?1.4:1.2)}const p=prog();while(next<ac.currentTime+.2){play(step,next,p);next+=S;step++}};
-  const set=v=>{on=v;bt.classList.toggle('off',!v);bt.setAttribute('aria-pressed',v);bt.title=bt.ariaLabel=T('mus');
-    if(v){if(!ac)mk();ac.resume();mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(vol(),ac.currentTime,1.2);ex=explore;if(!timer){step=0;next=ac.currentTime+.08;timer=setInterval(tick,40)}}
-    else if(ac){mg.gain.setTargetAtTime(0,ac.currentTime,.3);setTimeout(()=>{if(!on){clearInterval(timer);timer=0;ac.suspend()}},1500)}};
-  bt.onclick=e=>{e.stopPropagation();set(!on)};
-  document.addEventListener('visibilitychange',()=>{if(ac&&on)document.hidden?ac.suspend():ac.resume()});
-  window.__music=Object.assign(set,{peak:()=>{const d=new Float32Array(an.fftSize);an.getFloatTimeDomainData(d);return Math.max(...d.map(Math.abs))},state:()=>ac&&ac.state+' '+step+' sec='+SEC});
-  bt.title=bt.ariaLabel=T('mus')}
+// ambient music (src/music.js)
+initMusic({slug:D.slug,T,isExplore:()=>explore,getProgress:()=>Math.min(1,scrollY/Math.max(1,SECH.slice(0,4).reduce((a,h)=>a+h,0)*vhpx()))});
 
 // clean screen: the legend and the language / share / sound buttons fade out when nobody touches the page for a few seconds
 // (the scroll of the Play button does not count as an interaction)
-{let idle=0;const wake=()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>document.body.classList.add('idle'),4000)};
+{let idle=0;const wake=()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>{if(!document.querySelector('#gp input:focus'))document.body.classList.add('idle')},4000)};
   ['mousemove','mousedown','pointerdown','touchstart','wheel','keydown'].forEach(e=>addEventListener(e,wake,{passive:true}));wake()}

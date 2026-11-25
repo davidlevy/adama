@@ -1,14 +1,17 @@
 # generated pages, data and caches stay local
 *.html
-!web/src/template.html
+!web/src/index.html
+!web/src/html/*.html
 dist/
 node_modules
 data/
+!web/src/data/
 city_*/
 raw/
 *.json
 !package.json
 !package-lock.json
+!tsconfig.json
 !web/vercel.json
 .venv/
 __pycache__/

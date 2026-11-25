@@ -14,7 +14,7 @@ A ":lat,lon,radius" suffix crops a very large or elongated city to a round windo
 (radius in 20 m cells) around the given point. Serve out_dir over HTTP (fetch does not
 work from file://), for example by copying it to public/adama/ in an Astro site.
 """
-import json, subprocess, sys, os
+import json, subprocess, sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prep
 here = os.path.dirname(os.path.abspath(__file__))
@@ -59,19 +59,45 @@ for arg in args:
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
     has = [k for k in ('heat', 'air', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
-    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has})
+    bb = d['bbox']   # [lon0, lat0, lon1, lat1]: centre of the city, for the world map
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has, 'll': [round((bb[1] + bb[3]) / 2, 2), round((bb[0] + bb[2]) / 2, 2)]})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
 os.makedirs(os.path.dirname(bundle), exist_ok=True)
-subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.js'),
-                '--bundle', '--minify', '--format=esm', '--target=es2022', '--outfile=' + bundle,
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.ts'),
+                '--bundle', '--minify', '--jsx=automatic', '--jsx-import-source=preact', '--format=esm', '--target=es2022', '--outfile=' + bundle,
                 '--log-level=warning'], check=True)
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js
-head = open(os.path.join(here, 'src', 'template.html'), encoding='utf-8').read()
+# the stylesheet: src/css/*.css bundled by esbuild (index.css lists the files in cascade order) and inlined into the page
+css_out = os.path.join(root, 'dist', 'global.css')
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'css', 'index.css'),
+                '--bundle', '--minify', '--outfile=' + css_out, '--log-level=warning'], check=True)
+head = open(os.path.join(here, 'src', 'index.html'), encoding='utf-8').read()
+# the markup is assembled from src/html/*.html (one fragment per component, in DOM order, see index.html); the loading screen script is src/loader.js
+head = re.sub(r'<!--include:([\w-]+)-->', lambda m: open(os.path.join(here, 'src', 'html', m.group(1) + '.html'), encoding='utf-8').read(), head)
+loader_out = os.path.join(root, 'dist', 'loader.js')
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'loader.ts'),
+                '--bundle', '--minify', '--format=iife', '--outfile=' + loader_out, '--log-level=warning'], check=True)
+assert head.count('<!--script:loader-->') == 1
+head = head.replace('<!--script:loader-->', '<script>' + open(loader_out, encoding='utf-8').read().strip() + '</script>')
+assert head.count('/*CSS*/') == 1
+css = open(css_out, encoding='utf-8').read()
+mod_css = os.path.join(root, 'dist', 'bundle.css')   # extracted by esbuild from the CSS modules imported in the JS (src/ui/*.module.css)
+if os.path.exists(mod_css):
+    mod = open(mod_css, encoding='utf-8').read()
+    # esbuild shortens the local class names (a, b, ...): make sure none of them equals a class of the global CSS
+    clash = set(re.findall(r'\.([A-Za-z_][\w-]*)', mod)) & set(re.findall(r'\.([A-Za-z_][\w-]*)', re.sub(r'url\([^)]*\)', '', css)))
+    assert not clash, 'CSS module class names collide with global classes: %s' % sorted(clash)
+    css += mod
+head = head.replace('/*CSS*/', css)
 if base:
     head = head.replace('<head>', '<head><base href="%s"><meta name="adama-routing" content="path">' % base, 1)
 with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(head + '<script type="module">' + js + '</script></body></html>')
+og = os.path.join(here, 'og.png')   # social share image (1200x630), served at /og.png
+if os.path.exists(og):
+    import shutil
+    shutil.copyfile(og, os.path.join(out, 'og.png'))
 print('wrote', out)
