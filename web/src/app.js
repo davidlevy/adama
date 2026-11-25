@@ -379,7 +379,7 @@ gpm.onclick=()=>{closeAddr();if(posMode==='gps'){clearPos();return}
   setPos('gps','busy');msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=T('loc');
   navigator.geolocation.getCurrentPosition(p=>place(p.coords.latitude,p.coords.longitude,p.coords.accuracy),
     e=>{setPos('','');openAddr(e.code===1?T('deny'):T('nf'))},{enableHighAccuracy:true,timeout:15000})};
-const hdB=document.getElementById('hdb');if(hoodLabs.length){hdB.style.display='';hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
+const hdB=document.getElementById('hdb');if(hoodLabs.length){/* the Districts button stays hidden (the pills already appear only when zoomed in); shared links that hide them still work through hdB.click() */hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{LG=b.dataset.l;applyLang()});
