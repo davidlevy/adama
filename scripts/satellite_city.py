@@ -29,6 +29,7 @@ import re
 import subprocess
 import sys
 import time
+import unicodedata
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 
@@ -83,7 +84,10 @@ def data_root():
 
 
 def slug(s):
-    s = re.sub(r"[^a-z0-9]+", "-", s.lower().split(",")[0]).strip("-")
+    """URL-safe name: accents dropped, apostrophes removed (Ra'anana -> raanana), other separators become one hyphen."""
+    s = unicodedata.normalize("NFKD", s.split(",")[0]).encode("ascii", "ignore").decode().lower()
+    s = re.sub(r"[\'\u2019`]", "", s)
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s or "city"
 
 
