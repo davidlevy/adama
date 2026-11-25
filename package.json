@@ -7,5 +7,9 @@
     "start": "python3 -m http.server 8000 -d dist/site",
     "dev": "npm run build && npm run start"
   },
-  "dependencies": { "esbuild": "^0.28.2", "three": "^0.187.0" }
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "preact": "^11.2.0",
+    "three": "^0.187.0"
+  }
 }

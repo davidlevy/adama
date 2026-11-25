@@ -66,7 +66,7 @@ with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
 bundle = os.path.join(root, 'dist', 'bundle.js')
 os.makedirs(os.path.dirname(bundle), exist_ok=True)
 subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.js'),
-                '--bundle', '--minify', '--format=esm', '--target=es2022', '--outfile=' + bundle,
+                '--bundle', '--minify', '--jsx=automatic', '--jsx-import-source=preact', '--format=esm', '--target=es2022', '--outfile=' + bundle,
                 '--log-level=warning'], check=True)
 js = open(bundle, encoding='utf-8').read()
 assert '</script>' not in js

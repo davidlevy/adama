@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {WORLD} from './worldmask.js';
 import {playPixelLogo} from './pixellogo.js';
+import {mountPosition} from './ui/Position.jsx';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
 const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
@@ -205,7 +206,7 @@ let cmvLang=()=>{};let zpLang=()=>{};
 function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
   const nm=(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];cmn.innerHTML='<span class="cn"></span> <span class="cc"></span>';cmn.firstChild.textContent=nm;cmn.lastChild.textContent=COUNTRY[LG];cms.placeholder=T('find');renderCities();document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
-  cmvLang();zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
+  cmvLang();zpLang();posListeners.forEach(f=>f());window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
 bars.innerHTML=gy.map((v,i)=>'<div class="bar" data-i="'+i+'"><div style="height:'+Math.round(v/gmax*100)+'%"></div></div>').join('');
@@ -351,35 +352,21 @@ addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();z
 let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
-// three states for the position control: nothing, busy (locating / searching) and on (the marker is on the map); a click on the active segment clears it
-let posMode='';const seg0=()=>document.getElementById('gp'),setPos=(m,st)=>{posMode=m;seg0().dataset.mode=m;seg0().dataset.st=st};
-const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';msg.textContent='';setPos('','');dirty=true};
-const place=(lat,lon,acc)=>{const [x,z]=toXZ(lat,lon);
-  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){setPos('','');const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;msg.textContent=T('outside').replace('{d}',(Math.hypot(dx,dz)/1000).toFixed(1));meV=null;me.style.display='none';return}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';setPos(posMode,'on');msg.textContent=acc?T('ok').replace('{a}',Math.round(acc)):'';
-  hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true};
-// my position: a segmented control, "My location" (GPS) | "Address". Address turns into an input field in every case, not only when the GPS fails.
-// The text is sent to OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
+// my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
+const posListeners=[];
+const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
+const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
+  if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
+  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
+  hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
+// Address search for the Position component: OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
 // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
 const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
   const photon=async q=>{const r=await fetch('https://photon.komoot.io/api/?limit=1&lang='+(LG==='fr'?'fr':'en')+'&bbox='+[w,s,e,n].join(',')+'&q='+encodeURIComponent(q+' '+city)),j=await r.json();return j.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}))};
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
   let j=await find(q0);const q2=q0.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q0)j=await find(q2);return j};
-const seg=document.getElementById('gp'),gpm=document.getElementById('gpm'),gpa=document.getElementById('gpa');let adr=null;
-const closeAddr=()=>{if(!adr)return;adr.remove();adr=null;gpa.style.display='';seg.classList.remove('typing')};
-const openAddr=why=>{msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=why||'';if(adr){adr.focus();return}
-  const i=document.createElement('input');i.className='adr';i.type='text';i.autocomplete='off';i.spellcheck=false;i.placeholder=T('addr');i.setAttribute('aria-label',T('addr'));
-  gpa.style.display='none';seg.classList.add('typing');seg.append(i);adr=i;i.focus();
-  i.onkeydown=async ev=>{if(ev.key==='Escape'){closeAddr();msg.textContent='';return}if(ev.key!=='Enter')return;const q=i.value.trim();if(!q)return;
-    msg.textContent=T('loc');setPos('addr','busy');const j=await findAddr(q);if(j.length){msg.textContent='';closeAddr();place(+j[0].lat,+j[0].lon,0)}else{setPos('','');msg.textContent=T('adrnf')}};
-  i.onblur=()=>{if(!i.value.trim())setTimeout(()=>{if(adr===i&&document.activeElement!==i)closeAddr()},120)}};
-gpa.onclick=()=>{if(posMode==='addr')clearPos();openAddr('')};
-gpm.onclick=()=>{closeAddr();if(posMode==='gps'){clearPos();return}
-  if(!navigator.geolocation){openAddr(T('nogeo'));return}
-  setPos('gps','busy');msg.style.pointerEvents='none';msg.style.maxWidth='';msg.textContent=T('loc');
-  navigator.geolocation.getCurrentPosition(p=>place(p.coords.latitude,p.coords.longitude,p.coords.accuracy),
-    e=>{setPos('','');openAddr(e.code===1?T('deny'):T('nf'))},{enableHighAccuracy:true,timeout:15000})};
+mountPosition(document.getElementById('posroot'),{T:k=>T(k),subscribe:f=>{posListeners.push(f);return()=>posListeners.splice(posListeners.indexOf(f),1)},place,clear:clearPos,find:findAddr});
 const hdB=document.getElementById('hdb');if(hoodLabs.length){/* the Districts button stays hidden (the pills already appear only when zoomed in); shared links that hide them still work through hdB.click() */hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};
