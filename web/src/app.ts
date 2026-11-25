@@ -52,7 +52,7 @@ const hemi=new THREE.HemisphereLight(0xf2f4ff,0x3a3a3c,1.2);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(-120,260,80);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);
 const sc=sun.shadow.camera;sc.left=-230;sc.right=230;sc.top=230;sc.bottom=-230;sc.near=1;sc.far=900;sun.shadow.bias=-.0004;sun.shadow.normalBias=.2;scene.add(sun);
 // roads: rasterise OSM arteries onto the cell grid
-D.osm.arteries.forEach(wy=>{if(!wy.c)return;/* only motorway/trunk/primary: secondary and tertiary roads cluttered the view */const P=wy.pts.map(p=>toXZ(p[0],p[1])),r=.78,v=2;
+D.osm.arteries.forEach(wy=>{const P=wy.pts.map(p=>toXZ(p[0],p[1])),r=wy.c?.78:.62,v=wy.c?2:1;
   for(let i=0;i<P.length-1;i++){const [x0,z0]=P[i],[x1,z1]=P[i+1],L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.ceil(L/.3));
     for(let s=0;s<=n;s++){const px=x0+(x1-x0)*s/n,pz=z0+(z1-z0)*s/n,gx=Math.floor(px+W/2),gy=Math.floor(pz+H/2);
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=gx+dx,Z=gy+dy;if(X<0||Z<0||X>=W||Z>=H)continue;const j=idx[Z*W+X];if(j<0)continue;const c=cells[j];if(Math.hypot(c.x-px,c.z-pz)<r)c.road=Math.max(c.road,v)}}}});
@@ -96,6 +96,8 @@ const m4=new THREE.Matrix4(),col=new THREE.Color(),q=new THREE.Quaternion(),pos=
 const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8a40'),G2=new THREE.Color('#2fa650');
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
   stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.8:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
+// roads are grey, never white (white is only for new buildings): main axes lighter, secondary streets darker
+const ROAD_MAJ=new THREE.Color('#a3a8b1'),ROAD_MIN=new THREE.Color('#5f646d');
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{if(!wy.c)return;const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
@@ -210,7 +212,7 @@ function update(t){
   let bt=0,nw=0,gv=0;const HYc=HT&&heatOn?HY[hIdx(YR[yi])]:null;
   for(let i=0;i<cells.length;i++){const c=cells[i];if(c.st)continue;let h,color;const hv=c.h;
     const ye=lensOn&&hp&&Math.hypot(c.x-hp.x,c.z-hp.z)<LR?(yi>yi0/2?0:yi0):t;const built=c.f<=ye+1e-6;
-    if(c.road&&(built||c.f===999)){h=.08;color=c.road===2?col.setRGB(2.3,2.3,2.3,THREE.LinearSRGBColorSpace):col.setRGB(.7,.7,.72,THREE.LinearSRGBColorSpace)}
+    if(c.road&&(built||c.f===999)){h=.08;color=c.road===2?col.copy(ROAD_MAJ):col.copy(ROAD_MIN)}
     else if(built){const h0=.8+c.nb*1.1+hv*.9;h=h0*VX;const age=ye-c.f;color=gray(h0);if(c.f>0&&age<3)color.lerp(WH,(1-age/3)*.85)}
     else if(c.f<999&&(c.lt===0||c.lt===3)&&c.f-1<ye){const k=ye-c.f+1,hb=(.8+c.nb*1.1+hv*.9)*VX,hg=.42;h=hg+(hb-hg)*k;color=col.copy(WH)}
     else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
