@@ -5,11 +5,15 @@
   "scripts": {
     "build": "python3 web/build.py",
     "start": "python3 -m http.server 8000 -d dist/site",
-    "dev": "npm run build && npm run start"
+    "dev": "npm run build && npm run start",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
     "preact": "^11.2.0",
     "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
   }
 }

@@ -1,12 +1,15 @@
+// @ts-nocheck
+// TODO(ts): this file is not type-checked yet. The scene, the story, the share links and the air / heat / tower layers are still
+// to be split out of it into typed modules (as music.ts, pixellogo.ts and ui/Position.tsx were), and then this line goes away.
 import * as THREE from 'three';
-import {playPixelLogo} from './pixellogo.js';
-import {mountPosition} from './ui/Position.jsx';
-import {NAMES} from './data/names.js';
-import {IC,LT} from './data/icons.js';
-import {I18} from './i18n.js';
-import {CTRY,CODE,CO} from './data/countries.js';
-import {initMusic} from './music.js';
-import {initCityMenu} from './cityMenu.js';
+import {playPixelLogo} from './pixellogo';
+import {mountPosition} from './ui/Position';
+import {NAMES} from './data/names';
+import {IC,LT} from './data/icons';
+import {I18} from './i18n';
+import {initMusic} from './music';
+import {mountCityMenu} from './ui/city-menu/CityMenu';
+import {langBus} from './ui/langBus';
 
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
@@ -134,15 +137,15 @@ function heatStat(yi){if(!HT||!HM)return;const k=hIdx(YR[yi]),avg=(i)=>{let a=0,
   document.getElementById('hvb').textContent=(k<=2?'':(d>=0?'+':'−')+nf.format(Math.abs(d))+' °C');document.getElementById('hvl').textContent=T('hv').replace('{y}',HT.years[Math.min(2,HT.years.length-1)]===YR[0]?YR[0]:HT.years[0])}
 const sl=document.getElementById('sl'),pl=document.getElementById('pl'),tkEl=document.getElementById('tk'),tip=document.getElementById('tip');
 sl.max=yi0;sl.value=yi0;
-const cmEl=document.getElementById('cm'),cmb=document.getElementById('cmb'),cmn=document.getElementById('cmn'),cml=document.getElementById('cml');
-const COUNTRY=CO(D.slug);
 // city menu (src/cityMenu.js)
-const menu=initCityMenu({D,CITIES,T,getLang:()=>LG,PATHMODE,ROOTP,cmEl,cmb,cml});
+// the city menu of the top bar (src/ui/city-menu): a Preact component, it never touches the scene
+const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
+mountCityMenu(document.querySelector('.crumb'),{T,getLang:()=>LG,subscribe:langBus.subscribe,cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
 function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
-  const nm=(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];cmn.innerHTML='<span class="cn"></span> <span class="cc"></span>';cmn.firstChild.textContent=nm;cmn.lastChild.textContent=COUNTRY[LG];menu.cms.placeholder=T('find');menu.renderCities();document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
-  menu.langChanged();zpLang();posListeners.forEach(f=>f());window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
+  document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
+  zpLang();langBus.emit();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
 bars.innerHTML=gy.map((v,i)=>'<div class="bar" data-i="'+i+'"><div style="height:'+Math.round(v/gmax*100)+'%"></div></div>').join('');
@@ -289,7 +292,6 @@ let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=c
 // my position
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
 // my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
-const posListeners=[];
 const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
 const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
   if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
@@ -302,7 +304,7 @@ const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
   let j=await find(q0);const q2=q0.replace(/\d+[a-z]?/gi,' ').replace(/[,\s]+/g,' ').trim();if(!j.length&&q2&&q2!==q0)j=await find(q2);return j};
-mountPosition(document.getElementById('posroot'),{T:k=>T(k),subscribe:f=>{posListeners.push(f);return()=>posListeners.splice(posListeners.indexOf(f),1)},place,clear:clearPos,find:findAddr});
+mountPosition(document.getElementById('posroot'),{T:k=>T(k),subscribe:langBus.subscribe,place,clear:clearPos,find:findAddr});
 const hdB=document.getElementById('hdb');if(hoodLabs.length){/* the Districts button stays hidden (the pills already appear only when zoomed in); shared links that hide them still work through hdB.click() */hdB.classList.add('on');hdB.onclick=()=>{hoodsOn=!hoodsOn;hdB.classList.toggle('on',hoodsOn);dirty=true}}
 const htB=document.getElementById('ht');if(HT){htB.style.display='';htB.onclick=()=>{heatOn=!heatOn;htB.classList.toggle('on',heatOn);document.body.classList.toggle('heat',heatOn);const yi=Math.min(yi0,Math.max(0,Math.round(tt)));paintStatic(yi);if(heatOn)heatStat(yi);domYi=-1;update(tt);dirty=true}}
 const bfB=document.getElementById('bf');bfB.onclick=()=>{lensOn=!lensOn;bfB.classList.toggle('on',lensOn);dirty=true};

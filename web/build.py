@@ -65,7 +65,7 @@ with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')
 os.makedirs(os.path.dirname(bundle), exist_ok=True)
-subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.js'),
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'app.ts'),
                 '--bundle', '--minify', '--jsx=automatic', '--jsx-import-source=preact', '--format=esm', '--target=es2022', '--outfile=' + bundle,
                 '--log-level=warning'], check=True)
 js = open(bundle, encoding='utf-8').read()
@@ -78,7 +78,7 @@ head = open(os.path.join(here, 'src', 'index.html'), encoding='utf-8').read()
 # the markup is assembled from src/html/*.html (one fragment per component, in DOM order, see index.html); the loading screen script is src/loader.js
 head = re.sub(r'<!--include:([\w-]+)-->', lambda m: open(os.path.join(here, 'src', 'html', m.group(1) + '.html'), encoding='utf-8').read(), head)
 loader_out = os.path.join(root, 'dist', 'loader.js')
-subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'loader.js'),
+subprocess.run([os.path.join(root, 'node_modules', '.bin', 'esbuild'), os.path.join(here, 'src', 'loader.ts'),
                 '--bundle', '--minify', '--format=iife', '--outfile=' + loader_out, '--log-level=warning'], check=True)
 assert head.count('<!--script:loader-->') == 1
 head = head.replace('<!--script:loader-->', '<script>' + open(loader_out, encoding='utf-8').read().strip() + '</script>')

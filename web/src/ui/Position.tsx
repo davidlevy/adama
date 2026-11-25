@@ -8,14 +8,25 @@ import {render} from 'preact';
 import {useState, useEffect, useRef} from 'preact/hooks';
 import css from './Position.module.css';
 
-function Position({api}) {
-  const [mode, setMode] = useState('');      // '' | 'gps' | 'addr'
-  const [st, setSt] = useState('');          // '' | 'busy' | 'on'
+/** What the scene gives the component (see the comment above). */
+export interface PositionApi {
+  T(key: string): string;
+  subscribe(fn: () => void): () => void;
+  place(lat: number, lon: number): {ok: true} | {ok: false; km: string};
+  clear(): void;
+  find(text: string): Promise<{lat: number | string; lon: number | string}[]>;
+}
+type Mode = '' | 'gps' | 'addr';
+type Status = '' | 'busy' | 'on';
+
+function Position({api}: {api: PositionApi}) {
+  const [mode, setMode] = useState<Mode>('');
+  const [st, setSt] = useState<Status>('');
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
   const [msg, setMsg] = useState('');
   const [, setTick] = useState(0);
-  const input = useRef(null);
+  const input = useRef<HTMLInputElement>(null);
   const T = api.T;
 
   useEffect(() => api.subscribe(() => setTick(n => n + 1)), []);                               // re-render on language change
@@ -23,12 +34,12 @@ function Position({api}) {
   useEffect(() => { const m = document.getElementById('gm'); if (m) m.textContent = msg; }, [msg]);   // the message slot sits at the end of the bar
 
   const reset = (m = '') => { setMode(''); setSt(''); setMsg(m); };
-  const placeAt = (lat, lon, acc, how) => {
+  const placeAt = (lat: number, lon: number, acc: number, how: Mode) => {
     const r = api.place(lat, lon);
-    if (r.ok) { setMode(how); setSt('on'); setMsg(acc ? T('ok').replace('{a}', Math.round(acc)) : ''); }
+    if (r.ok) { setMode(how); setSt('on'); setMsg(acc ? T('ok').replace('{a}', String(Math.round(acc))) : ''); }
     else reset(T('outside').replace('{d}', r.km));
   };
-  const openAddr = why => { setMsg(why || ''); setTyping(true); };
+  const openAddr = (why?: string) => { setMsg(why || ''); setTyping(true); };
   const clear = () => { api.clear(); reset(); };
 
   const onGps = () => {
@@ -49,7 +60,7 @@ function Position({api}) {
     if (found.length) { setTyping(false); setText(''); placeAt(+found[0].lat, +found[0].lon, 0, 'addr'); }
     else reset(T('adrnf'));
   };
-  const onKey = e => {
+  const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') { setTyping(false); setMsg(''); }
     else if (e.key === 'Enter') submit();
   };
@@ -66,4 +77,4 @@ function Position({api}) {
   );
 }
 
-export const mountPosition = (root, api) => render(<Position api={api} />, root);
+export const mountPosition = (root: HTMLElement, api: PositionApi) => render(<Position api={api} />, root);
