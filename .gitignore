@@ -1,9 +1,11 @@
 # generated pages, data and caches stay local
 *.html
 !web/src/index.html
+!web/src/html/*.html
 dist/
 node_modules
 data/
+!web/src/data/
 city_*/
 raw/
 *.json
