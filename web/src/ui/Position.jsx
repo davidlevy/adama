@@ -6,6 +6,7 @@
 //   clear()              hides the marker          find(text) -> Promise<[{lat, lon}]>   address search (OpenStreetMap)
 import {render} from 'preact';
 import {useState, useEffect, useRef} from 'preact/hooks';
+import css from './Position.module.css';
 
 function Position({api}) {
   const [mode, setMode] = useState('');      // '' | 'gps' | 'addr'
@@ -55,10 +56,10 @@ function Position({api}) {
   const onBlur = () => { if (!text.trim()) setTimeout(() => { if (document.activeElement !== input.current) setTyping(false); }, 120); };
 
   return (
-    <span class={'seg' + (typing ? ' typing' : '')} id="gp" role="group" data-mode={mode} data-st={st}>
+    <span class={css.seg} id="gp" role="group" data-mode={mode} data-st={st}>
       <button id="gpm" onClick={onGps}>{T('mypos')}</button>
       {typing
-        ? <input ref={input} class="adr" type="text" autocomplete="off" spellcheck={false} value={text} placeholder={T('addr')} aria-label={T('addr')}
+        ? <input ref={input} class={css.adr} type="text" autocomplete="off" spellcheck={false} value={text} placeholder={T('addr')} aria-label={T('addr')}
             onInput={e => setText(e.currentTarget.value)} onKeyDown={onKey} onBlur={onBlur} />
         : <button id="gpa" onClick={onAddr}>{T('addrb')}</button>}
     </span>
