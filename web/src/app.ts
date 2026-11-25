@@ -53,11 +53,12 @@ const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(-120,260,80)
 const sc=sun.shadow.camera;sc.left=-230;sc.right=230;sc.top=230;sc.bottom=-230;sc.near=1;sc.far=900;sun.shadow.bias=-.0004;sun.shadow.normalBias=.2;scene.add(sun);
 // roads: rasterise OSM arteries onto the cell grid
 // road classes: 2 wide primary/trunk/motorway (light), 1 narrow primary (dark), 3 secondary/tertiary (darker, only when zoomed in a lot)
-const RANK=[0,2,3,1];
+const RANK=[0,2,3,1],RL=[0,0,0,0];   // RL: length of each road class, in cells
 D.osm.arteries.forEach(wy=>{const v=!wy.c?3:wy.w>=10?2:1,P=wy.pts.map(p=>toXZ(p[0],p[1])),r=v===2?.78:.62;
-  for(let i=0;i<P.length-1;i++){const [x0,z0]=P[i],[x1,z1]=P[i+1],L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.ceil(L/.3));
+  for(let i=0;i<P.length-1;i++){const [x0,z0]=P[i],[x1,z1]=P[i+1],L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.ceil(L/.3));if(Math.hypot(x0,z0)<RD)RL[v]+=L;
     for(let s=0;s<=n;s++){const px=x0+(x1-x0)*s/n,pz=z0+(z1-z0)*s/n,gx=Math.floor(px+W/2),gy=Math.floor(pz+H/2);
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=gx+dx,Z=gy+dy;if(X<0||Z<0||X>=W||Z>=H)continue;const j=idx[Z*W+X];if(j<0)continue;const c=cells[j];if(Math.hypot(c.x-px,c.z-pz)<r)if(RANK[v]>RANK[c.road])c.road=v}}}});
+{const f=1000/Math.max(1,cells.reduce((n,c)=>n+c.in,0)*(D.cell_m||20));RDEN=[RL[2]*f,(RL[2]+RL[1])*f,(RL[2]+RL[1]+RL[3])*f]}
 const ground0=0;
 const PL=(r0,r1,h,y,c,rg)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r0,r1,h,160),new THREE.MeshStandardMaterial({color:c,roughness:rg,metalness:.1}));m.position.y=y;m.receiveShadow=true;m.castShadow=false;scene.add(m);return m};
 const ground=PL(RD+1.5,RD+1.5,5,-2.5,0xd2d2d8,.55);ground.material.emissive=new THREE.Color(0x8a8a92);           // simple light-grey slab
@@ -101,8 +102,11 @@ const lerp=(a,b,t)=>a+(b-a)*t,WH=new THREE.Color(1,1,1),G1=new THREE.Color('#1b8
 {const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),_a=new THREE.Color('#1b8a40'),_b=new THREE.Color('#2fa650');
   stBlocks.forEach((b,i)=>{_p.set(b.x,0,b.z);_s.set(b.s,b.lt===1?.06:b.lt===2?.2+b.h*.12:b.lt===3?.8:.42,b.s);_m.compose(_p,_q,_s);smesh.setMatrixAt(i,_m);if(b.lt===1)_c.copy(WATER).lerp(WATER2,b.h);else if(b.lt===2)_c.copy(BARE).lerp(BARE2,b.h);else if(b.lt===3)_c.copy(FIELD).lerp(FIELD2,.5);else _c.copy(_a).lerp(_b,.5);smesh.setColorAt(i,_c)});smesh.instanceMatrix.needsUpdate=true;smesh.instanceColor.needsUpdate=true}
 // roads are grey, never white (white is only for new buildings): main axes lighter, secondary streets darker
-const ROAD_MAJ=new THREE.Color('#b9bec7'),ROAD_MIN=new THREE.Color('#9aa0a9'),ROAD_MIN3=new THREE.Color('#80868f');
-const rdOn=c=>c.road===3?roadLv>=2:c.road>0&&roadLv>=1;
+// roads stay discreet: main roads mid grey, narrow roads dark, secondary streets almost black (they read as thin cuts in the grain)
+const ROAD_MAJ=new THREE.Color('#5a5f68'),ROAD_MIN=new THREE.Color('#2a2d33'),ROAD_MIN3=new THREE.Color('#0d0d10');
+// Road detail follows the zoom AND the road density of the city (km of road per km2), so that a dense city does not look cluttered and a small one is not bare:
+// wide main roads are always drawn; narrow primary roads and secondary streets join once the zoom allows that much road per km2.
+const rdOn=c=>c.road===2||(c.road===1?roadLv>=2:c.road===3&&roadLv>=3);
 const gray=h=>{const k=Math.min(1,Math.max(0,(h-.8)/1.9)),v=lerp(.52,.075,k);return col.setRGB(v,v,v,THREE.SRGBColorSpace)};
 const roadLabs=[];
 {const by={};D.osm.arteries.forEach(wy=>{if(!wy.c)return;const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<2)return;const e=by[key]=by[key]||{nm,pts:[],len:0};e.pts.push(...P);for(let i=0;i<P.length-1;i++)e.len+=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1])});
@@ -211,7 +215,9 @@ if(AIR||AIRL){const el=document.createElement('div');el.className='air';document
   const notes=()=>(AIRL?'<div>'+T('airnow').replace('{a}',AIRL.aqi).replace('{s}',AIRL.station).replace('{d}',AIRL.distance_km)+'</div>':'')+(AIR?'<div>'+(br?T('airbrk').replace('{y}',br)+' · ':'')+T('airsrc').replace('{s}',AIR.source).replace('{r}',AIR.res_km||'<1')+'</div>':'');
   const arB=document.getElementById('ar');arB.style.display='';arB.onclick=()=>{airOn=!airOn;arB.classList.toggle('on',airOn);document.body.classList.toggle('airon',airOn);hazeSet();const yi=Math.min(yi0,Math.max(0,Math.round(tt)));airUpd(YR[yi]);dirty=true};
   airLang=()=>{el.innerHTML='<div class="ah"><div class="ax"><div class="at">'+T('air')+'</div><div class="av"></div></div>'+svg+'</div>';airUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}}
-let VX=1,roadLv=1;const ROAD_ZOOM=.82,ROAD_ZOOM_MINOR=4;   // explore only: no roads when zoomed far out, secondary streets when zoomed in a lot// buildings grow taller when zoomed in, for contrast with the ground
+let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
+const roadBudget=z=>.6*Math.pow(z,2.5);   // road density the view can take at this zoom
+// buildings grow taller when zoomed in, for contrast with the ground
 function update(t){
   const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);
   let bt=0,nw=0,gv=0;const HYc=HT&&heatOn?HY[hIdx(YR[yi])]:null;
@@ -383,7 +389,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   animBalloons(n/1000);animHaze(n/1000);
   if(explore&&roEl.checked&&!ctl.autoRotate){idleT+=d;if(idleT>8){ctl.autoRotate=true;ctl.autoRotateSpeed=.3}}
   if(ctl.autoRotate&&lastE&&!lensOn&&!run)aim(lastE);
-  if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}{const lv=!explore?1:cam.zoom<ROAD_ZOOM?0:cam.zoom>=ROAD_ZOOM_MINOR?2:1;if(lv!==roadLv){roadLv=lv;update(tt)}}{const m=lodFor(cam.zoom);if(m!==LODm){LODm=m;animating=true}}renderer.render(scene,cam);
+  if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}{const B=roadBudget(cam.zoom),lv=RDEN[2]<=B?3:RDEN[1]<=B?2:1;if(lv!==roadLv){roadLv=lv;update(tt)}}{const m=lodFor(cam.zoom);if(m!==LODm){LODm=m;animating=true}}renderer.render(scene,cam);
   const w=wrap.clientWidth,h=wrap.clientHeight;
   const hoodsShow=explore&&hoodsOn&&cam.zoom>=HOOD_ZOOM;if(hoodsShow&&Math.min(yi0,Math.max(0,Math.round(tt)))!==hoodYi)hoodTxt();
   hoodLabs.forEach(l=>{const p=l.v.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;l.d.style.display=(hoodsShow&&x>0&&x<w&&y>0&&y<h)?'block':'none';l.d.style.left=x+'px';l.d.style.top=y+'px'});
