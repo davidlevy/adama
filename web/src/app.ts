@@ -238,11 +238,13 @@ const RAIN=D.rain&&D.rain.years&&D.rain.years.length>=10?D.rain:null;
 if(RAIN){const el=document.getElementById('rain');
   const W_=230,H_=60,ys=RAIN.years,vs=RAIN.values,y0=ys[0],y1=ys[ys.length-1],mean=vs.reduce((a,b)=>a+b,0)/vs.length,vmax=Math.max(...vs)*1.04,vmin=Math.min(...vs)*.7,   // the scale starts under the driest year, not at zero: a line over 0-900 mm would look flat
     X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-(v-vmin)/(vmax-vmin)*(H_-8),
+    ABS=RAIN.absolute!==false,   // a model that is known to run low (Open-Meteo): only the gap to the average is shown, not millimetres
     avg=ys.map((_,i)=>i<4?null:vs.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5),line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
   const svg='<svg viewBox="0 0 '+W_+' '+H_+'" width="'+W_+'" height="'+H_+'"><line x1="0" x2="'+W_+'" y1="'+Y(mean)+'" y2="'+Y(mean)+'" class="rw"/><polyline points="'+line(ys.map((y,i)=>[y,vs[i]]))+'" class="ro"/><polyline points="'+line(ys.map((y,i)=>[y,avg[i]]).filter(p=>p[1]!=null))+'" class="rc"/><line id="rml" y1="0" y2="'+H_+'" class="rm"/><circle id="rmc" r="3" class="rd"/></svg>';
   rainUpd=yr=>{if(yr>y1)yr=y1;const i=ys.indexOf(yr),v=i<0?null:vs[i],d=v==null?0:Math.round((v/mean-1)*100);
-    el.querySelector('.rv').innerHTML=v==null?'<span class="no">'+T('airno').replace('{y}',y0)+'</span>':'<b>'+v+'</b> '+T('rainu')+' <span class="rp">'+T('rainvs').replace('{d}',(d>0?'+':d<0?'−':'')+Math.abs(d))+'</span>';
-    el.title=[T('rainwhat').replace('{m}',Math.round(mean)).replace('{a}',y0).replace('{b}',y1),v==null?'':T('rainyr').replace('{y}',yr).replace('{v}',v),T('rainsrc').replace('{s}',RAIN.source).replace('{r}',RAIN.res_km)].filter(Boolean).join('\n');
+    const sg=(d>0?'+':d<0?'\u2212':'')+Math.abs(d);
+    el.querySelector('.rv').innerHTML=v==null?'<span class="no">'+T('airno').replace('{y}',y0)+'</span>':ABS?'<b>'+v+'</b> '+T('rainu')+' <span class="rp">'+T('rainvs').replace('{d}',sg)+'</span>':'<b>'+sg+' %</b> <span class="rp">'+T('rainrel').replace('{a}',y0).replace('{b}',y1)+'</span>';
+    el.title=[T(ABS?'rainwhat':'rainwhat2').replace('{m}',Math.round(mean)).replace('{a}',y0).replace('{b}',y1),ABS&&v!=null?T('rainyr').replace('{y}',yr).replace('{v}',v):'',T('rainsrc').replace('{s}',RAIN.source).replace('{r}',RAIN.res_km)].filter(Boolean).join('\n');
     const l=el.querySelector('#rml'),c=el.querySelector('#rmc');l.style.display=c.style.display=v==null?'none':'';if(v!=null){l.setAttribute('x1',X(yr));l.setAttribute('x2',X(yr));c.setAttribute('cx',X(yr));c.setAttribute('cy',Y(v))}};
   rainLang=()=>{el.innerHTML='<div class="rh"><div class="rx"><div class="rt">'+T('rain')+'</div><div class="rv"></div></div>'+svg+'</div>';rainUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}
   // the rain over the city (discreet): vertical streaks, more of them in a wet year, with the card; the RAIN button shows or hides both

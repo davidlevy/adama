@@ -53,6 +53,9 @@ const fr = {
   rainwhat:
     'Pluie annuelle. Trait fin : total de chaque année. Trait épais : moyenne sur 5 ans. Pointillé : moyenne {a}\u2013{b} ({m} mm). Trait vertical : l\u2019année affichée.',
   rainsrc: 'Source : {s}, grille de {r} km. Estimation régionale, pas un pluviomètre de la ville.',
+  rainrel: 'vs moyenne {a}\u2013{b}',
+  rainwhat2:
+    'Pluie annuelle, comparée à la moyenne {a}\u2013{b}. Trait fin : chaque année. Trait épais : moyenne sur 5 ans. Pointillé : la moyenne. Trait vertical : l\u2019année affichée. Estimation d\u2019un modèle : elle suit les années sèches et humides, pas les millimètres réels (trop bas sur la côte).',
   about: 'À propos',
   abh: 'Adama montre comment nos villes ont évolué sur la terre.',
   abp: 'Depuis 1984, des images satellites gratuites suivent chaque ville. Fais défiler les années et regarde le vert laisser place au béton.',
@@ -158,6 +161,9 @@ const en: Messages = {
   rainwhat:
     'Yearly rainfall. Thin line: the total of each year. Thick line: 5-year average. Dashed line: {a}\u2013{b} average ({m} mm). Vertical line: the year shown.',
   rainsrc: 'Source: {s}, {r} km grid. A regional estimate, not a rain gauge in the city.',
+  rainrel: 'vs the {a}\u2013{b} average',
+  rainwhat2:
+    'Yearly rainfall against the {a}\u2013{b} average. Thin line: each year. Thick line: 5-year average. Dashed line: the average. Vertical line: the year shown. A model estimate: it follows the dry and wet years, not the real millimetres (too low on the coast).',
   about: 'About',
   abh: 'Adama shows what our cities grew over.',
   abp: 'Since 1984, free satellite images have followed every city. Scroll through the years and watch the green give way to concrete.',
@@ -259,6 +265,9 @@ const he: Messages = {
   rainwhat:
     'כמות גשם שנתית. קו דק: הסכום של כל שנה. קו עבה: ממוצע של 5 שנים. קו מקווקו: ממוצע {a}\u2013{b} ({m} מ״מ). קו אנכי: השנה המוצגת.',
   rainsrc: 'מקור: {s}, רשת של {r} ק״מ. אומדן אזורי, לא מד גשם בעיר.',
+  rainrel: 'לעומת ממוצע {a}\u2013{b}',
+  rainwhat2:
+    'כמות גשם שנתית לעומת ממוצע {a}\u2013{b}. קו דק: כל שנה. קו עבה: ממוצע של 5 שנים. קו מקווקו: הממוצע. קו אנכי: השנה המוצגת. אומדן של מודל: הוא עוקב אחרי שנים יבשות וגשומות, לא אחרי המילימטרים האמיתיים (נמוך מדי בחוף).',
   about: 'אודות',
   abh: 'אדמה מראה איך הערים שלנו התפתחו על האדמה.',
   abp: 'מאז 1984 תמונות לוויין חינמיות עוקבות אחרי כל עיר. גללו בין השנים וראו את הירוק מפנה מקום לבטון.',
