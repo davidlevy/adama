@@ -128,7 +128,11 @@ Links made by earlier versions (`?s=` token) are no longer read.
 
 ## Publishing
 
-`adama_site/publish.sh` rebuilds the site from the current code and data. `--deploy` publishes it on the Cloudflare worker of the personal site (`/adama/`). `--vercel` deploys only the page to Vercel (`web/vercel.json` rewrites `/data/*` to the Cloudflare copy, and `data/` is not uploaded), so the 100 MB upload limit of the free plan does not matter. It checks first that Cloudflare holds the same cities and stops otherwise: run `--deploy` first. First time: `npx vercel login` then `npx vercel link` in `adama_site/`.
+`adama_site/publish.sh` rebuilds the site from the current code and data. The page lives on Vercel (the canonical address, `/place/<city>`), the data files on the Cloudflare worker of the personal site (`/adama/data/*`: static assets, free and unlimited, with `Access-Control-Allow-Origin: *` from `public/_headers` there). The Vercel page reads the data straight from Cloudflare (`<meta name="adama-data">` added by `publish.sh`, read in `app.ts`), so no data goes through Vercel. On Cloudflare, `/adama/<city>...` is a 301 redirect to the Vercel page (route `src/pages/adama/[...slug].ts`), so old links keep working.
+- `--deploy` copies the data to the personal site and deploys it. Run it first.
+- `--vercel` deploys only the page to Vercel (`data/` is not uploaded: the 100 MB upload limit of the free plan does not matter). It checks first that Cloudflare holds the same cities and stops otherwise. First time: `npx vercel login` then `npx vercel link` in `adama_site/`.
+- The Git integration of the Vercel project is switched off with an "Ignored Build Step" (`exit 0`), since Vercel cannot build the site itself (the city data is not in git).
+- Free plans: static asset requests on Cloudflare are free and unlimited; only the redirect and the rest of the personal site count against the 100,000 Worker requests per day. Vercel Hobby counts the page (about 1 MB per visit) against its transfer quota.
 
 ## Data sources and licences
 
