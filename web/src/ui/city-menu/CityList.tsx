@@ -1,7 +1,7 @@
 // The list view of the city menu: the cities grouped by country (the groups flow in columns), filtered by what is typed in the search field.
-import { CTRY, CODE, CO } from '../../data/countries';
+import { CTRY, CO } from '../../data/countries';
 import { IC, LT } from '../../data/icons';
-import { NAMES } from '../../data/names';
+import { cityName } from '../../data/cities';
 import { LANGS } from '../../types';
 import { useLang, useT } from '../store';
 import type { CityEntry, MenuApi } from './types';
@@ -13,7 +13,7 @@ export const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '
  *  "t" finds Tel Aviv and Tiberias, "ra" finds Ra'anana and Rafah... `query` is already normalized. */
 export function matches(c: CityEntry, query: string, lang: 'fr' | 'en' | 'he'): boolean {
   if (!query) return true;
-  const names = [...LANGS.map((l) => NAMES[c.slug]?.[l]), c.name.split(',')[0], CO(c.slug)[lang]];
+  const names = [...LANGS.map((l) => c.names?.[l]), c.name.split(',')[0], CO(c.co)[lang]];
   return names.some(
     (n) =>
       n &&
@@ -33,12 +33,12 @@ export function CityList({ api, query, onPick }: Props) {
   const lang = useLang(),
     T = useT(),
     q = normalize(query.trim());
-  const nameOf = (c: CityEntry) => NAMES[c.slug]?.[lang] || c.name.split(',')[0];
+  const nameOf = (c: CityEntry) => cityName(c, lang);
 
   const byCountry = new Map<string, CityEntry[]>();
   for (const c of api.cities) {
     if (!matches(c, q, lang)) continue;
-    const code = CODE[c.slug] || 'IL';
+    const code = c.co || 'IL';
     byCountry.set(code, [...(byCountry.get(code) ?? []), c]);
   }
   const codes = [...byCountry.keys()].sort((a, b) => CTRY[lang][a].localeCompare(CTRY[lang][b], lang));

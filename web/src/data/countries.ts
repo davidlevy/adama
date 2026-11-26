@@ -71,44 +71,9 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     MA: 'מרוקו',
   },
 };
-export const CODE: Record<string, string> = {
-  grenoble: 'FR',
-  dubai: 'AE',
-  paris: 'FR',
-  amsterdam: 'NL',
-  venice: 'IT',
-  palma: 'ES',
-  ibiza: 'ES',
-  limassol: 'CY',
-  shenzhen: 'CN',
-  singapore: 'SG',
-  strasbourg: 'FR',
-  metz: 'FR',
-  'cape-town': 'ZA',
-  lagos: 'NG',
-  miami: 'US',
-  nouakchott: 'MR',
-  'mexico-city': 'MX',
-  'hong-kong': 'HK',
-  macau: 'MO',
-  'santa-cruz-de-tenerife': 'ES',
-  'las-vegas': 'US',
-  cairo: 'EG',
-  'new-administrative-capital': 'EG',
-  perth: 'AU',
-  marrakech: 'MA',
-  yakutsk: 'RU',
-  novosibirsk: 'RU',
-  sapporo: 'JP',
-};
-export const CO = (s: string): PerLang => ({
-  get fr() {
-    return CTRY.fr[CODE[s] || 'IL'];
-  },
-  get en() {
-    return CTRY.en[CODE[s] || 'IL'];
-  },
-  get he() {
-    return CTRY.he[CODE[s] || 'IL'];
-  },
+/** Country names of a country code (IL when the city has none). */
+export const CO = (code?: string): PerLang => ({
+  fr: CTRY.fr[code || 'IL'],
+  en: CTRY.en[code || 'IL'],
+  he: CTRY.he[code || 'IL'],
 });

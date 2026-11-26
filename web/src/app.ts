@@ -4,7 +4,6 @@
 import * as THREE from 'three';
 import {playPixelLogo} from './pixellogo';
 import {mountPosition} from './ui/Position';
-import {NAMES} from './data/names';
 import {IC,LT} from './data/icons';
 import {I18} from './i18n';
 import {initMusic} from './music';
@@ -169,11 +168,11 @@ sl.max=yi0;sl.value=yi0;
 // city menu (src/cityMenu.js)
 // the city menu of the top bar (src/ui/city-menu): a Preact component, it never touches the scene
 const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
-mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
+mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name,names:D.names,co:D.co},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
 function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['rn','rain','rainb'],['mb','mobile','netb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
-  document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
+  document.title=((D.names||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
   zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
 // graph: green area per year
 const bars=document.getElementById('gb'),gy=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.lt===0&&c.f>y)n++});return n*AR}),gmax=Math.max(...gy);
@@ -415,7 +414,7 @@ function resize(){const w=wrap.clientWidth,h=wrap.clientHeight;renderer.setSize(
 addEventListener('resize',resize);resize();document.getElementById('lw').style.display=HASW?'':'none';document.getElementById('lb').style.display=HASB?'':'none';document.getElementById('lf').style.display=cells.some(c=>c.lt===3)?'':'none';applyLang();update(tt);ctl.enabled=false;renderer.domElement.style.pointerEvents='none';
 let last=0,acc=0,DLY=null;
 // ---------- scroll story ----------
-const nm0=()=>(NAMES[D.slug]||{})[LG]||D.name.split(',')[0];
+const nm0=()=>(D.names||{})[LG]||D.name.split(',')[0];
 const bArr=YR.map((_,y)=>{let n=0;cells.forEach(c=>{if(c.in&&c.f<=y)n++});return n/NIN*100});
 let ib=yi0,bestG=-1;for(let y=Math.min(5,yi0);y<=yi0;y++){const g=bArr[y]-bArr[Math.max(0,y-5)];if(g>bestG){bestG=g;ib=y}}
 const ia=Math.max(0,ib-5);

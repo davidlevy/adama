@@ -2,7 +2,7 @@
 
     python3 web/build.py [out_dir] [city.json[:LAT,LON,RADIUS_CELLS] ...]
 
-With no arguments it builds dist/site from the cities listed in web/cities.txt.
+With no arguments it builds dist/site from the cities listed in web/cities.json (slug, names fr/en/he, country code, optional crop).
 Option --base=/adama/ (anywhere on the command line): path links instead of hash links.
 
 Result:
@@ -29,8 +29,13 @@ for a_ in list(sys.argv[1:]):
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'dist', 'site')
 args = sys.argv[2:]
 if not args:
-    with open(os.path.join(here, 'cities.txt'), encoding='utf-8') as f:
-        args = [l.strip() for l in f if l.strip() and not l.startswith('#')]
+    with open(os.path.join(here, 'cities.json'), encoding='utf-8') as f:
+        listed = json.load(f)
+    # path of the city file, with the optional crop as ":lat,lon,radius"
+    args = ['../city_%s/city_%s.json%s' % (c['slug'], c['slug'], ':%s,%s,%s' % (c['crop']['lat'], c['crop']['lon'], c['crop']['radius']) if 'crop' in c else '') for c in listed]
+    meta = {c['slug']: c for c in listed}
+else:
+    meta = {}
 os.makedirs(os.path.join(out, 'data'), exist_ok=True)
 index = []
 for arg in args:
@@ -65,11 +70,14 @@ for arg in args:
     np_ = os.path.join(os.path.dirname(path), 'neighborhoods.json')
     if os.path.exists(np_):
         d['hoods'] = json.load(open(np_, encoding='utf-8'))['hoods']
+    m = meta.get(d['slug'])
+    if m:   # names and country come from web/cities.json, for the menu, the title and the story
+        d['names'], d['co'] = m['names'], m['country']
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
     has = [k for k in ('heat', 'air', 'rain', 'pop', 'mobile', 'towers', 'hoods') if k in d and not (k == 'mobile' and d[k]['totals'][-1] < 20)]   # layers available for this city (icons in the menu)
     bb = d['bbox']   # [lon0, lat0, lon1, lat1]: centre of the city, for the world map
-    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has, 'll': [round((bb[1] + bb[3]) / 2, 2), round((bb[0] + bb[2]) / 2, 2)]})
+    index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'names': d.get('names'), 'co': d.get('co'), 'has': has, 'll': [round((bb[1] + bb[3]) / 2, 2), round((bb[0] + bb[2]) / 2, 2)]})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
     json.dump(index, f, ensure_ascii=False)
 bundle = os.path.join(root, 'dist', 'bundle.js')

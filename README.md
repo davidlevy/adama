@@ -33,7 +33,7 @@ python adama/scripts/skyscrapers.py   --city "Ra'anana, Israel"
 python adama/scripts/tower_dates.py   --city "Ra'anana, Israel"   # construction years of the towers
 python adama/scripts/air_quality.py   --city "Ra'anana, Israel"
 
-# 4. List the cities in adama/web/cities.txt, then build and run the site
+# 4. List the cities in adama/web/cities.json, then build and run the site
 cd adama && npm install && npm run dev      # http://localhost:8000
 ```
 
@@ -108,7 +108,7 @@ At 20 m a small park between buildings is often classified as built. `python scr
     python scripts/tower_dates.py --city "Grenoble, France"
     python scripts/air_quality.py --city "Grenoble, France"
 
-Then add it to `web/cities.txt` and its name and country in `NAMES` and `CODE` in `web/src/app.js`. `npm run dev` rebuilds the site.
+Then add it to `web/cities.json` (slug, names in fr/en/he, country code, optional crop). `npm run dev` rebuilds the site.
 
 For a big city or a region, give the centre and a radius in km: `--center 25.2,55.27 --radius 7`.
 
