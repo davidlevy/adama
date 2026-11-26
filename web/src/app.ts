@@ -19,7 +19,7 @@ if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug
   location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
 const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 // city names in links are read with or without hyphens and case: raanana, raanana, Tel-Aviv, telaviv
-const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~/]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 window.__ldp&&window.__ldp(.7);   // loading bar: data is here, the build follows
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
@@ -315,6 +315,8 @@ const restoreMe=(lat,lon)=>{const [x,z]=toXZ(lat,lon);if(Math.abs(x)>W/2+5||Math
 // Address search for the Position component: OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
 // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
 const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
+  // a pasted Google Maps link (the place pin !3d..!4d.. first, else the centre @lat,lon) or plain coordinates: no geocoder needed
+  {const g=q0.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||q0.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||q0.match(/^\s*(-?\d{1,2}\.\d+)\s*[,; ]\s*(-?\d{1,3}\.\d+)\s*$/);if(g)return [{lat:+g[1],lon:+g[2]}]}
   const photon=async q=>{const r=await fetch('https://photon.komoot.io/api/?limit=1&lang='+(LG==='fr'?'fr':'en')+'&bbox='+[w,s,e,n].join(',')+'&q='+encodeURIComponent(q+' '+city)),j=await r.json();return j.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}))};
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
@@ -435,7 +437,12 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     const o={y:1980+b[0],bits};
     if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100;if(bits[POINT]&&b.length>=p+19){const pv=new DataView(new Uint8Array(b.slice(p+11,p+19)).buffer);o.point={lat:pv.getUint32(0)/1e5-90,lon:pv.getUint32(4)/1e5-180}}}}
     return o}catch(e){return null}};
+  // readable location like Google Maps: /place/bat-yam/@32.0728,34.7833,18z (or #bat-yam/@...): opens the view there with the marker on that point
+  const LOCM=(PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash)).match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/);
+  // Google web-mercator zoom -> our camera zoom: same metres on screen (156543 m per pixel at zoom 0 on the equator)
+  const gz2zoom=(gz,lat)=>{const mpp=156543.03*Math.cos(lat*Math.PI/180)/Math.pow(2,gz);return (cam.top-cam.bottom)*CM/(wrap.clientHeight*mpp)};
   const hashState=()=>{const rest=HASH.slice(SLUG.length);
+    if(LOCM&&rest[0]!=='~'&&!/^\?s=/.test(rest)){const la=+LOCM[1],lo=+LOCM[2];return{y:null,bits:[],full:true,view:{lat:la,lon:lo,zoom:gz2zoom(LOCM[3]?+LOCM[3]:17,la)},point:{lat:la,lon:lo}}}
     if(rest[0]==='~')return dec(rest.slice(1));
     if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));if(q.has('s'))return dec(q.get('s'));const L=(q.get('l')||'').split(',');   // older links: ?y=2010&l=heat,air&d=0
       return{y:+q.get('y')||null,bits:[L.includes('heat')?1:0,L.includes('air')?1:0,q.get('d')==='0'?1:0],old:true,full:q.has('y')||q.has('l')}}

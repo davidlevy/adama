@@ -44,6 +44,7 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 ## State in the URL
 
 - Any new filter, layer, toggle or other UI parameter that changes what the user sees must be kept in the address, so that a shared link restores the session. Add it to the `FLAGS` table above `enc()` in `web/src/app.ts` (one bit per boolean, appended at the end; the flag bytes have a continuation bit, so links already shared keep working). Values that are not booleans (a position, a zoom, an angle, a number) go in the saved-view part of the token, appended after the existing fields, with a decoder that accepts the shorter older tokens.
+- A readable form is also read, like Google Maps: `/place/<slug>/@lat,lon,18z` (or `#<slug>/@lat,lon,18z`): view and marker on that point. The Google zoom is converted to the camera zoom by `gz2zoom` (capped by `ctl.maxZoom`). The Position field also accepts a pasted Google Maps link (pin `!3d..!4d..` first, else `@lat,lon`) or plain coordinates. The complete state stays in `?s=<token>`.
 - Do not put the language in the link. Never change the meaning of an existing bit or the order of the existing fields.
 - When you add a parameter, test it end to end: change it, read the address, open that address in a fresh page, check the parameter is restored (see the "Share links" section of the README).
 

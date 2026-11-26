@@ -60,7 +60,7 @@ function Position({ api }: { api: PositionApi }) {
     } else reset(T('outside').replace('{d}', r.km));
   };
   const openAddr = (why?: string) => {
-    setMsg(why || '');
+    setMsg(why || T('addrhint'));
     setTyping(true);
   };
   const clear = () => {

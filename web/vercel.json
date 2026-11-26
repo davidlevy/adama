@@ -6,6 +6,10 @@
       "destination": "https://me.selenium79.workers.dev/adama/data/:path*"
     },
     {
+      "source": "/place/:slug([A-Za-z0-9-]+)/@:loc",
+      "destination": "/"
+    },
+    {
       "source": "/place/:slug([A-Za-z0-9-]+)",
       "destination": "/"
     }
