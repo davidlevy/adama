@@ -2,7 +2,7 @@
 export interface CityEntry {
   slug: string;
   name: string;
-  has?: string[]; // layers the city has: heat, air, rain, towers, hoods
+  has?: string[]; // layers the city has: heat, air, rain, mobile, towers, hoods
   ll?: [number, number];
 }
 

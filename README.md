@@ -144,6 +144,7 @@ The code is MIT (see `LICENSE`). The data it fetches has its own terms:
 - Imagery access through Microsoft Planetary Computer.
 - Air quality: Copernicus Atmosphere Monitoring Service (CAMS) data through Open-Meteo.com (CC BY 4.0, credit both). WAQI, if used, requires crediting the World Air Quality Index Project.
 - Rainfall: CHIRPS v3.0, Climate Hazards Center, UC Santa Barbara (https://www.chc.ucsb.edu/data/chirps), 5 km grid, 1981 to now, 60 N to 60 S. Cite the Climate Hazards Center if you reuse it.
+- Mobile network: OpenCelliD (https://opencellid.org), CC BY-SA 4.0. Only a coarse density grid (400 m blocks) is published, never the position of an antenna. It shows what contributors observed, not the real network and not radiation.
 - Tower years: Wikidata (CC0).
 - Roads, playgrounds and tall buildings: © OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright). Keep the attribution if you publish a site built from it.
 - Fonts embedded in the page (Geist, Fraunces, Caveat): SIL Open Font License.

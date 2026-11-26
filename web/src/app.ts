@@ -171,7 +171,7 @@ sl.max=yi0;sl.value=yi0;
 const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
 mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
-function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['rn','rain','rainb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
+function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['rn','rain','rainb'],['mb','mobile','netb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
   document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
   zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
@@ -204,7 +204,7 @@ function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.ins
     ma[o]=sc;ma[o+5]=Math.max(.05,Ch[i]);ma[o+10]=sc;ma[o+12]=DX[i];ma[o+14]=DZ[i];ma[o+15]=1;
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
-let airLang=()=>{},airOn=false,airV=null,rainLang=()=>{},rainUpd=()=>{},rainFx=false,rainSet=()=>{},rainTick=()=>{},rainBase=.2;
+let airLang=()=>{},airOn=false,airV=null,rainLang=()=>{},rainUpd=()=>{},rainFx=false,rainSet=()=>{},rainTick=()=>{},rainBase=.2,mobUpd=()=>{},mobTick=()=>{},mobOn=false,mobSet=()=>{};
 // ---------- air haze: stacked translucent veils above the city, grainy like the green; the grain gets coarser and stronger when the air is worse ----------
 const HZ_Y=[5,9.5,14,18.5],HZ_U={uT:UT,uA:{value:.02},uG:{value:.5},uS:{value:.7}};
 const hzMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:HZ_U,
@@ -264,11 +264,33 @@ if(RAIN){const el=document.getElementById('rain');
   const upd0=rainUpd;rainUpd=yr=>{upd0(yr);fxApply(yr);fxShow()};
   rainTick=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;if(rain.visible){RU.uA.value=rainBase*Math.min(1,3.2/cam.zoom);RU.uF.value=haze.visible?22+(VX-1)*5.5:14}}   // with the haze on, the rain stays above its top veil (it rises with the zoom) and never crosses it   // zoomed in, the streaks would look huge: fainter
 }
+// observed mobile network (scripts/mobile_network.py): a white lattice floating over the city, tighter and brighter where the network is denser.
+// Only a coarse grid (400 m blocks) comes from the file, no antenna position. The density of the selected year is a small texture read by the vertex shader.
+const MOB=D.mobile&&D.mobile.years?D.mobile:null;
+if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0))),tex=new THREE.DataTexture(new Uint8Array(bw*bh),bw,bh,THREE.RedFormat,THREE.UnsignedByteType);
+  tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
+  const st=Math.max(2,Math.ceil(Math.max(W,H)/110)),P=[],L=[],nx=Math.floor(W/st),nz=Math.floor(H/st),lv=i=>i%4===0?0:i%2===0?1:2;   // lines every `st` cells, coarse every 4th, fine every 2nd, finest all
+  for(let j=0;j<=nz;j++)for(let i=0;i<nx;i++){P.push(i*st-W/2,0,j*st-H/2,(i+1)*st-W/2,0,j*st-H/2);L.push(lv(j),lv(j))}
+  for(let i=0;i<=nx;i++)for(let j=0;j<nz;j++){P.push(i*st-W/2,0,j*st-H/2,i*st-W/2,0,(j+1)*st-H/2);L.push(lv(i),lv(i))}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aLv',new THREE.Float32BufferAttribute(L,1));
+  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:5},uR:{value:RD}};
+  const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:MU,
+    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
+      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.45+.55*d)*(1.-smoothstep(uR*.8,uR,length(position.xz)));'+
+      'gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp,position.z,1.);}',
+    fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,uA*vA);}'});
+  const mesh=new THREE.LineSegments(g,mm);mesh.frustumCulled=false;mesh.renderOrder=9;mesh.visible=false;scene.add(mesh);
+  const mbB=document.getElementById('mb'),y0=MOB.years[0],y1=MOB.years[MOB.years.length-1],empty=new Uint8Array(bw*bh);
+  const show=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;mbB.classList.toggle('on',mobOn);mbB.title=T('nett')};
+  mobUpd=yr=>{tex.image.data.set(yr<y0?empty:grids[Math.min(yr,y1)-y0]);tex.needsUpdate=true;show()};
+  mbB.style.display='';mobSet=v=>{mobOn=v;show();dirty=true};mbB.onclick=()=>mobSet(!mobOn);
+  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=6+VX*2.2;MU.uA.value=.85}}
+}
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
 // buildings grow taller when zoomed in, for contrast with the ground
 function update(t){
-  const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);rainUpd(YR[yi]);
+  const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);rainUpd(YR[yi]);mobUpd(YR[yi]);
   let bt=0,nw=0,gv=0;const HYc=HT&&heatOn?HY[hIdx(YR[yi])]:null;
   for(let i=0;i<cells.length;i++){const c=cells[i];if(c.st)continue;let h,color;const hv=c.h;
     const ye=lensOn&&hp&&Math.hypot(c.x-hp.x,c.z-hp.z)<LR?(yi>yi0/2?0:yi0):t;const built=c.f<=ye+1e-6;
@@ -439,7 +461,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   if(dirty&&!run){dirty=false;update(tt)}
   UT.value=n/1000;if(animating)animating=animStep(Math.min(1,d*5));
   if(!explore){const K=KF[secI],e=Math.min(1,d*2.2);CS.az+=(K.az-CS.az)*e+d*(secI<1?1.5:.8);K.az+=d*(secI<1?1.5:.8);CS.pol+=(K.pol-CS.pol)*e;CS.z+=(K.z-CS.z)*e;setCam()}
-  animBalloons(n/1000);animHaze(n/1000);rainTick();
+  animBalloons(n/1000);animHaze(n/1000);rainTick();mobTick();
   if(explore&&roEl.checked&&!ctl.autoRotate){idleT+=d;if(idleT>8){ctl.autoRotate=true;ctl.autoRotateSpeed=.3}}
   if(ctl.autoRotate&&lastE&&!lensOn&&!run)aim(lastE);
   if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}{const B=roadBudget(cam.zoom),lv=RDEN[2]<=B?3:RDEN[1]<=B?2:1;if(lv!==roadLv){roadLv=lv;update(tt)}}{const m=lodFor(cam.zoom);if(m!==LODm){LODm=m;animating=true}}renderer.render(scene,cam);
@@ -482,7 +504,8 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
       dec:(b,o)=>{o.az=b[0]/256*2*Math.PI;o.pol=b[1]*Math.PI/180;o.zoom=b[2]/10;return 3}},
     {k:'point',enc:()=>{if(!explore||!meLL)return null;const la=u16((meLL[0]-D.bbox[1])*1e5),lo=u16((meLL[1]-D.bbox[0])*1e5);return[la>>8,la&255,lo>>8,lo&255]},   // 1e-5 degree from the south-west corner of the city (a city is under 0.65 degree wide)
       dec:(b,o)=>{o.point={lat:D.bbox[1]+(b[0]<<8|b[1])/1e5,lon:D.bbox[0]+(b[2]<<8|b[3])/1e5};return 4}},
-    {k:'rain',enc:()=>rainFx?[]:null,dec:(b,o)=>{o.rain=1;return 0}}];   // the RAIN button (card + rain over the city); the 8th flag opens a second flag byte, only when it is on
+    {k:'rain',enc:()=>rainFx?[]:null,dec:(b,o)=>{o.rain=1;return 0}},
+    {k:'mobile',enc:()=>mobOn?[]:null,dec:(b,o)=>{o.mobile=1;return 0}}];   // the RAIN button (card + rain over the city); the 8th flag opens a second flag byte, only when it is on
   const encData=()=>{const bits=FIELDS.map(f=>f.enc()),fb=[],pay=[];
     for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)if(bits[k+j])v|=1<<j;fb.push(v)}
     while(fb.length>1&&fb[fb.length-1]===0)fb.pop();if(fb.length===1&&fb[0]===0)return '';
@@ -510,7 +533,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const P=hashState();
   if(P){
     const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
-    if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();if(P.rain)rainSet(true);
+    if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();if(P.rain)rainSet(true);if(P.mobile)mobSet(true);
     domYi=-1;update(tt);dirty=true;
     setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
     const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;if(P.view.lat!=null){const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d)}cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};

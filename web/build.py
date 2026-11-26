@@ -53,6 +53,9 @@ for arg in args:
     rp = os.path.join(os.path.dirname(path), 'rain.json')
     if os.path.exists(rp):
         d['rain'] = json.load(open(rp, encoding='utf-8'))
+    mp = os.path.join(os.path.dirname(path), 'mobile.json')
+    if os.path.exists(mp):
+        d['mobile'] = json.load(open(mp, encoding='utf-8'))
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))
@@ -61,7 +64,7 @@ for arg in args:
         d['hoods'] = json.load(open(np_, encoding='utf-8'))['hoods']
     with open(os.path.join(out, 'data', d['slug'] + '.json'), 'w', encoding='utf-8') as f:
         json.dump(d, f, separators=(',', ':'), ensure_ascii=False)
-    has = [k for k in ('heat', 'air', 'rain', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
+    has = [k for k in ('heat', 'air', 'rain', 'mobile', 'towers', 'hoods') if k in d]   # layers available for this city (icons in the menu)
     bb = d['bbox']   # [lon0, lat0, lon1, lat1]: centre of the city, for the world map
     index.append({'slug': d['slug'], 'name': d['name'].split(',')[0], 'has': has, 'll': [round((bb[1] + bb[3]) / 2, 2), round((bb[0] + bb[2]) / 2, 2)]})
 with open(os.path.join(out, 'data', 'cities.json'), 'w', encoding='utf-8') as f:
