@@ -306,9 +306,9 @@ let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=c
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null,meLL=null;const msg=document.getElementById('gm');
 // my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
 const clearPos=()=>{meV=null;meLL=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
-const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
+const place=(lat,lon,gps)=>{const [x,z]=toXZ(lat,lon);
   if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';meLL=[lat,lon];
+  meV=new THREE.Vector3(x,6,z);meLL=gps?null:[lat,lon];{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
   hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
 // a shared link that holds a point: draw the marker and tell the bar (no camera move, the saved view already looks at it)
 const restoreMe=(lat,lon)=>{const [x,z]=toXZ(lat,lon);if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5)return;meV=new THREE.Vector3(x,6,z);meLL=[lat,lon];me.style.display='block';dirty=true;dispatchEvent(new CustomEvent('adama:pos-restored'))};
@@ -408,9 +408,9 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 {const l=document.getElementById('ld');if(l){window.__ldp&&window.__ldp(1);setTimeout(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)},350)}}
 
 // ---------- share / deep link: like Google Maps ----------
-// /place/bat-yam/@32.0178,34.751,15z/data=AUcFcCj3   (hash build: #bat-yam/@.../data=...)
+// /place/bat-yam/@32.0178,34.751,15z?s=cR4gPBI_E4g   (hash build: #bat-yam/@...?s=...)
 //   @lat,lon,Zz   the centre and the zoom of explore mode, readable and editable by hand (Google Maps scale, see gz2zoom)
-//   data=<token>  everything else, opaque and short: base64url of one or more flag bytes, then the payload of each flag that is set, in flag order.
+//   s=<token>     everything else, opaque and short: base64url of one or more flag bytes, then the payload of each flag that is set, in flag order.
 //                 Bit 7 of a flag byte says that another flag byte follows (7 more flags each), so a new layer or field is appended at the end of FIELDS.
 // Every part is optional; either opens explore mode. The address bar follows the session. No language in the link.
 {const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
@@ -420,7 +420,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const mppAt=la=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*cam.zoom)/(156543.03*Math.cos(la*Math.PI/180));   // = 2^-gz at the current camera zoom
   const gz2zoom=(gz,la)=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*156543.03*Math.cos(la*Math.PI/180)/Math.pow(2,gz));
   const n4=x=>+x.toFixed(4),n1=x=>+x.toFixed(1),u16=x=>Math.max(0,Math.min(65535,Math.round(x)));
-  // The fields of data=, one flag bit each, in this order (append new ones at the end, never reorder).
+  // The fields of s=, one flag bit each, in this order (append new ones at the end, never reorder).
   // enc() returns the bytes of the payload or null when the field is off; dec(bytes, state) reads it and returns how many bytes it took.
   const FIELDS=[
     {k:'heat',enc:()=>heatOn?[]:null,dec:(b,o)=>{o.heat=1;return 0}},
@@ -440,11 +440,11 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
     const o={};bits.forEach((on,k)=>{if(on&&FIELDS[k])p+=FIELDS[k].dec(b.slice(p),o)});return o}catch(e){return null}};
   const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)+','+n1(-Math.log2(mppAt(la)))+'z'}
-    const d=encData();return loc+(d?'/data='+d:'')};
+    const d=encData();return loc+(d?'?s='+d:'')};
   const hashState=()=>{const tail=PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0]);
-    const LOCM=tail.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/),DM=tail.match(/\/data=([A-Za-z0-9_-]+)/);
-    if(!LOCM&&!DM)return null;
-    const P=(DM&&decData(DM[1]))||{};
+    const LOCM=tail.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/),qi=HASH.indexOf('?'),S=qi<0?null:new URLSearchParams(HASH.slice(qi+1)).get('s');
+    if(!LOCM&&!S)return null;
+    const P=(S&&decData(S))||{};
     if(LOCM){const la=+LOCM[1],lo=+LOCM[2];P.view={lat:la,lon:lo,zoom:gz2zoom(LOCM[3]?+LOCM[3]:17,la)};if(P.az!=null){P.view.az=P.az;P.view.pol=P.pol}}
     return P};
   const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+enc():location.origin+location.pathname+'#'+D.slug+enc();

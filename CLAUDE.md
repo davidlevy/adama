@@ -43,8 +43,9 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 
 ## State in the URL
 
-- The link is short, like Google Maps: `/place/<slug>/@32.0178,34.751,15z/data=cR4gPBI_E4g` (hash build: `#<slug>/@.../data=...`). `@lat,lon,Zz` is the readable centre and zoom of explore mode (Google scale, converted by `gz2zoom`, capped by `ctl.maxZoom`). `data=` is everything else, opaque: base64url of flag bytes then the payload of each set flag, in the order of `FIELDS` in `web/src/app.ts` (heat, air, "before" lens, districts hidden, year, camera angles, placed point). Bit 7 of a flag byte says another flag byte follows. Both parts are optional and either opens explore mode.
+- The link is short, like Google Maps: `/place/<slug>/@32.0178,34.751,15z?s=cR4gPBI_E4g` (hash build: `#<slug>/@...?s=...`). `@lat,lon,Zz` is the readable centre and zoom of explore mode (Google scale, converted by `gz2zoom`, capped by `ctl.maxZoom`). `s=` is everything else, opaque: base64url of flag bytes then the payload of each set flag, in the order of `FIELDS` in `web/src/app.ts` (heat, air, "before" lens, districts hidden, year, camera angles, placed point). Bit 7 of a flag byte says another flag byte follows. Both parts are optional and either opens explore mode (`?s=` alone works without `@`).
 - Any new filter, layer or toggle that changes what the user sees must be in the link: append one entry at the END of `FIELDS` (never reorder or change an existing entry), with its `enc` (payload bytes or null when off) and `dec`. Keep it as short as possible: one flag bit and no payload for an on/off layer.
+- A point that comes from the GPS is never written in the link (only an address the user typed or pasted is): `place(lat, lon, gps)` keeps `meLL` empty for it.
 - The Position field also accepts a pasted Google Maps link (pin `!3d..!4d..` first, else `@lat,lon`) or plain coordinates.
 - Do not put the language in the link.
 - When you add a parameter, test it end to end: change it, read the address, open that address in a fresh page, check the parameter is restored (see the "Share links" section of the README).
