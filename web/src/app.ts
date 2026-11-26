@@ -278,7 +278,7 @@ if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Arr
   const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:MU,
     vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH,uT;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
       'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.35+.65*d)*(1.-smoothstep(.8,1.,length(position.xz)/uR));'+
-      'float q=length(position.xz)/uR,w=exp(-pow((q-fract(uT*.045)*1.2)/.07,2.))*(1.-smoothstep(.85,1.,q));vA=min(1.,vA+w*.5*smoothstep(.0,.12,d));gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp+w*1.6,position.z,1.);}',
+      'float q=length(position.xz)/uR,w=0.;for(int k=0;k<2;k++){float x=q-fract(uT*.06+float(k)*.5)*1.25;w+=(x>0.?exp(-x*x/.0004):exp(x/.09))*(1.-smoothstep(.85,1.,q));}vA=min(1.,vA*(1.+2.2*w));gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp,position.z,1.);}',
     fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,uA*vA);}'});
   const mesh=new THREE.LineSegments(g,mm);mesh.frustumCulled=false;mesh.renderOrder=9;mesh.visible=false;scene.add(mesh);
   const mbB=document.getElementById('mb'),y0=MOB.years[0],y1=MOB.years[MOB.years.length-1],empty=new Uint8Array(bw*bh);
