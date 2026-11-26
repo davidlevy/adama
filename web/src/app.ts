@@ -303,13 +303,15 @@ zp.onclick=()=>setHand(!hand);zpLang=()=>{zp.dataset.tip=zp.ariaLabel=T('pan')};
 addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();zoomBy(Math.exp(-e.deltaY*.01))},{passive:false});
 let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
-const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null;const msg=document.getElementById('gm');
+const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null,meLL=null;const msg=document.getElementById('gm');
 // my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
-const clearPos=()=>{meV=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
+const clearPos=()=>{meV=null;meLL=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
 const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
   if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
+  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';meLL=[lat,lon];
   hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
+// a shared link that holds a point: draw the marker and tell the bar (no camera move, the saved view already looks at it)
+const restoreMe=(lat,lon)=>{const [x,z]=toXZ(lat,lon);if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5)return;meV=new THREE.Vector3(x,6,z);meLL=[lat,lon];me.style.display='block';dirty=true;dispatchEvent(new CustomEvent('adama:pos-restored'))};
 // Address search for the Position component: OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
 // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
 const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
@@ -405,7 +407,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 // ---------- share / deep link: #slug?s=<token> ----------
 // The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
-// (explore mode), 11 more bytes: latitude, longitude (1e-5 degree), zoom (x10), azimuth and polar angle of the camera. About 15 characters. The address bar follows the session.
+// (explore mode), 11 more bytes: latitude, longitude (1e-5 degree), zoom (x10), azimuth and polar angle of the camera, then, when flag 5 is set (a point of the Position control is placed), 8 more bytes: its latitude and longitude. About 15 to 28 characters. The address bar follows the session.
 // The older #slug?y=2010&l=heat,air&d=0&lg=fr and #slug~<token> are still read.
 {const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
   const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
@@ -417,19 +419,21 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     {get:()=>airOn,set:v=>v&&on(btn('ar'))&&btn('ar').click()},                        // 1 air layer
     {get:()=>!!hoodLabs.length&&!hoodsOn,set:v=>v&&hoodLabs.length&&hdB.click()},      // 2 districts hidden
     {get:()=>explore,set:()=>{}},                                                      // 3 a view is saved (explore mode)
-    {get:()=>lensOn,set:v=>v&&btn('bf').click()}];                                     // 4 "before" lens
-  const VIEW=3;
+    {get:()=>lensOn,set:v=>v&&btn('bf').click()},                                      // 4 "before" lens
+    {get:()=>explore&&!!meLL,set:()=>{}}];                                             // 5 a point (my position or an address) is placed: 8 more bytes after the view
+  const VIEW=3,POINT=5;
   const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),bits=FLAGS.map(f=>f&&f.get()?1:0),fb=[];
     for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)v|=(bits[k+j]||0)<<j;fb.push(v)}
     while(fb.length>1&&fb[fb.length-1]===0)fb.pop();fb.forEach((v,i)=>{if(i<fb.length-1)fb[i]=v|128});
     const b=[YR[yi]-1980,...fb];
     if(bits[VIEW]){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z),dv=new DataView(new ArrayBuffer(9));dv.setUint32(0,Math.round((la+90)*1e5));dv.setUint32(4,Math.round((lo+180)*1e5));dv.setUint8(8,Math.max(1,Math.min(255,Math.round(cam.zoom*10))));
-      b.push(...new Uint8Array(dv.buffer),Math.round((ctl.getAzimuthalAngle()+Math.PI)/(2*Math.PI)*255),Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*100))))}
+      b.push(...new Uint8Array(dv.buffer),Math.round((ctl.getAzimuthalAngle()+Math.PI)/(2*Math.PI)*255),Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*100))));
+      if(bits[POINT]&&meLL){const pv=new DataView(new ArrayBuffer(8));pv.setUint32(0,Math.round((meLL[0]+90)*1e5));pv.setUint32(4,Math.round((meLL[1]+180)*1e5));b.push(...new Uint8Array(pv.buffer))}}
     return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
   const dec=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0));if(b.length<2)return null;
     const bits=[];let p=1;for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
     const o={y:1980+b[0],bits};
-    if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100}}
+    if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100;if(bits[POINT]&&b.length>=p+19){const pv=new DataView(new Uint8Array(b.slice(p+11,p+19)).buffer);o.point={lat:pv.getUint32(0)/1e5-90,lon:pv.getUint32(4)/1e5-180}}}}
     return o}catch(e){return null}};
   const hashState=()=>{const rest=HASH.slice(SLUG.length);
     if(rest[0]==='~')return dec(rest.slice(1));
@@ -447,7 +451,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     FLAGS.forEach((f,k)=>f&&f.set(!!P.bits[k]));
     domYi=-1;update(tt);dirty=true;
     if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
-    if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true},1100)}
+    if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true;if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
   // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
   if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
   // the address bar follows the session: in explore mode it always holds a link that restores the view

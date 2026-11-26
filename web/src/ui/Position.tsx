@@ -32,6 +32,16 @@ function Position({ api }: { api: PositionApi }) {
     if (typing && input.current) input.current.focus();
   }, [typing]);
   useEffect(() => {
+    // a shared link held a point: the scene has drawn the marker, show it in the bar too
+    const onRestored = () => {
+      setMode('addr');
+      setSt('on');
+      setMsg(T('sharedpt'));
+    };
+    addEventListener('adama:pos-restored', onRestored);
+    return () => removeEventListener('adama:pos-restored', onRestored);
+  }, [T]);
+  useEffect(() => {
     const m = document.getElementById('gm');
     if (m) m.textContent = msg;
   }, [msg]); // the message slot sits at the end of the bar
