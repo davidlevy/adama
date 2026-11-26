@@ -269,22 +269,23 @@ if(RAIN){const el=document.getElementById('rain');
 const MOB=D.mobile&&D.mobile.years?D.mobile:null;
 if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0))),tex=new THREE.DataTexture(new Uint8Array(bw*bh),bw,bh,THREE.RedFormat,THREE.UnsignedByteType);
   tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
-  // honeycomb lying low over the city (the dome hid the districts): pointy hexagons, each cell owns 3 of its 6 edges so no edge is drawn twice; density reads in the vertex shader
-  const hs=Math.max(5,Math.ceil(Math.max(W,H)/34)),hw=Math.sqrt(3)*hs,P=[],L=[],cr=(c,k)=>[c[0]+hs*Math.cos((60*k-30)*Math.PI/180),c[1]+hs*Math.sin((60*k-30)*Math.PI/180)];
-  for(let r=-1;r*1.5*hs<=H+hs;r++)for(let q=-1;q*hw<=W+hw;q++){const c=[q*hw+(r&1?hw/2:0)-W/2,r*1.5*hs-H/2];for(let k=0;k<3;k++){const A=cr(c,k),B=cr(c,k+1);P.push(A[0],0,A[1],B[0],0,B[1]);L.push(0,0)}}
+  // square lattice floating low over the city (the most readable shape): coarse lines every 4th, fine every 2nd, finest all; the denser the network the more of them show
+  const st=Math.max(2,Math.ceil(Math.max(W,H)/110)),P=[],L=[],nx=Math.floor(W/st),nz=Math.floor(H/st),lv=i=>i%4===0?0:i%2===0?1:2;
+  for(let j=0;j<=nz;j++)for(let i=0;i<nx;i++){P.push(i*st-W/2,0,j*st-H/2,(i+1)*st-W/2,0,j*st-H/2);L.push(lv(j),lv(j))}
+  for(let i=0;i<=nx;i++)for(let j=0;j<nz;j++){P.push(i*st-W/2,0,j*st-H/2,i*st-W/2,0,(j+1)*st-H/2);L.push(lv(i),lv(i))}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aLv',new THREE.Float32BufferAttribute(L,1));
-  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:3},uR:{value:RD},uH:{value:0}};
+  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:2},uR:{value:RD},uH:{value:0},uT:{value:0}};
   const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:MU,
-    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
-      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.25+.75*d)*(1.-smoothstep(.8,1.,length(position.xz)/uR));'+
-      'float q=length(position.xz)/uR;gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,uH*sqrt(max(0.,1.-q*q))+d*uAmp,position.z,1.);}',
+    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH,uT;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
+      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.35+.65*d)*(1.-smoothstep(.8,1.,length(position.xz)/uR));'+
+      'float q=length(position.xz)/uR,w=exp(-pow((q-fract(uT*.045)*1.2)/.07,2.))*(1.-smoothstep(.85,1.,q));vA=min(1.,vA+w*.5*smoothstep(.0,.12,d));gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp+w*1.6,position.z,1.);}',
     fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,uA*vA);}'});
   const mesh=new THREE.LineSegments(g,mm);mesh.frustumCulled=false;mesh.renderOrder=9;mesh.visible=false;scene.add(mesh);
   const mbB=document.getElementById('mb'),y0=MOB.years[0],y1=MOB.years[MOB.years.length-1],empty=new Uint8Array(bw*bh);
   const show=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;mbB.classList.toggle('on',mobOn);mbB.title=T('nett')};
   mobUpd=yr=>{tex.image.data.set(yr<y0?empty:grids[Math.min(yr,y1)-y0]);tex.needsUpdate=true;show()};
   mbB.style.display='';mobSet=v=>{mobOn=v;show();dirty=true};mbB.onclick=()=>mobSet(!mobOn);
-  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=6+VX*2.2;MU.uA.value=1}}
+  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=6+VX*2.2;MU.uT.value=performance.now()/1000;MU.uA.value=1}}
 }
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
