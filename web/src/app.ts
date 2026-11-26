@@ -420,13 +420,13 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   // Google zoom <-> our camera zoom: the same metres on screen (156543 m per pixel at zoom 0 on the equator)
   const mppAt=la=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*cam.zoom)/(156543.03*Math.cos(la*Math.PI/180));   // = 2^-gz at the current camera zoom
   const gz2zoom=(gz,la)=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*156543.03*Math.cos(la*Math.PI/180)/Math.pow(2,gz));
-  const n5=x=>+x.toFixed(5),deg=r=>Math.round((r*180/Math.PI%360+360)%360);
+  const n5=x=>+x.toFixed(5),n4=x=>+x.toFixed(4),n1=x=>+x.toFixed(1),deg=r=>Math.round((r*180/Math.PI%360+360)%360);
   const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),q=[];
     if(yi!==yi0)q.push('y='+YR[yi]);
     const ls=LAYERS.filter(l=>l.get()).map(l=>l.k);if(ls.length)q.push('l='+ls.join(','));
     if(hoodLabs.length&&!hoodsOn)q.push('d=0');
     if(explore&&meLL)q.push('p='+n5(meLL[0])+','+n5(meLL[1]));
-    let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n5(la)+','+n5(lo)+','+(-Math.log2(mppAt(la))).toFixed(2)+'z,'+deg(ctl.getAzimuthalAngle())+'h,'+Math.round(ctl.getPolarAngle()*180/Math.PI)+'t'}
+    let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)+','+n1(-Math.log2(mppAt(la)))+'z,'+deg(ctl.getAzimuthalAngle())+'h,'+Math.round(ctl.getPolarAngle()*180/Math.PI)+'t'}
     return loc+(q.length?'?'+q.join('&'):'')};
   const hashState=()=>{const qi=HASH.indexOf('?'),q=new URLSearchParams(qi<0?'':HASH.slice(qi+1));
     const LOCM=(PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0])).match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)((?:,-?\d+(?:\.\d+)?[zht])*)/);
