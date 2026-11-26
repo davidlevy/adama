@@ -1,3 +1,7 @@
+/* Three type levels: the year, the figures (one size for all of them: --kpi), the small grey captions. */
+:root {
+  --kpi: clamp(28px, 2.7vw, 40px);
+}
 /* Left column: the year, the data source, the built / green figures, the heat legend. */
 .hero {
   left: clamp(18px, 3vw, 44px);
@@ -28,7 +32,7 @@
 }
 .stats b {
   display: block;
-  font-size: clamp(24px, 2.7vw, 40px);
+  font-size: var(--kpi);
   font-weight: 300;
   color: #fff;
   letter-spacing: -0.02em;
@@ -48,7 +52,7 @@
 }
 .green b {
   display: block;
-  font-size: clamp(40px, 4.8vw, 72px);
+  font-size: var(--kpi);
   font-weight: 300;
   color: #74dd7c;
   letter-spacing: -0.035em;
@@ -129,7 +133,7 @@ body:not(.exp) .gb {
 }
 .heatv b {
   display: block;
-  font-size: clamp(40px, 4.8vw, 72px);
+  font-size: var(--kpi);
   font-weight: 200;
   color: #ff7a2e;
   letter-spacing: -0.035em;
