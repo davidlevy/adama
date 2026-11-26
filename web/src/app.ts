@@ -269,23 +269,23 @@ if(RAIN){const el=document.getElementById('rain');
 const MOB=D.mobile&&D.mobile.years?D.mobile:null;
 if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0))),tex=new THREE.DataTexture(new Uint8Array(bw*bh),bw,bh,THREE.RedFormat,THREE.UnsignedByteType);
   tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
-  // organic mesh: a triangular lattice whose points are nudged at random (straight edges); each edge has a random rank, so the denser the network the more edges appear
-  const st=Math.max(3,Math.ceil(Math.max(W,H)/80)),nx=Math.floor(W/st)+1,nz=Math.floor(H/(st*.866))+1,P=[],L=[],hs=(i,j,k)=>{const v=Math.sin(i*127.1+j*311.7+k*74.7)*43758.5453;return v-Math.floor(v)};
-  const vx=(i,j)=>[i*st+(j&1)*st/2+(hs(i,j,1)-.5)*st*.55-W/2,j*st*.866+(hs(i,j,2)-.5)*st*.55-H/2],edge=(a,b,k)=>{const r=hs(a[0]+b[0]*3,a[1]+b[1]*5,k),l=r<.3?0:r<.65?1:2,A=vx(...a),B=vx(...b);P.push(A[0],0,A[1],B[0],0,B[1]);L.push(l,l)};
-  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){edge([i,j],[i+1,j],3);if(j+1<nz){edge([i,j],[i,j+1],4);edge([i,j],[i+((j&1)?1:-1),j+1],5)}}
+  // dome: parallels and meridians of a half sphere over the city (the ground position of each point reads the density, the vertex shader lifts it); the denser the network, the more lines show
+  const NR=14,NM=48,NS=96,P=[],L=[],lv=i=>i%4===0?0:i%2===0?1:2,pt=(r,a)=>[RD*r*Math.cos(a),RD*r*Math.sin(a)];
+  for(let k=1;k<=NR;k++)for(let m=0;m<NS;m++){const A=pt(k/NR,m/NS*2*Math.PI),B=pt(k/NR,(m+1)/NS*2*Math.PI);P.push(A[0],0,A[1],B[0],0,B[1]);L.push(lv(k),lv(k))}
+  for(let m=0;m<NM;m++)for(let k=m%2?3:0;k<NR*3;k++){const A=pt(k/(NR*3),m/NM*2*Math.PI),B=pt((k+1)/(NR*3),m/NM*2*Math.PI);P.push(A[0],0,A[1],B[0],0,B[1]);L.push(lv(m),lv(m))}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aLv',new THREE.Float32BufferAttribute(L,1));
-  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:5},uR:{value:RD}};
+  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:12},uR:{value:RD},uH:{value:RD*.2}};
   const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:MU,
-    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
-      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.45+.55*d)*(1.-smoothstep(uR*.8,uR,length(position.xz)));'+
-      'gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp,position.z,1.);}',
+    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
+      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.7+.3*d)*(1.-.5*smoothstep(.85,1.,length(position.xz)/uR));'+
+      'float q=length(position.xz)/uR;gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,uH*sqrt(max(0.,1.-q*q))+d*uAmp,position.z,1.);}',
     fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,uA*vA);}'});
   const mesh=new THREE.LineSegments(g,mm);mesh.frustumCulled=false;mesh.renderOrder=9;mesh.visible=false;scene.add(mesh);
   const mbB=document.getElementById('mb'),y0=MOB.years[0],y1=MOB.years[MOB.years.length-1],empty=new Uint8Array(bw*bh);
   const show=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;mbB.classList.toggle('on',mobOn);mbB.title=T('nett')};
   mobUpd=yr=>{tex.image.data.set(yr<y0?empty:grids[Math.min(yr,y1)-y0]);tex.needsUpdate=true;show()};
   mbB.style.display='';mobSet=v=>{mobOn=v;show();dirty=true};mbB.onclick=()=>mobSet(!mobOn);
-  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=14+VX*3;MU.uA.value=1}}
+  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=8+VX*2;MU.uA.value=1}}
 }
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
