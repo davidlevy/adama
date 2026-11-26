@@ -123,6 +123,9 @@ body.top .sh {
   unicode-bidi: isolate;
   color: #b9b9c0;
 }
+.hd em i {
+  font-style: normal;
+}
 .hd em svg {
   fill: none;
   stroke: currentColor;

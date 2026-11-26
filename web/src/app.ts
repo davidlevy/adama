@@ -338,7 +338,7 @@ let npg=BP.length;
 const WR=20;let tipX=0,tipY=0;
 const hring=new THREE.Mesh(new THREE.RingGeometry(.975,1,96).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.9,depthTest:false}));hring.renderOrder=9;hring.visible=false;hring.position.y=5;scene.add(hring);
 function cellAt(x,z){const gx=Math.floor(x+W/2),gy=Math.floor(z+H/2);if(gx<0||gy<0||gx>=W||gy>=H)return null;const j=idx[gy*W+gx];return j<0?null:cells[j]}
-function popLine(c){if(!POP)return'';const v=popSum(c.gx+.5,c.gy+.5,WR),n=popAtYear(v,YR[Math.min(yi0,Math.max(0,Math.round(tt)))]);if(n<20)return'';const pc=popPct(v,YR[Math.min(yi0,Math.max(0,Math.round(tt)))]);return'<span>'+T('pop').replace('{n}',popRound(n).toLocaleString(LG==='fr'?'fr-FR':LG==='he'?'he-IL':'en-US')).replace('{p}',pc?' ('+pc+' '+T('since').replace('{y}',POP.ys[0])+')':'')+'</span>'}
+function popLine(c){if(!POP)return'';const v=popSum(c.gx+.5,c.gy+.5,WR),n=popAtYear(v,YR[Math.min(yi0,Math.max(0,Math.round(tt)))]);if(n<20)return'';return'<span>'+T('pop').replace('{n}',popRound(n).toLocaleString(LG==='fr'?'fr-FR':LG==='he'?'he-IL':'en-US'))+'</span>'}
 function refreshTip(yi){
   if(yi===undefined)yi=Math.min(yi0,Math.max(0,Math.round(tt)));
   const c=hp&&cellAt(hp.x,hp.z);if(!c){tip.style.display='none';hring.visible=false;return}
