@@ -50,6 +50,9 @@ for arg in args:
     ap = os.path.join(os.path.dirname(path), 'air.json')
     if os.path.exists(ap):
         d['air'] = json.load(open(ap, encoding='utf-8'))
+    rp = os.path.join(os.path.dirname(path), 'rain.json')
+    if os.path.exists(rp):
+        d['rain'] = json.load(open(rp, encoding='utf-8'))
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))

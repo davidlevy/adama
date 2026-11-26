@@ -1,9 +1,6 @@
 /* Air quality layer: the legend / curve panel. */
 .air {
-  position: fixed;
-  left: clamp(18px, 3vw, 44px);
-  bottom: clamp(140px, 22vh, 166px);
-  z-index: 12;
+  position: relative;
   display: none;
   color: #e4e4e7;
   font-size: 11px;
