@@ -33,14 +33,13 @@ def parse_height(tags):
 
 
 def tower(el, min_h):
-    tags, geom = el.get("tags", {}), el.get("geometry")
+    tags, b = el.get("tags", {}), el.get("bounds")
     h = parse_height(tags)
-    if not geom or h < min_h:
+    if not b or h < min_h:
         return None
-    lats, lons = [p["lat"] for p in geom], [p["lon"] for p in geom]
-    lat, lon = (min(lats) + max(lats)) / 2, (min(lons) + max(lons)) / 2
-    w = (max(lons) - min(lons)) * 111320.0 * math.cos(math.radians(lat))
-    d = (max(lats) - min(lats)) * 110574.0
+    lat, lon = (b["minlat"] + b["maxlat"]) / 2, (b["minlon"] + b["maxlon"]) / 2
+    w = (b["maxlon"] - b["minlon"]) * 111320.0 * math.cos(math.radians(lat))
+    d = (b["maxlat"] - b["minlat"]) * 110574.0
     m = re.match(r"^\s*(\d{4})", tags.get("start_date", ""))
     name = tags.get("name:en") or tags.get("name") or ""
     return [round(lat, 6), round(lon, 6), round(h), round(max(w, 8)), round(max(d, 8)), int(m.group(1)) if m else 0, name]
@@ -58,11 +57,11 @@ def main():
         sys.exit("Run satellite_city.py first: %s not found" % src)
     bb = json.load(open(src, encoding="utf-8"))["bbox"]   # lon_min, lat_min, lon_max, lat_max
     box = "(%f,%f,%f,%f)" % (bb[1], bb[0], bb[3], bb[2])
-    q = ('[out:json][timeout:170];(way["building"]["height"~"%s"]%s;way["building"]["building:levels"~"%s"]%s;);out tags geom;'
+    q = ('[out:json][timeout:90];(way["building"]["height"~"%s"]%s;way["building"]["building:levels"~"%s"]%s;);out tags bb;'
          % (H_RE, box, L_RE, box))
     rep = []
     sc.log("Asking OpenStreetMap for tall buildings ...", rep)
-    data = sc.overpass(q, rep, tries=1, timeout=180)   # a big city scans millions of buildings: wait for the answer instead of restarting
+    data = sc.overpass(q, rep, tries=2, timeout=100)   # "out bb" (box only, no full outline) is ~10x lighter: it answers in ~40 s where "out geom" timed out
     if data is None:
         sys.exit("OpenStreetMap did not answer. Run the same command again in a minute.")
     towers = [t for t in (tower(e, a.min_height) for e in data.get("elements", [])) if t]
