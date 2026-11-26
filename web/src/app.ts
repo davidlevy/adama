@@ -17,7 +17,8 @@ const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new UR
 if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug~token: open the path version
   const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?/]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
   location.replace(ROOTP+sl+r)}
-const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
+// the Vercel copy reads its data straight from Cloudflare (<meta name="adama-data">, added by publish.sh); everywhere else the data sits next to the page
+const BASE=document.querySelector('meta[name=adama-data]')?.content||new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 // city names in links are read with or without hyphens and case: raanana, raanana, Tel-Aviv, telaviv
 const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?/]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 window.__ldp&&window.__ldp(.7);   // loading bar: data is here, the build follows
