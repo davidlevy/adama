@@ -269,9 +269,10 @@ if(RAIN){const el=document.getElementById('rain');
 const MOB=D.mobile&&D.mobile.years?D.mobile:null;
 if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0))),tex=new THREE.DataTexture(new Uint8Array(bw*bh),bw,bh,THREE.RedFormat,THREE.UnsignedByteType);
   tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
-  const st=Math.max(2,Math.ceil(Math.max(W,H)/110)),P=[],L=[],nx=Math.floor(W/st),nz=Math.floor(H/st),lv=i=>i%4===0?0:i%2===0?1:2;   // lines every `st` cells, coarse every 4th, fine every 2nd, finest all
-  for(let j=0;j<=nz;j++)for(let i=0;i<nx;i++){P.push(i*st-W/2,0,j*st-H/2,(i+1)*st-W/2,0,j*st-H/2);L.push(lv(j),lv(j))}
-  for(let i=0;i<=nx;i++)for(let j=0;j<nz;j++){P.push(i*st-W/2,0,j*st-H/2,i*st-W/2,0,(j+1)*st-H/2);L.push(lv(i),lv(i))}
+  // organic mesh: a triangular lattice whose points are nudged at random (straight edges); each edge has a random rank, so the denser the network the more edges appear
+  const st=Math.max(3,Math.ceil(Math.max(W,H)/80)),nx=Math.floor(W/st)+1,nz=Math.floor(H/(st*.866))+1,P=[],L=[],hs=(i,j,k)=>{const v=Math.sin(i*127.1+j*311.7+k*74.7)*43758.5453;return v-Math.floor(v)};
+  const vx=(i,j)=>[i*st+(j&1)*st/2+(hs(i,j,1)-.5)*st*.55-W/2,j*st*.866+(hs(i,j,2)-.5)*st*.55-H/2],edge=(a,b,k)=>{const r=hs(a[0]+b[0]*3,a[1]+b[1]*5,k),l=r<.3?0:r<.65?1:2,A=vx(...a),B=vx(...b);P.push(A[0],0,A[1],B[0],0,B[1]);L.push(l,l)};
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){edge([i,j],[i+1,j],3);if(j+1<nz){edge([i,j],[i,j+1],4);edge([i,j],[i+((j&1)?1:-1),j+1],5)}}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aLv',new THREE.Float32BufferAttribute(L,1));
   const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:5},uR:{value:RD}};
   const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:MU,
