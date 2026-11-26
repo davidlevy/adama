@@ -248,12 +248,12 @@ if(RAIN){const el=document.getElementById('rain');
     const l=el.querySelector('#rml'),c=el.querySelector('#rmc');l.style.display=c.style.display=v==null?'none':'';if(v!=null){l.setAttribute('x1',X(yr));l.setAttribute('x2',X(yr));c.setAttribute('cx',X(yr));c.setAttribute('cy',Y(v))}};
   rainLang=()=>{el.innerHTML='<div class="rh"><div class="rx"><div class="rt">'+T('rain')+'</div><div class="rv"></div></div>'+svg+'</div>';rainUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}
   // the rain over the city (discreet): vertical streaks, more of them in a wet year, with the card; the RAIN button shows or hides both
-  const NMAX=1600,HR=70,RU={uT:UT,uA:{value:0},uH:{value:HR},uL:{value:2.6}},rp=new Float32Array(NMAX*6);
+  const NMAX=1600,HR=84,RU={uT:UT,uA:{value:0},uH:{value:HR},uL:{value:2.6},uF:{value:14}},rp=new Float32Array(NMAX*6);
   for(let k=0;k<NMAX;k++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*RD,x=Math.cos(a)*r,z=Math.sin(a)*r,y=Math.random()*HR;rp.set([x,y,z,x,y,z],k*6);}
   const rg=new THREE.BufferGeometry(),end=new Float32Array(NMAX*2),sd=new Float32Array(NMAX*2);for(let k=0;k<NMAX;k++){const q=Math.random();end[k*2]=0;end[k*2+1]=1;sd[k*2]=sd[k*2+1]=q}
   rg.setAttribute('position',new THREE.BufferAttribute(rp,3));rg.setAttribute('aEnd',new THREE.BufferAttribute(end,1));rg.setAttribute('aSd',new THREE.BufferAttribute(sd,1));
   const rm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:RU,
-    vertexShader:'attribute float aEnd,aSd;uniform float uT,uH,uL;varying float vA;void main(){float y=mod(position.y-uT*(9.+7.*aSd),uH);vA=smoothstep(0.,6.,y)*(1.-smoothstep(uH*.7,uH,y))*(.45+.55*aEnd);vec3 p=vec3(position.x+y*.12,y+uL*aEnd,position.z);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
+    vertexShader:'attribute float aEnd,aSd;uniform float uT,uH,uL,uF;varying float vA;void main(){float y=mod(position.y-uT*(9.+7.*aSd),uH);vA=smoothstep(uF,uF+16.,y)*(1.-smoothstep(uH*.7,uH,y))*(.45+.55*aEnd);vec3 p=vec3(position.x+y*.12,y+uL*aEnd,position.z);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
     fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(.36,.62,1.,uA*vA);}'});
   const rain=new THREE.LineSegments(rg,rm);rain.frustumCulled=false;rain.renderOrder=9;rain.visible=false;scene.add(rain);
   const fxApply=(yr)=>{const i=ys.indexOf(Math.min(yr,y1)),v=i<0?mean:vs[i],k=Math.max(.08,Math.min(1,.5*v/mean));rg.setDrawRange(0,Math.round(NMAX*k)*2);rainBase=.34+.3*k};
@@ -262,7 +262,7 @@ if(RAIN){const el=document.getElementById('rain');
   rnB.style.display='';
   rainSet=v=>{rainFx=v;fxShow();dirty=true};rnB.onclick=()=>rainSet(!rainFx);
   const upd0=rainUpd;rainUpd=yr=>{upd0(yr);fxApply(yr);fxShow()};
-  rainTick=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;if(rain.visible)RU.uA.value=rainBase*Math.min(1,3.2/cam.zoom)}   // zoomed in, the streaks would look huge: fainter
+  rainTick=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;if(rain.visible){RU.uA.value=rainBase*Math.min(1,3.2/cam.zoom);RU.uF.value=haze.visible?22+(VX-1)*5.5:14}}   // with the haze on, the rain stays above its top veil (it rises with the zoom) and never crosses it   // zoomed in, the streaks would look huge: fainter
 }
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
