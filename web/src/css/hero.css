@@ -214,3 +214,31 @@ body:not(.exp) .heatv {
   background: #6aa26e;
   vertical-align: 1px;
 }
+
+/* Compact green block: the figure on the left, its three lines (caption, trend, fields) stacked beside it. */
+.green {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  align-items: center;
+}
+.green b {
+  grid-column: 1;
+  grid-row: 1 / 4;
+}
+.green span,
+.green em,
+.green em#gf {
+  grid-column: 2;
+  margin: 0;
+  line-height: 1.35;
+}
+.green span {
+  font-size: clamp(12px, 1vw, 13px);
+}
+.green em {
+  font-size: clamp(13px, 1.05vw, 15px);
+}
+.green em#gf {
+  font-size: clamp(12px, 1vw, 13px);
+}
