@@ -355,7 +355,7 @@ he:{s0:()=>({k:nm0()+' · '+lat0+'°N '+lon0+'°E',h:'לאן נעלם הירוק
 const SECH=[100,260,200,110,130],vhpx=()=>innerHeight/100;
 const storyEl=document.getElementById('story');storyEl.innerHTML=SECH.map(h=>'<section style="height:'+h+'vh"></section>').join('');
 const card=document.getElementById('card'),upB=document.getElementById('up');
-let secI=0,explore=false,cardKey=-1;
+let secI=0,explore=false,cardKey=-1,pendingView=null;   // pendingView: the camera of a shared link, applied when explore mode starts (it resets the camera)
 const KF=[{az:25,pol:70,z:.86},{az:45,pol:56,z:1.0},{az:58,pol:44,z:1.1},{az:62,pol:36,z:1.12},{az:40,pol:50,z:1.0}],CS={az:25,pol:70,z:.86};
 const RAD=400;function setCam(){const a=CS.az*Math.PI/180,p=CS.pol*Math.PI/180;cam.position.set(RAD*Math.sin(p)*Math.sin(a),RAD*Math.cos(p),RAD*Math.sin(p)*Math.cos(a));cam.lookAt(0,0,0);cam.zoom=CS.z;cam.updateProjectionMatrix()}
 function syncFromCam(){const r=cam.position.length();CS.az=Math.atan2(cam.position.x,cam.position.z)*180/Math.PI;CS.pol=Math.acos(cam.position.y/r)*180/Math.PI;CS.z=cam.zoom;KF[4].az=CS.az;KF[4].pol=CS.pol;KF[4].z=CS.z}
@@ -368,7 +368,7 @@ function story(){
   const vh=vhpx();let st=[],a=0;SECH.forEach(h=>{st.push(a*vh);a+=h});
   const y=scrollY;document.body.classList.toggle('top',y<60);let i=0;st.forEach((v,k)=>{if(y>=v-vh*25)i=k});
   const ex=i===4;
-  if(i!==secI||ex!==explore||cardKey!==i+LG){secI=i;if(ex!==explore){explore=ex;document.body.classList.toggle('exp',ex);ctl.enabled=ex;renderer.domElement.style.pointerEvents=ex?'auto':'none';if(!ex){hp=null;tip.style.display='none';hring.visible=false}if(ex){setCam();ctl.target.set(0,0,0);ctl.autoRotate=roEl.checked;tt=DLY!=null?DLY:yi0;DLY=null;sl.value=tt;dirty=true}else{syncFromCam();ctl.autoRotate=false}}cardKey=i+LG;renderCard(i)}
+  if(i!==secI||ex!==explore||cardKey!==i+LG){secI=i;if(ex!==explore){explore=ex;document.body.classList.toggle('exp',ex);ctl.enabled=ex;renderer.domElement.style.pointerEvents=ex?'auto':'none';if(!ex){hp=null;tip.style.display='none';hring.visible=false}if(ex){setCam();ctl.target.set(0,0,0);ctl.autoRotate=roEl.checked;tt=DLY!=null?DLY:yi0;DLY=null;sl.value=tt;dirty=true;if(pendingView){const f=pendingView;pendingView=null;f()}}else{syncFromCam();ctl.autoRotate=false}}cardKey=i+LG;renderCard(i)}
   if(!explore){let t;const p1=cl((y-st[1])/((SECH[1]-100)*vh)),p2=cl((y-st[2])/((SECH[2]-100)*vh));
     if(y<st[1])t=0;else if(y<st[2])t=lerp(0,ib,ease(p1));else if(y<st[3])t=lerp(ib,yi0,ease(p2));else t=yi0;
     tt=t;sl.value=Math.round(t);dirty=true;lastY=y}
@@ -408,18 +408,17 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 {const l=document.getElementById('ld');if(l){window.__ldp&&window.__ldp(1);setTimeout(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)},350)}}
 
 // ---------- share / deep link: like Google Maps ----------
-// /place/bat-yam/@32.0178,34.751,15z?s=cR4gPBI_E4g   (hash build: #bat-yam/@...?s=...)
-//   @lat,lon,Zz   the centre and the zoom of explore mode, readable and editable by hand (Google Maps scale, see gz2zoom)
+// /place/bat-yam/@32.0178,34.751?s=cR4gPBI_E4g   (hash build: #bat-yam/@...?s=...)
+//   @lat,lon      the centre of explore mode, readable and editable by hand (a hand-written ,15z after it is read too, Google Maps scale, see gz2zoom)
 //   s=<token>     everything else, opaque and short: base64url of one or more flag bytes, then the payload of each flag that is set, in flag order.
 //                 Bit 7 of a flag byte says that another flag byte follows (7 more flags each), so a new layer or field is appended at the end of FIELDS.
 // Every part is optional; either opens explore mode. The address bar follows the session. No language in the link.
 {const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
   const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
     for(let k=0;k<2;k++){const [e,n]=utm(la,lo);la+=(N-n)/111000;lo+=(E-e)/kx}return [la,lo]};
-  // Google zoom <-> our camera zoom: the same metres on screen (156543 m per pixel at zoom 0 on the equator)
-  const mppAt=la=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*cam.zoom)/(156543.03*Math.cos(la*Math.PI/180));   // = 2^-gz at the current camera zoom
+  // a hand-written @lat,lon,15z (or a pasted Google link): Google zoom -> our camera zoom, the same metres on screen (156543 m per pixel at zoom 0 on the equator)
   const gz2zoom=(gz,la)=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*156543.03*Math.cos(la*Math.PI/180)/Math.pow(2,gz));
-  const n4=x=>+x.toFixed(4),n1=x=>+x.toFixed(1),u16=x=>Math.max(0,Math.min(65535,Math.round(x)));
+  const n4=x=>+x.toFixed(4),u16=x=>Math.max(0,Math.min(65535,Math.round(x)));
   // The fields of s=, one flag bit each, in this order (append new ones at the end, never reorder).
   // enc() returns the bytes of the payload or null when the field is off; dec(bytes, state) reads it and returns how many bytes it took.
   const FIELDS=[
@@ -428,7 +427,8 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     {k:'before',enc:()=>lensOn?[]:null,dec:(b,o)=>{o.before=1;return 0}},
     {k:'hoodsOff',enc:()=>hoodLabs.length&&!hoodsOn?[]:null,dec:(b,o)=>{o.hoodsOff=1;return 0}},
     {k:'year',enc:()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt)));return yi===yi0?null:[YR[yi]-1980]},dec:(b,o)=>{o.y=1980+b[0];return 1}},
-    {k:'angles',enc:()=>explore?[Math.round(((ctl.getAzimuthalAngle()*180/Math.PI)%360+360)%360/360*256)&255,Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*180/Math.PI)))]:null,dec:(b,o)=>{o.az=b[0]/256*2*Math.PI;o.pol=b[1]*Math.PI/180;return 2}},
+    {k:'camera',enc:()=>explore?[Math.round(((ctl.getAzimuthalAngle()*180/Math.PI)%360+360)%360/360*256)&255,Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*180/Math.PI))),Math.max(1,Math.min(255,Math.round(cam.zoom*10)))]:null,   // heading (1/256 turn), tilt (degrees), camera zoom (x10)
+      dec:(b,o)=>{o.az=b[0]/256*2*Math.PI;o.pol=b[1]*Math.PI/180;o.zoom=b[2]/10;return 3}},
     {k:'point',enc:()=>{if(!explore||!meLL)return null;const la=u16((meLL[0]-D.bbox[1])*1e5),lo=u16((meLL[1]-D.bbox[0])*1e5);return[la>>8,la&255,lo>>8,lo&255]},   // 1e-5 degree from the south-west corner of the city (a city is under 0.65 degree wide)
       dec:(b,o)=>{o.point={lat:D.bbox[1]+(b[0]<<8|b[1])/1e5,lon:D.bbox[0]+(b[2]<<8|b[3])/1e5};return 4}}];
   const encData=()=>{const bits=FIELDS.map(f=>f.enc()),fb=[],pay=[];
@@ -439,13 +439,13 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const decData=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0)),bits=[];let p=0;
     for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
     const o={};bits.forEach((on,k)=>{if(on&&FIELDS[k])p+=FIELDS[k].dec(b.slice(p),o)});return o}catch(e){return null}};
-  const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)+','+n1(-Math.log2(mppAt(la)))+'z'}
+  const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)}
     const d=encData();return loc+(d?'?s='+d:'')};
   const hashState=()=>{const tail=PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0]);
     const LOCM=tail.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/),qi=HASH.indexOf('?'),S=qi<0?null:new URLSearchParams(HASH.slice(qi+1)).get('s');
     if(!LOCM&&!S)return null;
     const P=(S&&decData(S))||{};
-    if(LOCM){const la=+LOCM[1],lo=+LOCM[2];P.view={lat:la,lon:lo,zoom:gz2zoom(LOCM[3]?+LOCM[3]:17,la)};if(P.az!=null){P.view.az=P.az;P.view.pol=P.pol}}
+    if(LOCM){const la=+LOCM[1],lo=+LOCM[2];P.view={lat:la,lon:lo,zoom:P.zoom!=null?P.zoom:LOCM[3]?gz2zoom(+LOCM[3],la):5};if(P.az!=null){P.view.az=P.az;P.view.pol=P.pol}}
     return P};
   const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+enc():location.origin+location.pathname+'#'+D.slug+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
@@ -458,8 +458,9 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();
     domYi=-1;update(tt);dirty=true;
     setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
-    setTimeout(()=>{if(P.view){roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true}
-      if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
+    const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};
+    if(P.view){if(explore)applyView();else pendingView=applyView}
+    setTimeout(()=>{if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
   // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
   if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
   // the address bar follows the session: in explore mode it always holds a link that restores the view

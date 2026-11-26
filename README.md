@@ -114,9 +114,9 @@ For a big city or a region, give the centre and a radius in km: `--center 25.2,5
 
 ## Share links
 
-The address follows the session and always holds a link that restores it, short like a Google Maps one: `https://host/adama/raanana/@32.186,34.871,15z?s=cR4gPBI_E4g`.
-- `@lat,lon,15z`: the centre and the zoom of explore mode, readable and editable by hand (Google Maps scale; the zoom is capped by what the camera allows).
-- `s=`: the rest, opaque and compact (about 10 characters): active layers (`heat`, `air`, the "before" lens), districts hidden, the year (left out for the latest), the camera heading and tilt, and the point of a typed or pasted address (never the GPS position). It is base64url of flag bytes followed by the payload of each set flag; a continuation bit lets new fields be appended without breaking links already shared. The format is above `FIELDS` in `web/src/app.ts`.
+The address follows the session and always holds a link that restores it, short like a Google Maps one: `https://host/adama/raanana/@32.186,34.871?s=cR4gPBI_E4g`.
+- `@lat,lon`: the centre of explore mode, readable and editable by hand. A hand-written `,15z` after it is read too (Google Maps scale, capped by what the camera allows); the link the page writes keeps the zoom in `s=`.
+- `s=`: the rest, opaque and compact (about 10 characters): active layers (`heat`, `air`, the "before" lens), districts hidden, the year (left out for the latest), the camera heading, tilt and zoom, and the point of a typed or pasted address (never the GPS position). It is base64url of flag bytes followed by the payload of each set flag; a continuation bit lets new fields be appended without breaking links already shared. The format is above `FIELDS` in `web/src/app.ts`.
 - Both parts are optional and either opens explore mode (`?s=` alone works without `@`). City names are read with or without hyphens (`telaviv`, `tel-aviv`). The Share button copies the link.
 - In the Position field you can paste a Google Maps link (the pin of the place) or coordinates.
 
