@@ -113,6 +113,23 @@ const roadLabs=[];
   const list=Object.values(by).filter(e=>e.len>25).sort((a,b)=>b.len-a.len),kept=[];
   for(const e of list){if(kept.length>=8)break;const m=e.pts[Math.floor(e.pts.length/2)];if(kept.every(k=>Math.hypot(k.x-m[0],k.z-m[1])>40))kept.push({nm:e.nm,x:m[0],z:m[1]})}
   kept.forEach(k=>{const d=document.createElement('div');d.className='rl';wrap.appendChild(d);roadLabs.push({d,nm:k.nm,v:new THREE.Vector3(k.x,3,k.z)})})}
+// Names of the secondary and tertiary streets: only at strong zoom, a few, one per street, never on top of another label.
+// Every 250 ms the streets near the centre of the screen are tried in order of distance to the centre; a name is kept only when its box overlaps nothing placed yet.
+const STREET_ZOOM=6,STREET_MAX=5,streets=[],streetLabs=[];
+{const by={};D.osm.arteries.forEach(wy=>{if(wy.c)return;const nm=wy.nm||{};const key=nm.d||nm.en||nm.he;if(!key)return;const P=wy.pts.map(p=>toXZ(p[0],p[1])).filter(p=>Math.hypot(p[0],p[1])<RD-2);if(P.length<1)return;(by[key]=by[key]||{nm,pts:[]}).pts.push(...P)});
+  streets.push(...Object.values(by));
+  for(let i=0;i<STREET_MAX;i++){const d=document.createElement('div');d.className='rl rs';d.style.display='none';wrap.appendChild(d);streetLabs.push({d,v:new THREE.Vector3(),on:false,txt:''})}}
+const pickStreets=(w,h)=>{const placed=[],box=(x,y,tw)=>({x0:x-tw/2-8,x1:x+tw/2+8,y0:y-12,y1:y+12});
+  const hit=(a,b)=>a.x0<b.x1&&a.x1>b.x0&&a.y0<b.y1&&a.y1>b.y0;
+  [...roadLabs,...hoodLabs].forEach(l=>{if(l.d.style.display==='none')return;const r=l.d.getBoundingClientRect(),q=wrap.getBoundingClientRect();placed.push({x0:r.left-q.left-8,x1:r.right-q.left+8,y0:r.top-q.top-8,y1:r.bottom-q.top+8})});
+  if(meV){const p=meV.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;placed.push({x0:x-14,x1:x+14,y0:y-14,y1:y+14})}
+  const v=new THREE.Vector3(),cand=[];
+  for(const st of streets){let best=null,bd=1e9;for(const q of st.pts){v.set(q[0],3,q[1]).project(cam);const x=(v.x+1)/2*w,y=(1-v.y)/2*h,dx=Math.abs(x-w/2),dy=Math.abs(y-h/2);if(dx>w*.4||dy>h*.36)continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best={x,y,q}}}
+    if(best)cand.push({st,x:best.x,y:best.y,q:best.q,d:bd})}
+  cand.sort((a,b)=>a.d-b.d);let n=0;const used=new Set();   // two streets with the same name: only the nearest one is named
+  for(const c of cand){if(n>=STREET_MAX)break;const txt=c.st.nm[LG]||c.st.nm.d||c.st.nm.en||c.st.nm.he,b=box(c.x,c.y,txt.length*7.4);if(used.has(txt)||placed.some(o=>hit(o,b)))continue;used.add(txt);placed.push(b);const l=streetLabs[n++];l.v.set(c.q[0],3,c.q[1]);l.on=true;if(l.txt!==txt){l.txt=txt;l.d.textContent=txt}}
+  for(let i=n;i<STREET_MAX;i++)streetLabs[i].on=false};
+let streetT=0;
 let LG=ui.getState().lang;   // the language lives in the Zustand store (ui/store.ts); LG mirrors it for the code of this file
 const T=k=>I18[LG][k];
 const YR=D.years,yi0=Y-1;let domYi=-1,lensOn=false,LR=9,tt=yi0,run=false,hp=null,dirty=true,facG=null;
@@ -396,6 +413,8 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   const hoodsShow=explore&&hoodsOn&&cam.zoom>=HOOD_ZOOM;if(hoodsShow&&Math.min(yi0,Math.max(0,Math.round(tt)))!==hoodYi)hoodTxt();
   hoodLabs.forEach(l=>{const p=l.v.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;l.d.style.display=(hoodsShow&&x>0&&x<w&&y>0&&y<h)?'block':'none';l.d.style.left=x+'px';l.d.style.top=y+'px'});
   roadLabs.forEach(l=>{const p=l.v.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;l.d.style.display=(x>0&&x<w&&y>0&&y<h)?'':'none';l.d.style.left=x+'px';l.d.style.top=y+'px'});
+  {const sOn=explore&&cam.zoom>=STREET_ZOOM&&roadLv>=3&&!lensOn;const now=performance.now();if(sOn&&now-streetT>250){streetT=now;pickStreets(w,h)}
+    streetLabs.forEach(l=>{if(!sOn||!l.on){l.d.style.display='none';return}const p=l.v.clone().project(cam),x=(p.x+1)/2*w,y=(1-p.y)/2*h;l.d.style.display=(x>0&&x<w&&y>0&&y<h)?'':'none';l.d.style.left=x+'px';l.d.style.top=y+'px'})}
   if(meV){const p=meV.clone().project(cam);me.style.left=((p.x+1)/2*w)+'px';me.style.top=((1-p.y)/2*h)+'px'}
   const n0=new THREE.Vector3(0,0,0).project(cam),n1=new THREE.Vector3(0,0,-10).project(cam);
   compass.style.transform='rotate('+Math.atan2((n1.x-n0.x)*w,-(n1.y-n0.y)*h)*180/Math.PI+'deg)';
