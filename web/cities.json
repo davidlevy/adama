@@ -51,5 +51,5 @@
   {"slug": "yakutsk", "names": {"fr": "Iakoutsk", "en": "Yakutsk", "he": "יקוטסק"}, "country": "RU"},
   {"slug": "novosibirsk", "names": {"fr": "Novossibirsk", "en": "Novosibirsk", "he": "נובוסיבירסק"}, "country": "RU"},
   {"slug": "sapporo", "names": {"fr": "Sapporo", "en": "Sapporo", "he": "סאפורו"}, "country": "JP"},
-  {"slug": "qumran", "names": {"fr": "Qumrân", "en": "Qumran", "he": "קומראן"}, "country": "WB", "crop": {"lat": 31.7415, "lon": 35.4589, "radius": 150}}
+  {"slug": "qumran", "names": {"fr": "Qumrân", "en": "Qumran", "he": "קומראן"}, "country": "WB", "crop": {"lat": 31.7345, "lon": 35.482, "radius": 170}}
 ]

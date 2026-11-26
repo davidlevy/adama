@@ -14,7 +14,7 @@ A ":lat,lon,radius" suffix crops a very large or elongated city to a round windo
 (radius in 20 m cells) around the given point. Serve out_dir over HTTP (fetch does not
 work from file://), for example by copying it to public/adama/ in an Astro site.
 """
-import json, subprocess, sys, os, re
+import json, subprocess, sys, os, re, base64
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prep
 here = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +64,17 @@ for arg in args:
     pp = os.path.join(os.path.dirname(path), 'pop.json')
     if os.path.exists(pp):
         d['pop'] = json.load(open(pp, encoding='utf-8'))
+    wp = os.path.join(os.path.dirname(path), 'water.json')
+    if os.path.exists(wp):
+        wt = json.load(open(wp, encoding='utf-8'))
+        if 'off' in d:   # the city was cropped to a round window (prep.crop): crop the water grids the same way
+            x0, y0 = d['off']
+            ow = wt['w']
+            for k in ('first', 'last'):
+                raw = base64.b64decode(wt[k])
+                wt[k] = base64.b64encode(b''.join(raw[yy * ow + x0:yy * ow + x0 + d['w']] for yy in range(y0, y0 + d['h']))).decode()
+            wt['w'], wt['h'] = d['w'], d['h']
+        d['water'] = wt
     tp = os.path.join(os.path.dirname(path), 'towers.json')
     if os.path.exists(tp):
         d['towers'] = json.load(open(tp, encoding='utf-8'))

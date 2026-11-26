@@ -68,7 +68,10 @@ const mat=new THREE.MeshStandardMaterial({roughness:.82,metalness:0});
 const WATER=new THREE.Color('#1d5fa8'),WATER2=new THREE.Color('#2f86d8'),BARE=new THREE.Color('#4a4033'),BARE2=new THREE.Color('#6b5c45'),FIELD=new THREE.Color('#5e9a63'),FIELD2=new THREE.Color('#76ab76');
 const lerp0=(a,b,t)=>a+(b-a)*t;
 // never-built cells (always green) are static, flat, merged 2x2 when possible, and cast no shadow
-cells.forEach(c=>{c.st=c.f===999&&!c.road?1:0;c.sm=0});
+// water year by year (scripts/water_history.py): first and last year each cell holds water; only the cells whose water changes are drawn one year at a time (not static)
+const WTR=D.water?{ys:D.water.years,f:b64(D.water.first),l:b64(D.water.last)}:null,wetAt=(c,yr)=>{const i=c.gy*W+c.gx;return yr>=WTR.ys[WTR.f[i]]&&yr<=WTR.ys[WTR.l[i]]};
+if(WTR)cells.forEach(c=>{const i=c.gy*W+c.gx,f=WTR.f[i];c.wc=f!==255&&!(f===0&&WTR.l[i]===WTR.ys.length-1)});
+cells.forEach(c=>{c.st=c.f===999&&!c.road&&!c.wc?1:0;c.sm=0});
 const stBlocks=[];
 // static zones (water, bare ground, never-built green): merge 4x4 first, so they read as calm surfaces instead of a field of cubes
 // 8x8 first for the meadows, fields and bare ground (few cells, few seams); water keeps the finer 4x4 blocks
@@ -306,7 +309,9 @@ function update(t){
     if(rdOn(c)&&(built||c.f===999)){h=.08;color=col.copy(c.road===2?ROAD_MAJ:c.road===1?ROAD_MIN:ROAD_MIN3)}
     else if(built){const h0=.8+c.nb*1.1+hv*.9;h=h0*VX;const age=ye-c.f;color=gray(h0);if(c.f>0&&age<3)color.lerp(WH,(1-age/3)*.85)}
     else if(c.f<999&&(c.lt===0||c.lt===3)&&c.f-1<ye){const k=ye-c.f+1,hb=(.8+c.nb*1.1+hv*.9)*VX,hg=.42;h=hg+(hb-hg)*k;color=col.copy(WH)}
-    else if(c.lt===1){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
+    else if(c.wc&&wetAt(c,YR[yi])){h=.06;color=col.copy(WATER).lerp(WATER2,.45+.4*hv)}
+    else if(c.lt===1&&!c.wc){h=.06;color=col.copy(WATER).lerp(WATER2,hv)}
+    else if(c.wc&&c.lt===1){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}   // water of today that was dry in this year
     else if(c.lt===2){h=.2+hv*.12;color=col.copy(BARE).lerp(BARE2,hv)}
     else if(c.lt===3){h=.8;color=col.copy(FIELD).lerp(FIELD2,.5)}
     else{h=.42;color=col.copy(G1).lerp(G2,.5)}
