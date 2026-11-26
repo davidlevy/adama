@@ -1,7 +1,7 @@
 // The map view of the city menu: a canvas with the land and the markers, and a popover (the name of a city, or the list of a group).
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CTRY, CODE } from '../../data/countries';
-import { NAMES } from '../../data/names';
+import { CTRY } from '../../data/countries';
+import { cityName } from '../../data/cities';
 import { cellSize, clusterCities, drawFrame, drawLand, mapHeight, nearestCluster, type Cluster } from './mapDrawing';
 import { useLang, useT } from '../store';
 import type { CityEntry, MenuApi } from './types';
@@ -26,8 +26,8 @@ export function WorldMap({ api, active }: Props) {
   if (!clusters.current.length) clusters.current = clusterCities(api.cities);
   const lang = useLang(),
     T = useT();
-  const nameOf = (c: CityEntry) => NAMES[c.slug]?.[lang] || c.name.split(',')[0];
-  const countryOf = (k: Cluster) => CTRY[lang][CODE[k.members[0].slug] || 'IL'];
+  const nameOf = (c: CityEntry) => cityName(c, lang);
+  const countryOf = (k: Cluster) => CTRY[lang][k.members[0].co || 'IL'];
 
   // the width of the map follows its box (it is 0 while the list view hides it)
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { render } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { CO } from '../../data/countries';
-import { NAMES } from '../../data/names';
+import { cityName } from '../../data/cities';
 import { CityList, matches, normalize } from './CityList';
 import { WorldMap } from './WorldMap';
 import { useLang, useT } from '../store';
@@ -44,7 +44,7 @@ function CityMenu({ api }: { api: MenuApi }) {
       else api.go(slug);
     },
   };
-  const name = NAMES[api.current.slug]?.[lang] || api.current.name.split(',')[0];
+  const name = cityName(api.current, lang);
 
   // a click anywhere else, or Escape, closes the menu
   useEffect(() => {
