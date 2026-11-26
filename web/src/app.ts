@@ -266,7 +266,7 @@ if(RAIN){const el=document.getElementById('rain');
 }
 // observed mobile network (scripts/mobile_network.py): a white lattice floating over the city, tighter and brighter where the network is denser.
 // Only a coarse grid (400 m blocks) comes from the file, no antenna position. The density of the selected year is a small texture read by the vertex shader.
-const MOB=D.mobile&&D.mobile.years?D.mobile:null;
+const MOB=D.mobile&&D.mobile.years&&D.mobile.totals[D.mobile.totals.length-1]>=20?D.mobile:null;   // a city with fewer than 20 observed sites has nothing worth showing
 if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0))),tex=new THREE.DataTexture(new Uint8Array(bw*bh),bw,bh,THREE.RedFormat,THREE.UnsignedByteType);
   tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
   // square lattice floating low over the city (the most readable shape): coarse lines every 4th, fine every 2nd, finest all; the denser the network the more of them show
