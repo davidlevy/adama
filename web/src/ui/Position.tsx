@@ -11,7 +11,7 @@ import { useT } from './store';
 
 /** What the scene gives the component (see the comment above). */
 export interface PositionApi {
-  place(lat: number, lon: number): { ok: true } | { ok: false; km: string };
+  place(lat: number, lon: number, gps?: boolean): { ok: true } | { ok: false; km: string }; // gps: the point is the user's own position, never put in a shared link
   clear(): void;
   find(text: string): Promise<{ lat: number | string; lon: number | string }[]>;
 }
@@ -52,7 +52,7 @@ function Position({ api }: { api: PositionApi }) {
     setMsg(m);
   };
   const placeAt = (lat: number, lon: number, acc: number, how: Mode) => {
-    const r = api.place(lat, lon);
+    const r = api.place(lat, lon, how === 'gps');
     if (r.ok) {
       setMode(how);
       setSt('on');
@@ -60,7 +60,7 @@ function Position({ api }: { api: PositionApi }) {
     } else reset(T('outside').replace('{d}', r.km));
   };
   const openAddr = (why?: string) => {
-    setMsg(why || '');
+    setMsg(why || T('addrhint'));
     setTyping(true);
   };
   const clear = () => {

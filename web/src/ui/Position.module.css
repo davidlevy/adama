@@ -60,7 +60,7 @@
 }
 .seg .adr {
   margin: 0;
-  width: 200px;
+  width: 300px;
   padding: 7px 13px;
   border: 0;
   border-radius: 999px;
@@ -86,7 +86,7 @@
     opacity: 0.4;
   }
   to {
-    width: 200px;
+    width: 300px;
     opacity: 1;
   }
 }

@@ -43,8 +43,11 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 
 ## State in the URL
 
-- Any new filter, layer, toggle or other UI parameter that changes what the user sees must be kept in the address, so that a shared link restores the session. Add it to the `FLAGS` table above `enc()` in `web/src/app.ts` (one bit per boolean, appended at the end; the flag bytes have a continuation bit, so links already shared keep working). Values that are not booleans (a position, a zoom, an angle, a number) go in the saved-view part of the token, appended after the existing fields, with a decoder that accepts the shorter older tokens.
-- Do not put the language in the link. Never change the meaning of an existing bit or the order of the existing fields.
+- The link is short, like Google Maps: `/place/<slug>/@32.0178,34.751?s=cR4gPBI_E4g` (hash build: `#<slug>/@...?s=...`). `@lat,lon` is the readable centre of explore mode (a hand-written `,15z` is read too: Google scale, converted by `gz2zoom`, capped by `ctl.maxZoom`). `s=` is everything else, opaque: base64url of flag bytes then the payload of each set flag, in the order of `FIELDS` in `web/src/app.ts` (heat, air, "before" lens, districts hidden, year, camera heading/tilt/zoom, placed typed address). Bit 7 of a flag byte says another flag byte follows. Both parts are optional and either opens explore mode (`?s=` alone works without `@`).
+- Any new filter, layer or toggle that changes what the user sees must be in the link: append one entry at the END of `FIELDS` (never reorder or change an existing entry), with its `enc` (payload bytes or null when off) and `dec`. Keep it as short as possible: one flag bit and no payload for an on/off layer.
+- A point that comes from the GPS is never written in the link (only an address the user typed or pasted is): `place(lat, lon, gps)` keeps `meLL` empty for it.
+- The Position field also accepts a pasted Google Maps link (pin `!3d..!4d..` first, else `@lat,lon`) or plain coordinates.
+- Do not put the language in the link.
 - When you add a parameter, test it end to end: change it, read the address, open that address in a fresh page, check the parameter is restored (see the "Share links" section of the README).
 
 ## Git and deploy

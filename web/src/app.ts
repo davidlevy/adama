@@ -15,11 +15,11 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
 const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
 if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug~token: open the path version
-  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?~]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
-  location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
+  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?/]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
+  location.replace(ROOTP+sl+r)}
 const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 // city names in links are read with or without hyphens and case: raanana, raanana, Tel-Aviv, telaviv
-const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?/]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 window.__ldp&&window.__ldp(.7);   // loading bar: data is here, the build follows
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
@@ -323,15 +323,17 @@ let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=c
 const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null,meLL=null;const msg=document.getElementById('gm');
 // my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
 const clearPos=()=>{meV=null;meLL=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
-const place=(lat,lon)=>{const [x,z]=toXZ(lat,lon);
+const place=(lat,lon,gps)=>{const [x,z]=toXZ(lat,lon);
   if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
-  meV=new THREE.Vector3(x,6,z);{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';meLL=[lat,lon];
+  meV=new THREE.Vector3(x,6,z);meLL=gps?null:[lat,lon];{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
   hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
 // a shared link that holds a point: draw the marker and tell the bar (no camera move, the saved view already looks at it)
 const restoreMe=(lat,lon)=>{const [x,z]=toXZ(lat,lon);if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5)return;meV=new THREE.Vector3(x,6,z);meLL=[lat,lon];me.style.display='block';dirty=true;dispatchEvent(new CustomEvent('adama:pos-restored'))};
 // Address search for the Position component: OpenStreetMap (Photon, then Nominatim), limited to the box of this city.
 // OpenStreetMap often lacks the house number, so the search is repeated without numbers.
 const findAddr=async q0=>{const [w,s,e,n]=D.bbox,city=nm0();
+  // a pasted Google Maps link (the place pin !3d..!4d.. first, else the centre @lat,lon) or plain coordinates: no geocoder needed
+  {const g=q0.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||q0.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||q0.match(/^\s*(-?\d{1,2}\.\d+)\s*[,; ]\s*(-?\d{1,3}\.\d+)\s*$/);if(g)return [{lat:+g[1],lon:+g[2]}]}
   const photon=async q=>{const r=await fetch('https://photon.komoot.io/api/?limit=1&lang='+(LG==='fr'?'fr':'en')+'&bbox='+[w,s,e,n].join(',')+'&q='+encodeURIComponent(q+' '+city)),j=await r.json();return j.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}))};
   const nominatim=async q=>{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&bounded=1&viewbox='+[w,n,e,s].join(',')+'&q='+encodeURIComponent(q),{headers:{'Accept-Language':LG}});return r.json()};
   const find=async q=>{for(const f of [photon,nominatim]){try{const j=await f(q);if(j.length)return j}catch(x){}}return[]};
@@ -370,7 +372,7 @@ he:{s0:()=>({k:nm0()+' · '+lat0+'°N '+lon0+'°E',h:'לאן נעלם הירוק
 const SECH=[100,260,200,110,130],vhpx=()=>innerHeight/100;
 const storyEl=document.getElementById('story');storyEl.innerHTML=SECH.map(h=>'<section style="height:'+h+'vh"></section>').join('');
 const card=document.getElementById('card'),upB=document.getElementById('up');
-let secI=0,explore=false,cardKey=-1;
+let secI=0,explore=false,cardKey=-1,pendingView=null;   // pendingView: the camera of a shared link, applied when explore mode starts (it resets the camera)
 const KF=[{az:25,pol:70,z:.86},{az:45,pol:56,z:1.0},{az:58,pol:44,z:1.1},{az:62,pol:36,z:1.12},{az:40,pol:50,z:1.0}],CS={az:25,pol:70,z:.86};
 const RAD=400;function setCam(){const a=CS.az*Math.PI/180,p=CS.pol*Math.PI/180;cam.position.set(RAD*Math.sin(p)*Math.sin(a),RAD*Math.cos(p),RAD*Math.sin(p)*Math.cos(a));cam.lookAt(0,0,0);cam.zoom=CS.z;cam.updateProjectionMatrix()}
 function syncFromCam(){const r=cam.position.length();CS.az=Math.atan2(cam.position.x,cam.position.z)*180/Math.PI;CS.pol=Math.acos(cam.position.y/r)*180/Math.PI;CS.z=cam.zoom;KF[4].az=CS.az;KF[4].pol=CS.pol;KF[4].z=CS.z}
@@ -383,7 +385,7 @@ function story(){
   const vh=vhpx();let st=[],a=0;SECH.forEach(h=>{st.push(a*vh);a+=h});
   const y=scrollY;document.body.classList.toggle('top',y<60);let i=0;st.forEach((v,k)=>{if(y>=v-vh*25)i=k});
   const ex=i===4;
-  if(i!==secI||ex!==explore||cardKey!==i+LG){secI=i;if(ex!==explore){explore=ex;document.body.classList.toggle('exp',ex);ctl.enabled=ex;renderer.domElement.style.pointerEvents=ex?'auto':'none';if(!ex){hp=null;tip.style.display='none';hring.visible=false}if(ex){setCam();ctl.target.set(0,0,0);ctl.autoRotate=roEl.checked;tt=DLY!=null?DLY:yi0;DLY=null;sl.value=tt;dirty=true}else{syncFromCam();ctl.autoRotate=false}}cardKey=i+LG;renderCard(i)}
+  if(i!==secI||ex!==explore||cardKey!==i+LG){secI=i;if(ex!==explore){explore=ex;document.body.classList.toggle('exp',ex);ctl.enabled=ex;renderer.domElement.style.pointerEvents=ex?'auto':'none';if(!ex){hp=null;tip.style.display='none';hring.visible=false}if(ex){setCam();ctl.target.set(0,0,0);ctl.autoRotate=roEl.checked;tt=DLY!=null?DLY:yi0;DLY=null;sl.value=tt;dirty=true;if(pendingView){const f=pendingView;pendingView=null;f()}}else{syncFromCam();ctl.autoRotate=false}}cardKey=i+LG;renderCard(i)}
   if(!explore){let t;const p1=cl((y-st[1])/((SECH[1]-100)*vh)),p2=cl((y-st[2])/((SECH[2]-100)*vh));
     if(y<st[1])t=0;else if(y<st[2])t=lerp(0,ib,ease(p1));else if(y<st[3])t=lerp(ib,yi0,ease(p2));else t=yi0;
     tt=t;sl.value=Math.round(t);dirty=true;lastY=y}
@@ -424,42 +426,47 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 {const l=document.getElementById('ld');if(l){window.__ldp&&window.__ldp(1);setTimeout(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)},350)}}
 
-// ---------- share / deep link: #slug?s=<token> ----------
-// The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
-// (explore mode), 11 more bytes: latitude, longitude (1e-5 degree), zoom (x10), azimuth and polar angle of the camera, then, when flag 5 is set (a point of the Position control is placed), 8 more bytes: its latitude and longitude. About 15 to 28 characters. The address bar follows the session.
-// The older #slug?y=2010&l=heat,air&d=0&lg=fr and #slug~<token> are still read.
+// ---------- share / deep link: like Google Maps ----------
+// /place/bat-yam/@32.0178,34.751?s=cR4gPBI_E4g   (hash build: #bat-yam/@...?s=...)
+//   @lat,lon      the centre of explore mode, readable and editable by hand (a hand-written ,15z after it is read too, Google Maps scale, see gz2zoom)
+//   s=<token>     everything else, opaque and short: base64url of one or more flag bytes, then the payload of each flag that is set, in flag order.
+//                 Bit 7 of a flag byte says that another flag byte follows (7 more flags each), so a new layer or field is appended at the end of FIELDS.
+// Every part is optional; either opens explore mode. The address bar follows the session. No language in the link.
 {const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
   const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
     for(let k=0;k<2;k++){const [e,n]=utm(la,lo);la+=(N-n)/111000;lo+=(E-e)/kx}return [la,lo]};
-  // Flags, one bit each, in this order. Bits 0-6 are in the first flag byte, bit 7 of a flag byte says that another flag byte follows
-  // (7 more flags each), so new layers can be added at the end without breaking the links already shared.
-  const FLAGS=[
-    {get:()=>heatOn,set:v=>v&&on(btn('ht'))&&btn('ht').click()},                       // 0 heat layer
-    {get:()=>airOn,set:v=>v&&on(btn('ar'))&&btn('ar').click()},                        // 1 air layer
-    {get:()=>!!hoodLabs.length&&!hoodsOn,set:v=>v&&hoodLabs.length&&hdB.click()},      // 2 districts hidden
-    {get:()=>explore,set:()=>{}},                                                      // 3 a view is saved (explore mode)
-    {get:()=>lensOn,set:v=>v&&btn('bf').click()},                                      // 4 "before" lens
-    {get:()=>explore&&!!meLL,set:()=>{}}];                                             // 5 a point (my position or an address) is placed: 8 more bytes after the view
-  const VIEW=3,POINT=5;
-  const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),bits=FLAGS.map(f=>f&&f.get()?1:0),fb=[];
-    for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)v|=(bits[k+j]||0)<<j;fb.push(v)}
-    while(fb.length>1&&fb[fb.length-1]===0)fb.pop();fb.forEach((v,i)=>{if(i<fb.length-1)fb[i]=v|128});
-    const b=[YR[yi]-1980,...fb];
-    if(bits[VIEW]){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z),dv=new DataView(new ArrayBuffer(9));dv.setUint32(0,Math.round((la+90)*1e5));dv.setUint32(4,Math.round((lo+180)*1e5));dv.setUint8(8,Math.max(1,Math.min(255,Math.round(cam.zoom*10))));
-      b.push(...new Uint8Array(dv.buffer),Math.round((ctl.getAzimuthalAngle()+Math.PI)/(2*Math.PI)*255),Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*100))));
-      if(bits[POINT]&&meLL){const pv=new DataView(new ArrayBuffer(8));pv.setUint32(0,Math.round((meLL[0]+90)*1e5));pv.setUint32(4,Math.round((meLL[1]+180)*1e5));b.push(...new Uint8Array(pv.buffer))}}
-    return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
-  const dec=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0));if(b.length<2)return null;
-    const bits=[];let p=1;for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
-    const o={y:1980+b[0],bits};
-    if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100;if(bits[POINT]&&b.length>=p+19){const pv=new DataView(new Uint8Array(b.slice(p+11,p+19)).buffer);o.point={lat:pv.getUint32(0)/1e5-90,lon:pv.getUint32(4)/1e5-180}}}}
-    return o}catch(e){return null}};
-  const hashState=()=>{const rest=HASH.slice(SLUG.length);
-    if(rest[0]==='~')return dec(rest.slice(1));
-    if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));if(q.has('s'))return dec(q.get('s'));const L=(q.get('l')||'').split(',');   // older links: ?y=2010&l=heat,air&d=0
-      return{y:+q.get('y')||null,bits:[L.includes('heat')?1:0,L.includes('air')?1:0,q.get('d')==='0'?1:0],old:true,full:q.has('y')||q.has('l')}}
-    return null};
-  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+'?s='+enc():location.origin+location.pathname+'#'+D.slug+'?s='+enc();
+  // a hand-written @lat,lon,15z (or a pasted Google link): Google zoom -> our camera zoom, the same metres on screen (156543 m per pixel at zoom 0 on the equator)
+  const gz2zoom=(gz,la)=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*156543.03*Math.cos(la*Math.PI/180)/Math.pow(2,gz));
+  const n4=x=>+x.toFixed(4),u16=x=>Math.max(0,Math.min(65535,Math.round(x)));
+  // The fields of s=, one flag bit each, in this order (append new ones at the end, never reorder).
+  // enc() returns the bytes of the payload or null when the field is off; dec(bytes, state) reads it and returns how many bytes it took.
+  const FIELDS=[
+    {k:'heat',enc:()=>heatOn?[]:null,dec:(b,o)=>{o.heat=1;return 0}},
+    {k:'air',enc:()=>airOn?[]:null,dec:(b,o)=>{o.air=1;return 0}},
+    {k:'before',enc:()=>lensOn?[]:null,dec:(b,o)=>{o.before=1;return 0}},
+    {k:'hoodsOff',enc:()=>hoodLabs.length&&!hoodsOn?[]:null,dec:(b,o)=>{o.hoodsOff=1;return 0}},
+    {k:'year',enc:()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt)));return yi===yi0?null:[YR[yi]-1980]},dec:(b,o)=>{o.y=1980+b[0];return 1}},
+    {k:'camera',enc:()=>explore?[Math.round(((ctl.getAzimuthalAngle()*180/Math.PI)%360+360)%360/360*256)&255,Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*180/Math.PI))),Math.max(1,Math.min(255,Math.round(cam.zoom*10)))]:null,   // heading (1/256 turn), tilt (degrees), camera zoom (x10)
+      dec:(b,o)=>{o.az=b[0]/256*2*Math.PI;o.pol=b[1]*Math.PI/180;o.zoom=b[2]/10;return 3}},
+    {k:'point',enc:()=>{if(!explore||!meLL)return null;const la=u16((meLL[0]-D.bbox[1])*1e5),lo=u16((meLL[1]-D.bbox[0])*1e5);return[la>>8,la&255,lo>>8,lo&255]},   // 1e-5 degree from the south-west corner of the city (a city is under 0.65 degree wide)
+      dec:(b,o)=>{o.point={lat:D.bbox[1]+(b[0]<<8|b[1])/1e5,lon:D.bbox[0]+(b[2]<<8|b[3])/1e5};return 4}}];
+  const encData=()=>{const bits=FIELDS.map(f=>f.enc()),fb=[],pay=[];
+    for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)if(bits[k+j])v|=1<<j;fb.push(v)}
+    while(fb.length>1&&fb[fb.length-1]===0)fb.pop();if(fb.length===1&&fb[0]===0)return '';
+    fb.forEach((v,i)=>{if(i<fb.length-1)fb[i]=v|128});bits.forEach(b=>{if(b)pay.push(...b)});
+    return btoa(String.fromCharCode(...fb,...pay)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  const decData=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0)),bits=[];let p=0;
+    for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
+    const o={};bits.forEach((on,k)=>{if(on&&FIELDS[k])p+=FIELDS[k].dec(b.slice(p),o)});return o}catch(e){return null}};
+  const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)}
+    const d=encData();return loc+(d?'?s='+d:'')};
+  const hashState=()=>{const tail=PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0]);
+    const LOCM=tail.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/),qi=HASH.indexOf('?'),S=qi<0?null:new URLSearchParams(HASH.slice(qi+1)).get('s');
+    if(!LOCM&&!S)return null;
+    const P=(S&&decData(S))||{};
+    if(LOCM){const la=+LOCM[1],lo=+LOCM[2];P.view={lat:la,lon:lo,zoom:P.zoom!=null?P.zoom:LOCM[3]?gz2zoom(+LOCM[3],la):5};if(P.az!=null){P.view.az=P.az;P.view.pol=P.pol}}
+    return P};
+  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+enc():location.origin+location.pathname+'#'+D.slug+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
   const share=async()=>{const url=deepLink();
     if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:document.title,url});return}catch(e){if(e&&e.name==='AbortError')return}}
@@ -467,14 +474,16 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const P=hashState();
   if(P){
     const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
-    FLAGS.forEach((f,k)=>f&&f.set(!!P.bits[k]));
+    if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();
     domYi=-1;update(tt);dirty=true;
-    if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
-    if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true;if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
+    setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
+    const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};
+    if(P.view){if(explore)applyView();else pendingView=applyView}
+    setTimeout(()=>{if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
   // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
   if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
   // the address bar follows the session: in explore mode it always holds a link that restores the view
-  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?'?s='+enc():'';
+  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?enc():'';
     if(PATHMODE){if(decodeURIComponent(location.pathname+location.search)!==ROOTP+D.slug+st)history.replaceState(null,'',ROOTP+D.slug+st)}
     else{const h='#'+D.slug+st;if(decodeURIComponent(location.hash)!==h)history.replaceState(null,'',location.pathname+location.search+h)}},800)}
 
