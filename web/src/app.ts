@@ -271,21 +271,22 @@ if(MOB){const bw=MOB.w,bh=MOB.h,bc=MOB.block_m/CM,grids=MOB.data.map(b=>Uint8Arr
   tex.minFilter=tex.magFilter=THREE.LinearFilter;tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;
   // square lattice floating low over the city (the most readable shape): coarse lines every 4th, fine every 2nd, finest all; the denser the network the more of them show
   const st=Math.max(2,Math.ceil(Math.max(W,H)/110)),P=[],L=[],nx=Math.floor(W/st),nz=Math.floor(H/st),lv=i=>i%4===0?0:i%2===0?1:2;
-  for(let j=0;j<=nz;j++)for(let i=0;i<nx;i++){P.push(i*st-W/2,0,j*st-H/2,(i+1)*st-W/2,0,j*st-H/2);L.push(lv(j),lv(j))}
-  for(let i=0;i<=nx;i++)for(let j=0;j<nz;j++){P.push(i*st-W/2,0,j*st-H/2,i*st-W/2,0,(j+1)*st-H/2);L.push(lv(i),lv(i))}
+  const TH=[0];
+  for(let j=0;j<=nz;j++)for(let i=0;i<nx;i++)TH.forEach(o=>{P.push(i*st-W/2,0,j*st-H/2+o,(i+1)*st-W/2,0,j*st-H/2+o);L.push(lv(j),lv(j))});
+  for(let i=0;i<=nx;i++)for(let j=0;j<nz;j++)TH.forEach(o=>{P.push(i*st-W/2+o,0,j*st-H/2,i*st-W/2+o,0,(j+1)*st-H/2);L.push(lv(i),lv(i))});
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aLv',new THREE.Float32BufferAttribute(L,1));
-  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:2},uR:{value:RD},uH:{value:0},uT:{value:0}};
+  const MU={uD:{value:tex},uS:{value:new THREE.Vector2(1/(bw*bc),1/(bh*bc))},uO:{value:new THREE.Vector2(W/2,H/2)},uA:{value:.55},uAmp:{value:2},uR:{value:RD},uH:{value:0},uT:{value:0},uP:{value:st/3}};
   const mm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:MU,
-    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH,uT;varying float vA;void main(){vec2 uv=(position.xz+uO)*uS;'+
-      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.35+.65*d)*(1.-smoothstep(.8,1.,length(position.xz)/uR));'+
+    vertexShader:'attribute float aLv;uniform sampler2D uD;uniform vec2 uS,uO;uniform float uAmp,uR,uH,uT;varying float vA;varying vec2 vP;void main(){vP=position.xz;vec2 uv=(position.xz+uO)*uS;'+
+      'float d=pow(texture2D(uD,uv).r,.7);float t=aLv<.5?.03:aLv<1.5?.22:.5;vA=smoothstep(t,t+.12,d)*(.7+.6*d)*(1.-smoothstep(.8,1.,length(position.xz)/uR));'+
       'float q=length(position.xz)/uR,w=0.;for(int k=0;k<2;k++){float x=q-fract(uT*.06+float(k)*.5)*1.25;w+=(x>0.?exp(-x*x/.0004):exp(x/.09))*(1.-smoothstep(.85,1.,q));}vA=min(1.,vA*(1.+2.2*w));gl_Position=projectionMatrix*modelViewMatrix*vec4(position.x,d*uAmp,position.z,1.);}',
-    fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,uA*vA);}'});
+    fragmentShader:'uniform float uA,uP;varying float vA;varying vec2 vP;void main(){float dt=1.;gl_FragColor=vec4(1.,1.,1.,uA*vA*dt);}'});
   const mesh=new THREE.LineSegments(g,mm);mesh.frustumCulled=false;mesh.renderOrder=9;mesh.visible=false;scene.add(mesh);
   const mbB=document.getElementById('mb'),y0=MOB.years[0],y1=MOB.years[MOB.years.length-1],empty=new Uint8Array(bw*bh);
   const show=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;mbB.classList.toggle('on',mobOn);mbB.title=T('nett')};
   mobUpd=yr=>{tex.image.data.set(yr<y0?empty:grids[Math.min(yr,y1)-y0]);tex.needsUpdate=true;show()};
   mbB.style.display='';mobSet=v=>{mobOn=v;show();dirty=true};mbB.onclick=()=>mobSet(!mobOn);
-  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=6+VX*2.2;MU.uT.value=performance.now()/1000;MU.uA.value=1}}
+  mobTick=()=>{mesh.visible=document.body.classList.contains('exp')&&mobOn;if(mesh.visible){mesh.position.y=4+VX*1.5;MU.uT.value=performance.now()/1000;MU.uA.value=1}}
 }
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
