@@ -112,6 +112,24 @@ body.top .sh {
   border: 1px solid #2c2c31;
   color: #e6e6e8;
 }
+.hd em {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-style: normal;
+  font-weight: 500;
+  margin-inline-start: 8px;
+  direction: ltr;
+  unicode-bidi: isolate;
+  color: #b9b9c0;
+}
+.hd em svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  flex: none;
+}
 .hd b {
   display: inline-flex;
   align-items: center;
