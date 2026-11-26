@@ -53,8 +53,9 @@ def year_total(y, box, tries=6):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--city", default="Ra'anana, Israel")
+    ap.add_argument("--slug", help="city folder name (city_<slug>), instead of deriving it from --city: for cities whose name is not in latin letters")
     a = ap.parse_args()
-    name = sc.slug(a.city)
+    name = a.slug or sc.slug(a.city)
     out_dir = os.path.join(sc.data_root(), "city_" + name)
     src = os.path.join(out_dir, "city_%s.json" % name)
     if not os.path.exists(src):
@@ -62,7 +63,7 @@ def main():
     bb = json.load(open(src, encoding="utf-8"))["bbox"]   # lon_min, lat_min, lon_max, lat_max
     lat, lon = (bb[1] + bb[3]) / 2, (bb[0] + bb[2]) / 2
     if abs(lat) > MAX_LAT:
-        sys.exit("%s is at %.1f degrees: CHIRPS only covers 60 N to 60 S, no rainfall card." % (a.city, lat))
+        sys.exit("%s is at %.1f degrees: CHIRPS only covers 60 N to 60 S, no rainfall card." % (a.slug or a.city, lat))
     hx, hy = max((bb[2] - bb[0]) / 2, MIN_HALF), max((bb[3] - bb[1]) / 2, MIN_HALF)
     box = (lon - hx, lat - hy, lon + hx, lat + hy)
     years, values, missing = [], [], []
@@ -82,7 +83,7 @@ def main():
     path = os.path.join(out_dir, "rain.json")
     json.dump(out, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print("%s: mean %d mm/year over %d years, driest %d (%d mm), wettest %d (%d mm)" % (
-        a.city, np.mean(values), len(years), years[int(np.argmin(values))], min(values), years[int(np.argmax(values))], max(values)))
+        a.slug or a.city, np.mean(values), len(years), years[int(np.argmin(values))], min(values), years[int(np.argmax(values))], max(values)))
     print("Output file:", path)
 
 
