@@ -320,12 +320,12 @@ zp.onclick=()=>setHand(!hand);zpLang=()=>{zp.dataset.tip=zp.ariaLabel=T('pan')};
 addEventListener('wheel',e=>{if(!e.ctrlKey||!explore)return;e.preventDefault();zoomBy(Math.exp(-e.deltaY*.01))},{passive:false});
 let g0=1;addEventListener('gesturestart',e=>{if(explore){e.preventDefault();g0=cam.zoom}});addEventListener('gesturechange',e=>{if(explore){e.preventDefault();cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,g0*e.scale));cam.updateProjectionMatrix();dirty=true}})}
 // my position
-const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null,meLL=null;const msg=document.getElementById('gm');
+const me=document.createElement('div');me.className='me';me.style.display='none';me.innerHTML='<i></i>';document.body.appendChild(me);let meV=null,meLL=null,meGps=null;   // meLL: the placed address (goes in the link); meGps: the user's own position (never in the link, nor the centre when the view is still on it)const msg=document.getElementById('gm');
 // my position: the scene side of the Position component (src/ui/Position.jsx), which owns the states and the markup
-const clearPos=()=>{meV=null;meLL=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
+const clearPos=()=>{meV=null;meLL=null;meGps=null;me.style.display='none';hp=null;tip.style.display='none';dirty=true};
 const place=(lat,lon,gps)=>{const [x,z]=toXZ(lat,lon);
   if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5){const dx=Math.max(0,Math.abs(x)-W/2)*CM,dz=Math.max(0,Math.abs(z)-H/2)*CM;meV=null;me.style.display='none';return {ok:false,km:(Math.hypot(dx,dz)/1000).toFixed(1)}}
-  meV=new THREE.Vector3(x,6,z);meLL=gps?null:[lat,lon];{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
+  meV=new THREE.Vector3(x,6,z);meLL=gps?null:[lat,lon];meGps=gps?[lat,lon]:null;{const d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.max(cam.zoom,5);cam.updateProjectionMatrix();ctl.update()}me.style.display='block';
   hp=new THREE.Vector3(x,1,z);tipX=wrap.clientWidth/2;tipY=wrap.clientHeight/2;dirty=true;return {ok:true}};
 // a shared link that holds a point: draw the marker and tell the bar (no camera move, the saved view already looks at it)
 const restoreMe=(lat,lon)=>{const [x,z]=toXZ(lat,lon);if(Math.abs(x)>W/2+5||Math.abs(z)>H/2+5)return;meV=new THREE.Vector3(x,6,z);meLL=[lat,lon];me.style.display='block';dirty=true;dispatchEvent(new CustomEvent('adama:pos-restored'))};
@@ -458,12 +458,15 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const decData=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0)),bits=[];let p=0;
     for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
     const o={};bits.forEach((on,k)=>{if(on&&FIELDS[k])p+=FIELDS[k].dec(b.slice(p),o)});return o}catch(e){return null}};
-  const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n4(la)+','+n4(lo)}
+  const enc=()=>{let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);
+      // the view is still centred on the user's GPS position (within 300 m): the centre would give it away, so it is left out
+      if(!meGps||Math.hypot((la-meGps[0])*111000,(lo-meGps[1])*111000*Math.cos(la*Math.PI/180))>300)loc='/@'+n4(la)+','+n4(lo)}
     const d=encData();return loc+(d?'?s='+d:'')};
   const hashState=()=>{const tail=PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0]);
     const LOCM=tail.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/),qi=HASH.indexOf('?'),S=qi<0?null:new URLSearchParams(HASH.slice(qi+1)).get('s');
     if(!LOCM&&!S)return null;
     const P=(S&&decData(S))||{};
+    if(!LOCM&&P.zoom!=null)P.view={lat:null,lon:null,zoom:P.zoom,az:P.az,pol:P.pol};   // no centre in the link: keep the camera angles and zoom, stay where the city opens
     if(LOCM){const la=+LOCM[1],lo=+LOCM[2];P.view={lat:la,lon:lo,zoom:P.zoom!=null?P.zoom:LOCM[3]?gz2zoom(+LOCM[3],la):5};if(P.az!=null){P.view.az=P.az;P.view.pol=P.pol}}
     return P};
   const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+enc():location.origin+location.pathname+'#'+D.slug+enc();
@@ -477,7 +480,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();
     domYi=-1;update(tt);dirty=true;
     setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
-    const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};
+    const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;if(P.view.lat!=null){const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d)}cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};
     if(P.view){if(explore)applyView();else pendingView=applyView}
     setTimeout(()=>{if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
   // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
