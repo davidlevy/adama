@@ -23,6 +23,7 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     RU: 'Russie',
     JP: 'Japon',
     MA: 'Maroc',
+    WB: 'Cisjordanie',
   },
   en: {
     IL: 'Israel',
@@ -46,6 +47,7 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     RU: 'Russia',
     JP: 'Japan',
     MA: 'Morocco',
+    WB: 'West Bank',
   },
   he: {
     IL: 'ישראל',
@@ -69,6 +71,7 @@ export const CTRY: Record<Lang, Record<string, string>> = {
     RU: 'רוסיה',
     JP: 'יפן',
     MA: 'מרוקו',
+    WB: 'יהודה ושומרון',
   },
 };
 /** Country names of a country code (IL when the city has none). */
