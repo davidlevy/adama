@@ -15,11 +15,11 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 // Links are either paths (/adama/haifa?s=...) when the page was built with --base, or hashes (#haifa?s=...) anywhere else.
 const PATHMODE=!!document.querySelector('meta[name=adama-routing]'),ROOTP=new URL(document.baseURI).pathname;
 if(PATHMODE&&location.hash.length>1){   // older links #slug, #slug?s=..., #slug~token: open the path version
-  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?~]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
-  location.replace(ROOTP+sl+(r[0]==='~'?'?s='+r.slice(1):r))}
+  const h=decodeURIComponent(location.hash.slice(1)),i=h.search(/[?/]/),sl=i<0?h:h.slice(0,i),r=i<0?'':h.slice(i);
+  location.replace(ROOTP+sl+r)}
 const BASE=new URL('data/',document.baseURI).href,getJSON=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 // city names in links are read with or without hyphens and case: raanana, raanana, Tel-Aviv, telaviv
-const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?~/]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
+const NORM=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),CITIES=await getJSON(BASE+'cities.json'),HASH=PATHMODE?decodeURIComponent(location.pathname.slice(ROOTP.length)).split('/')[0]+location.search:decodeURIComponent(location.hash.slice(1)),SLUG=HASH.split(/[?/]/)[0],D=await getJSON(BASE+(CITIES.find(c=>c.slug===SLUG)||CITIES.find(c=>NORM(c.slug)===NORM(SLUG))||CITIES[0]).slug+'.json'),W=D.w,H=D.h,Y=D.years.length,AR=0.04,CM=20; // 1 unit = 20 m, 0.04 ha per cell
 window.__ldp&&window.__ldp(.7);   // loading bar: data is here, the build follows
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const LAND=D.land?b64(D.land):null,FIRST=b64(D.first),INSIDE=b64(D.inside),LS=new Set(D.ls_years);
@@ -407,47 +407,35 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
 
 {const l=document.getElementById('ld');if(l){window.__ldp&&window.__ldp(1);setTimeout(()=>{l.style.opacity=0;setTimeout(()=>l.remove(),600)},350)}}
 
-// ---------- share / deep link: #slug?s=<token> ----------
-// The token is base64url of: 1 byte (year - 1980), 1 or more flag bytes (see FLAGS below) and, when a view is saved
-// (explore mode), 11 more bytes: latitude, longitude (1e-5 degree), zoom (x10), azimuth and polar angle of the camera, then, when flag 5 is set (a point of the Position control is placed), 8 more bytes: its latitude and longitude. About 15 to 28 characters. The address bar follows the session.
-// The older #slug?y=2010&l=heat,air&d=0&lg=fr and #slug~<token> are still read.
+// ---------- share / deep link: readable, like Google Maps ----------
+// /place/bat-yam/@32.0178,34.7510,15z,45h,60t?y=2010&l=heat,air,before&d=0&p=32.0231,34.7452   (hash build: #bat-yam/@...?y=...)
+//   @lat,lon,Zz,Hh,Tt   the camera of explore mode: centre, zoom (Google web-mercator scale, see gz2zoom), heading and tilt in degrees; z alone is enough
+//   y=2010              the year (left out for the latest)      l=heat,air,before   the layers on
+//   d=0                 districts hidden                        p=lat,lon           the placed point (my position or an address)
+// Every part is optional; any of them opens explore mode. The address bar follows the session. No language in the link.
 {const shB=document.getElementById('shr'),btn=id=>document.getElementById(id),on=b=>b&&b.style.display!=='none';
   const fromXZ=(x,z)=>{const E=(x+W/2)*CM+L0,N=T0-(z+H/2)*CM,la0=(D.bbox[1]+D.bbox[3])/2,lo0=(D.bbox[0]+D.bbox[2])/2,kx=111320*Math.cos(la0*Math.PI/180);let la=la0,lo=lo0;
     for(let k=0;k<2;k++){const [e,n]=utm(la,lo);la+=(N-n)/111000;lo+=(E-e)/kx}return [la,lo]};
-  // Flags, one bit each, in this order. Bits 0-6 are in the first flag byte, bit 7 of a flag byte says that another flag byte follows
-  // (7 more flags each), so new layers can be added at the end without breaking the links already shared.
-  const FLAGS=[
-    {get:()=>heatOn,set:v=>v&&on(btn('ht'))&&btn('ht').click()},                       // 0 heat layer
-    {get:()=>airOn,set:v=>v&&on(btn('ar'))&&btn('ar').click()},                        // 1 air layer
-    {get:()=>!!hoodLabs.length&&!hoodsOn,set:v=>v&&hoodLabs.length&&hdB.click()},      // 2 districts hidden
-    {get:()=>explore,set:()=>{}},                                                      // 3 a view is saved (explore mode)
-    {get:()=>lensOn,set:v=>v&&btn('bf').click()},                                      // 4 "before" lens
-    {get:()=>explore&&!!meLL,set:()=>{}}];                                             // 5 a point (my position or an address) is placed: 8 more bytes after the view
-  const VIEW=3,POINT=5;
-  const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),bits=FLAGS.map(f=>f&&f.get()?1:0),fb=[];
-    for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)v|=(bits[k+j]||0)<<j;fb.push(v)}
-    while(fb.length>1&&fb[fb.length-1]===0)fb.pop();fb.forEach((v,i)=>{if(i<fb.length-1)fb[i]=v|128});
-    const b=[YR[yi]-1980,...fb];
-    if(bits[VIEW]){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z),dv=new DataView(new ArrayBuffer(9));dv.setUint32(0,Math.round((la+90)*1e5));dv.setUint32(4,Math.round((lo+180)*1e5));dv.setUint8(8,Math.max(1,Math.min(255,Math.round(cam.zoom*10))));
-      b.push(...new Uint8Array(dv.buffer),Math.round((ctl.getAzimuthalAngle()+Math.PI)/(2*Math.PI)*255),Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*100))));
-      if(bits[POINT]&&meLL){const pv=new DataView(new ArrayBuffer(8));pv.setUint32(0,Math.round((meLL[0]+90)*1e5));pv.setUint32(4,Math.round((meLL[1]+180)*1e5));b.push(...new Uint8Array(pv.buffer))}}
-    return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
-  const dec=t=>{try{const b=[...atob(t.replace(/-/g,'+').replace(/_/g,'/'))].map(c=>c.charCodeAt(0));if(b.length<2)return null;
-    const bits=[];let p=1;for(;;){const v=b[p++];if(v===undefined)return null;for(let j=0;j<7;j++)bits.push((v>>j)&1);if(!(v&128))break}
-    const o={y:1980+b[0],bits};
-    if(bits[VIEW]&&b.length>=p+9){const dv=new DataView(new Uint8Array(b.slice(p,p+9)).buffer);o.view={lat:dv.getUint32(0)/1e5-90,lon:dv.getUint32(4)/1e5-180,zoom:dv.getUint8(8)/10};if(b.length>=p+11){o.view.az=b[p+9]/255*2*Math.PI-Math.PI;o.view.pol=b[p+10]/100;if(bits[POINT]&&b.length>=p+19){const pv=new DataView(new Uint8Array(b.slice(p+11,p+19)).buffer);o.point={lat:pv.getUint32(0)/1e5-90,lon:pv.getUint32(4)/1e5-180}}}}
-    return o}catch(e){return null}};
-  // readable location like Google Maps: /place/bat-yam/@32.0728,34.7833,18z (or #bat-yam/@...): opens the view there with the marker on that point
-  const LOCM=(PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash)).match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?)z)?/);
-  // Google web-mercator zoom -> our camera zoom: same metres on screen (156543 m per pixel at zoom 0 on the equator)
-  const gz2zoom=(gz,lat)=>{const mpp=156543.03*Math.cos(lat*Math.PI/180)/Math.pow(2,gz);return (cam.top-cam.bottom)*CM/(wrap.clientHeight*mpp)};
-  const hashState=()=>{const rest=HASH.slice(SLUG.length);
-    if(LOCM&&rest[0]!=='~'&&!/^\?s=/.test(rest)){const la=+LOCM[1],lo=+LOCM[2];return{y:null,bits:[],full:true,view:{lat:la,lon:lo,zoom:gz2zoom(LOCM[3]?+LOCM[3]:17,la)},point:{lat:la,lon:lo}}}
-    if(rest[0]==='~')return dec(rest.slice(1));
-    if(rest[0]==='?'){const q=new URLSearchParams(rest.slice(1));if(q.has('s'))return dec(q.get('s'));const L=(q.get('l')||'').split(',');   // older links: ?y=2010&l=heat,air&d=0
-      return{y:+q.get('y')||null,bits:[L.includes('heat')?1:0,L.includes('air')?1:0,q.get('d')==='0'?1:0],old:true,full:q.has('y')||q.has('l')}}
-    return null};
-  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+'?s='+enc():location.origin+location.pathname+'#'+D.slug+'?s='+enc();
+  const LAYERS=[{k:'heat',get:()=>heatOn,set:()=>on(btn('ht'))&&btn('ht').click()},{k:'air',get:()=>airOn,set:()=>on(btn('ar'))&&btn('ar').click()},{k:'before',get:()=>lensOn,set:()=>btn('bf').click()}];
+  // Google zoom <-> our camera zoom: the same metres on screen (156543 m per pixel at zoom 0 on the equator)
+  const mppAt=la=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*cam.zoom)/(156543.03*Math.cos(la*Math.PI/180));   // = 2^-gz at the current camera zoom
+  const gz2zoom=(gz,la)=>(cam.top-cam.bottom)*CM/(wrap.clientHeight*156543.03*Math.cos(la*Math.PI/180)/Math.pow(2,gz));
+  const n5=x=>+x.toFixed(5),deg=r=>Math.round((r*180/Math.PI%360+360)%360);
+  const enc=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt))),q=[];
+    if(yi!==yi0)q.push('y='+YR[yi]);
+    const ls=LAYERS.filter(l=>l.get()).map(l=>l.k);if(ls.length)q.push('l='+ls.join(','));
+    if(hoodLabs.length&&!hoodsOn)q.push('d=0');
+    if(explore&&meLL)q.push('p='+n5(meLL[0])+','+n5(meLL[1]));
+    let loc='';if(explore){const [la,lo]=fromXZ(ctl.target.x,ctl.target.z);loc='/@'+n5(la)+','+n5(lo)+','+(-Math.log2(mppAt(la))).toFixed(2)+'z,'+deg(ctl.getAzimuthalAngle())+'h,'+Math.round(ctl.getPolarAngle()*180/Math.PI)+'t'}
+    return loc+(q.length?'?'+q.join('&'):'')};
+  const hashState=()=>{const qi=HASH.indexOf('?'),q=new URLSearchParams(qi<0?'':HASH.slice(qi+1));
+    const LOCM=(PATHMODE?decodeURIComponent(location.pathname):decodeURIComponent(location.hash.split('?')[0])).match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)((?:,-?\d+(?:\.\d+)?[zht])*)/);
+    if(!LOCM&&!['y','l','d','p'].some(k=>q.has(k)))return null;
+    let view=null;if(LOCM){const la=+LOCM[1],lo=+LOCM[2],v={z:17};for(const m of LOCM[3].matchAll(/,(-?\d+(?:\.\d+)?)([zht])/g))v[m[2]]=+m[1];
+      view={lat:la,lon:lo,zoom:gz2zoom(v.z,la)};if(v.h!=null&&v.t!=null){view.az=v.h*Math.PI/180;view.pol=v.t*Math.PI/180}}
+    const pt=(q.get('p')||'').split(',').map(Number);
+    return{y:+q.get('y')||null,layers:(q.get('l')||'').split(','),hoodsOff:q.get('d')==='0',view,point:pt.length===2&&pt.every(isFinite)?{lat:pt[0],lon:pt[1]}:null}};
+  const deepLink=()=>PATHMODE?location.origin+ROOTP+D.slug+enc():location.origin+location.pathname+'#'+D.slug+enc();
   const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.classList.add('in'),10);setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),400)},2200)};
   const share=async()=>{const url=deepLink();
     if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:document.title,url});return}catch(e){if(e&&e.name==='AbortError')return}}
@@ -455,14 +443,15 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const P=hashState();
   if(P){
     const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
-    FLAGS.forEach((f,k)=>f&&f.set(!!P.bits[k]));
+    LAYERS.forEach(l=>{if(P.layers.includes(l.k))l.set()});if(P.hoodsOff&&hoodLabs.length)hdB.click();
     domYi=-1;update(tt);dirty=true;
-    if(!P.old||P.full)setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
-    if(P.view)setTimeout(()=>{roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true;if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
+    setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
+    setTimeout(()=>{if(P.view){roEl.checked=false;ctl.autoRotate=false;const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d);cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true}
+      if(P.point)restoreMe(P.point.lat,P.point.lon)},1100)}
   // a link pasted in an open tab only changes the hash: load it again (path links reload the page by themselves)
   if(!PATHMODE)addEventListener('hashchange',()=>location.reload());
   // the address bar follows the session: in explore mode it always holds a link that restores the view
-  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?'?s='+enc():'';
+  setInterval(()=>{if(P&&!explore&&performance.now()<1500)return;const st=explore?enc():'';
     if(PATHMODE){if(decodeURIComponent(location.pathname+location.search)!==ROOTP+D.slug+st)history.replaceState(null,'',ROOTP+D.slug+st)}
     else{const h='#'+D.slug+st;if(decodeURIComponent(location.hash)!==h)history.replaceState(null,'',location.pathname+location.search+h)}},800)}
 

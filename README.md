@@ -114,13 +114,17 @@ For a big city or a region, give the centre and a radius in km: `--center 25.2,5
 
 ## Share links
 
-The address follows the session and always holds a link that restores it: `https://host/adama/raanana?s=LgoAunJVAUfbRQmZeg`. The token `s` is base64url and short; it holds the year, the active layers (heat, air, districts, the "before" lens) and, in explore mode, the position, the zoom and the angle of the camera. The format is documented above `enc()` in `web/src/app.js`; flag bytes are extensible (a continuation bit), so new layers can be added at the end without breaking links already shared. City names are read with or without hyphens (`telaviv`, `tel-aviv`). The Share button copies the link.
+The address follows the session and always holds a link that restores it, readable and editable by hand, like Google Maps: `https://host/adama/raanana/@32.186,34.871,15.00z,45h,60t?y=2010&l=heat,air&p=32.19,34.87`.
+- `@lat,lon,15z,45h,60t`: the camera of explore mode (centre, zoom on the Google Maps scale, heading and tilt in degrees). `@lat,lon,15z` alone is enough, and the zoom is capped by what the camera allows.
+- `y`: the year (left out for the latest). `l`: the layers on (`heat`, `air`, `before`). `d=0`: districts hidden. `p=lat,lon`: the point placed with "My location" or an address.
+- Every part is optional and any of them opens explore mode. The code is `enc()` and `hashState()` in `web/src/app.ts`. City names are read with or without hyphens (`telaviv`, `tel-aviv`). The Share button copies the link.
+- In the Position field you can paste a Google Maps link (the pin of the place) or coordinates.
 
 Two kinds of addresses, chosen at build time:
-- **path links** (`/adama/raanana?s=...`) when the page is built with `--base=/adama/` (or `--base=/`): the host must return `index.html` for `/<base><slug>`. `adama_site/publish.sh` does this for the copies it publishes: `web/vercel.json` has the rewrite for Vercel (cities live under `/place/<slug>` there), and the personal site has the route `src/pages/adama/[slug].ts` for Cloudflare.
-- **hash links** (`#raanana?s=...`) for a plain static folder (`python3 -m http.server -d dist/site`).
+- **path links** (`/adama/raanana/@...`) when the page is built with `--base=/adama/` (or `--base=/`): the host must return `index.html` for `/<base><slug>` and `/<base><slug>/@...`. `adama_site/publish.sh` does this for the copies it publishes: `web/vercel.json` has the rewrites for Vercel (cities live under `/place/<slug>` there), and the personal site has the route `src/pages/adama/[slug].ts` for Cloudflare.
+- **hash links** (`#raanana/@...`) for a plain static folder (`python3 -m http.server -d dist/site`).
 
-Old links (`#slug`, `#slug?y=2010&l=heat,air`, `#slug~token`) still open: on a path build they redirect to the path version.
+Links made by earlier versions (base64 token `?s=`) are no longer read.
 
 ## Publishing
 
