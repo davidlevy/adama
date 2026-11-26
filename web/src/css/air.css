@@ -1,9 +1,6 @@
 /* Air quality layer: the legend / curve panel. */
 .air {
-  position: fixed;
-  left: clamp(18px, 3vw, 44px);
-  bottom: clamp(140px, 22vh, 166px);
-  z-index: 12;
+  position: relative;
   display: none;
   color: #e4e4e7;
   font-size: 11px;
@@ -89,22 +86,22 @@ body.airon .air {
 }
 .air .ac {
   stroke: #fff;
-  stroke-width: 2.2;
+  stroke-width: 2.4;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 .air .ao {
-  stroke: #c9c9d0;
+  stroke: #8a8a90;
   stroke-width: 1.6;
 }
 .air .aw {
-  stroke: #b4b4bb;
+  stroke: #55555b;
   stroke-width: 1;
 }
 .air .am {
-  stroke: #fff;
+  stroke: #6b6b72;
   stroke-width: 1;
-  opacity: 0.8;
+  opacity: 1;
 }
 .air .ad {
   fill: #fff;
@@ -112,13 +109,18 @@ body.airon .air {
   stroke-width: 1.5;
 }
 .air .at {
-  color: #d6d6db;
+  color: #7d7d83;
 }
 .air .av {
+  color: #8f8f94;
+  font-size: 12px;
+}
+.air .av b {
+  font-size: var(--kpi);
+  line-height: 1.05;
   color: #fff;
-  font-size: 13px;
 }
 .air .no,
 .air .an {
-  color: #a9a9b0;
+  color: #77777d;
 }

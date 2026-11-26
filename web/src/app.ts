@@ -171,7 +171,7 @@ sl.max=yi0;sl.value=yi0;
 const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
 mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
-function applyLang(){domYi=-1;airLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
+function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['rn','rain','rainb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
   document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
   zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
@@ -204,7 +204,7 @@ function animStep(k){let mv=false;const ma=mesh.instanceMatrix.array,ca=mesh.ins
     ma[o]=sc;ma[o+5]=Math.max(.05,Ch[i]);ma[o+10]=sc;ma[o+12]=DX[i];ma[o+14]=DZ[i];ma[o+15]=1;
     const i3=i*3;for(let j=0;j<3;j++){const e=Cg[i3+j]-Cc[i3+j];if(e>.002||e<-.002){Cc[i3+j]+=e*k;mv=true}else Cc[i3+j]=Cg[i3+j];ca[i3+j]=Cc[i3+j]}}
   mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;return stepTowers(Math.min(1,k*.7))||mv}
-let airLang=()=>{},airOn=false,airV=null;
+let airLang=()=>{},airOn=false,airV=null,rainLang=()=>{},rainUpd=()=>{},rainFx=false,rainSet=()=>{},rainTick=()=>{},rainBase=.2;
 // ---------- air haze: stacked translucent veils above the city, grainy like the green; the grain gets coarser and stronger when the air is worse ----------
 const HZ_Y=[5,9.5,14,18.5],HZ_U={uT:UT,uA:{value:.02},uG:{value:.5},uS:{value:.7}};
 const hzMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:HZ_U,
@@ -218,8 +218,8 @@ function hazeSet(){const who=(D.air&&D.air.who_pm25)||5,k=airV==null?0:Math.min(
 function animHaze(tm){if(!haze.visible)return;haze.children.forEach((m,i)=>{m.position.y=HZ_Y[i]+(VX-1)*5*(i+1)/HZ_Y.length+Math.sin(tm*.12+i)*.2})}
 // ---------- air quality (air.json from scripts/air_quality.py): yearly PM2.5 curve that follows the timeline ----------
 const AIR=D.air&&D.air.series&&D.air.series.pm25,AIRL=D.air&&D.air.live;let airUpd=()=>{};
-if(AIR||AIRL){const el=document.createElement('div');el.className='air';document.body.appendChild(el);
-  const W_=230,H_=48,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
+if(AIR||AIRL){const el=document.createElement('div');el.className='air';document.getElementById('cards').prepend(el);
+  const W_=170,H_=44,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
     X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-v/vmax*(H_-8),br=AIR&&AIR.break_before;
   const pts=AIR?AIR.years.map((y,i)=>[y,AIR.values[i]]):[],line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
   const old=br?pts.filter(p=>p[0]<=br):[],cur=br?pts.filter(p=>p[0]>=br):pts;
@@ -233,11 +233,42 @@ if(AIR||AIRL){const el=document.createElement('div');el.className='air';document
   const notes=()=>(AIRL?'<div>'+T('airnow').replace('{a}',AIRL.aqi).replace('{s}',AIRL.station).replace('{d}',AIRL.distance_km)+'</div>':'')+(AIR?'<div>'+(br?T('airbrk').replace('{y}',br)+' · ':'')+T('airsrc').replace('{s}',AIR.source).replace('{r}',AIR.res_km||'<1')+'</div>':'');
   const arB=document.getElementById('ar');arB.style.display='';arB.onclick=()=>{airOn=!airOn;arB.classList.toggle('on',airOn);document.body.classList.toggle('airon',airOn);hazeSet();const yi=Math.min(yi0,Math.max(0,Math.round(tt)));airUpd(YR[yi]);dirty=true};
   airLang=()=>{el.innerHTML='<div class="ah"><div class="ax"><div class="at">'+T('air')+'</div><div class="av"></div></div>'+svg+'</div>';airUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}}
+// ---------- rainfall (rain.json from scripts/rainfall.py, CHIRPS): a small card with the yearly total and its 5-year average, no layer on the map ----------
+const RAIN=D.rain&&D.rain.years&&D.rain.years.length>=10?D.rain:null;
+if(RAIN){const el=document.getElementById('rain');
+  const W_=170,H_=44,ys=RAIN.years,vs=RAIN.values,y0=ys[0],y1=ys[ys.length-1],mean=vs.reduce((a,b)=>a+b,0)/vs.length,vmax=Math.max(...vs)*1.04,vmin=Math.min(...vs)*.7,   // the scale starts under the driest year, not at zero: a line over 0-900 mm would look flat
+    X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-(v-vmin)/(vmax-vmin)*(H_-8),
+    ABS=RAIN.absolute!==false,   // a model that is known to run low (Open-Meteo): only the gap to the average is shown, not millimetres
+    avg=ys.map((_,i)=>i<4?null:vs.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5),line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
+  const svg='<svg viewBox="0 0 '+W_+' '+H_+'" width="'+W_+'" height="'+H_+'"><line x1="0" x2="'+W_+'" y1="'+Y(mean)+'" y2="'+Y(mean)+'" class="rw"/><polyline points="'+line(ys.map((y,i)=>[y,vs[i]]))+'" class="ro"/><polyline points="'+line(ys.map((y,i)=>[y,avg[i]]).filter(p=>p[1]!=null))+'" class="rc"/><line id="rml" y1="0" y2="'+H_+'" class="rm"/><circle id="rmc" r="3" class="rd"/></svg>';
+  rainUpd=yr=>{if(yr>y1)yr=y1;const i=ys.indexOf(yr),v=i<0?null:vs[i],d=v==null?0:Math.round((v/mean-1)*100);
+    const sg=(d>0?'+':d<0?'\u2212':'')+Math.abs(d);
+    el.querySelector('.rv').innerHTML=v==null?'<span class="no">'+T('airno').replace('{y}',y0)+'</span>':ABS?'<b>'+v+'</b> '+T('rainu')+' <span class="rp">'+T('rainvs').replace('{d}',sg)+'</span>':'<b>'+sg+' %</b> <span class="rp">'+T('rainrel').replace('{a}',y0).replace('{b}',y1)+'</span>';
+    el.title=[T(ABS?'rainwhat':'rainwhat2').replace('{m}',Math.round(mean)).replace('{a}',y0).replace('{b}',y1),ABS&&v!=null?T('rainyr').replace('{y}',yr).replace('{v}',v):'',T('rainsrc').replace('{s}',RAIN.source).replace('{r}',RAIN.res_km)].filter(Boolean).join('\n');
+    const l=el.querySelector('#rml'),c=el.querySelector('#rmc');l.style.display=c.style.display=v==null?'none':'';if(v!=null){l.setAttribute('x1',X(yr));l.setAttribute('x2',X(yr));c.setAttribute('cx',X(yr));c.setAttribute('cy',Y(v))}};
+  rainLang=()=>{el.innerHTML='<div class="rh"><div class="rx"><div class="rt">'+T('rain')+'</div><div class="rv"></div></div>'+svg+'</div>';rainUpd(YR[Math.min(yi0,Math.max(0,Math.round(tt)))])}
+  // the rain over the city (discreet): vertical streaks, more of them in a wet year, with the card; the RAIN button shows or hides both
+  const NMAX=1600,HR=84,RU={uT:UT,uA:{value:0},uH:{value:HR},uL:{value:2.6},uF:{value:14}},rp=new Float32Array(NMAX*6);
+  for(let k=0;k<NMAX;k++){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*RD,x=Math.cos(a)*r,z=Math.sin(a)*r,y=Math.random()*HR;rp.set([x,y,z,x,y,z],k*6);}
+  const rg=new THREE.BufferGeometry(),end=new Float32Array(NMAX*2),sd=new Float32Array(NMAX*2);for(let k=0;k<NMAX;k++){const q=Math.random();end[k*2]=0;end[k*2+1]=1;sd[k*2]=sd[k*2+1]=q}
+  rg.setAttribute('position',new THREE.BufferAttribute(rp,3));rg.setAttribute('aEnd',new THREE.BufferAttribute(end,1));rg.setAttribute('aSd',new THREE.BufferAttribute(sd,1));
+  const rm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:RU,
+    vertexShader:'attribute float aEnd,aSd;uniform float uT,uH,uL,uF;varying float vA;void main(){float y=mod(position.y-uT*(9.+7.*aSd),uH);vA=smoothstep(uF,uF+16.,y)*(1.-smoothstep(uH*.7,uH,y))*(.45+.55*aEnd);vec3 p=vec3(position.x+y*.12,y+uL*aEnd,position.z);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
+    fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(.36,.62,1.,uA*vA);}'});
+  const rain=new THREE.LineSegments(rg,rm);rain.frustumCulled=false;rain.renderOrder=9;rain.visible=false;scene.add(rain);
+  const fxApply=(yr)=>{const i=ys.indexOf(Math.min(yr,y1)),v=i<0?mean:vs[i],k=Math.max(.08,Math.min(1,.5*v/mean));rg.setDrawRange(0,Math.round(NMAX*k)*2);rainBase=.34+.3*k};
+  const rnB=document.getElementById('rn'),fxShow=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;   // (not `explore`: update() runs once before it is declared)
+    document.body.classList.toggle('rainon',rainFx);rnB.classList.toggle('on',rainFx)};
+  rnB.style.display='';
+  rainSet=v=>{rainFx=v;fxShow();dirty=true};rnB.onclick=()=>rainSet(!rainFx);
+  const upd0=rainUpd;rainUpd=yr=>{upd0(yr);fxApply(yr);fxShow()};
+  rainTick=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;if(rain.visible){RU.uA.value=rainBase*Math.min(1,3.2/cam.zoom);RU.uF.value=haze.visible?22+(VX-1)*5.5:14}}   // with the haze on, the rain stays above its top veil (it rises with the zoom) and never crosses it   // zoomed in, the streaks would look huge: fainter
+}
 let VX=1,roadLv=1;let RDEN=[0,0,0];   // km of road per km2 once the wide, then the wide + narrow, then all roads are drawn
 const roadBudget=z=>.25*Math.pow(z,2.5);   // road density the view can take at this zoom
 // buildings grow taller when zoomed in, for contrast with the ground
 function update(t){
-  const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);
+  const yi=Math.min(yi0,Math.max(0,Math.round(t)));airUpd(YR[yi]);rainUpd(YR[yi]);
   let bt=0,nw=0,gv=0;const HYc=HT&&heatOn?HY[hIdx(YR[yi])]:null;
   for(let i=0;i<cells.length;i++){const c=cells[i];if(c.st)continue;let h,color;const hv=c.h;
     const ye=lensOn&&hp&&Math.hypot(c.x-hp.x,c.z-hp.z)<LR?(yi>yi0/2?0:yi0):t;const built=c.f<=ye+1e-6;
@@ -408,7 +439,7 @@ function frame(n){const d=Math.min(.1,(n-last)/1000);last=n;
   if(dirty&&!run){dirty=false;update(tt)}
   UT.value=n/1000;if(animating)animating=animStep(Math.min(1,d*5));
   if(!explore){const K=KF[secI],e=Math.min(1,d*2.2);CS.az+=(K.az-CS.az)*e+d*(secI<1?1.5:.8);K.az+=d*(secI<1?1.5:.8);CS.pol+=(K.pol-CS.pol)*e;CS.z+=(K.z-CS.z)*e;setCam()}
-  animBalloons(n/1000);animHaze(n/1000);
+  animBalloons(n/1000);animHaze(n/1000);rainTick();
   if(explore&&roEl.checked&&!ctl.autoRotate){idleT+=d;if(idleT>8){ctl.autoRotate=true;ctl.autoRotateSpeed=.3}}
   if(ctl.autoRotate&&lastE&&!lensOn&&!run)aim(lastE);
   if(explore)ctl.update();{const v=explore?Math.round((1+Math.min(1,Math.max(0,(cam.zoom-1.2)/2.8))*2.2)*10)/10:1;if(v!==VX){VX=v;update(tt)}}{const B=roadBudget(cam.zoom),lv=RDEN[2]<=B?3:RDEN[1]<=B?2:1;if(lv!==roadLv){roadLv=lv;update(tt)}}{const m=lodFor(cam.zoom);if(m!==LODm){LODm=m;animating=true}}renderer.render(scene,cam);
@@ -450,7 +481,8 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
     {k:'camera',enc:()=>explore?[Math.round(((ctl.getAzimuthalAngle()*180/Math.PI)%360+360)%360/360*256)&255,Math.max(0,Math.min(255,Math.round(ctl.getPolarAngle()*180/Math.PI))),Math.max(1,Math.min(255,Math.round(cam.zoom*10)))]:null,   // heading (1/256 turn), tilt (degrees), camera zoom (x10)
       dec:(b,o)=>{o.az=b[0]/256*2*Math.PI;o.pol=b[1]*Math.PI/180;o.zoom=b[2]/10;return 3}},
     {k:'point',enc:()=>{if(!explore||!meLL)return null;const la=u16((meLL[0]-D.bbox[1])*1e5),lo=u16((meLL[1]-D.bbox[0])*1e5);return[la>>8,la&255,lo>>8,lo&255]},   // 1e-5 degree from the south-west corner of the city (a city is under 0.65 degree wide)
-      dec:(b,o)=>{o.point={lat:D.bbox[1]+(b[0]<<8|b[1])/1e5,lon:D.bbox[0]+(b[2]<<8|b[3])/1e5};return 4}}];
+      dec:(b,o)=>{o.point={lat:D.bbox[1]+(b[0]<<8|b[1])/1e5,lon:D.bbox[0]+(b[2]<<8|b[3])/1e5};return 4}},
+    {k:'rain',enc:()=>rainFx?[]:null,dec:(b,o)=>{o.rain=1;return 0}}];   // the RAIN button (card + rain over the city); the 8th flag opens a second flag byte, only when it is on
   const encData=()=>{const bits=FIELDS.map(f=>f.enc()),fb=[],pay=[];
     for(let k=0;k<bits.length;k+=7){let v=0;for(let j=0;j<7;j++)if(bits[k+j])v|=1<<j;fb.push(v)}
     while(fb.length>1&&fb[fb.length-1]===0)fb.pop();if(fb.length===1&&fb[0]===0)return '';
@@ -478,7 +510,7 @@ story();window.__ready=true;window.__set=v=>{tt=v;sl.value=v;update(v)};
   const P=hashState();
   if(P){
     const i=YR.indexOf(P.y);if(i>=0){tt=i;sl.value=i;DLY=i}
-    if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();
+    if(P.heat&&on(btn('ht')))btn('ht').click();if(P.air&&on(btn('ar')))btn('ar').click();if(P.before)btn('bf').click();if(P.hoodsOff&&hoodLabs.length)hdB.click();if(P.rain)rainSet(true);
     domYi=-1;update(tt);dirty=true;
     setTimeout(()=>scrollTo(0,document.documentElement.scrollHeight),400);
     const applyView=()=>{roEl.checked=false;ctl.autoRotate=false;if(P.view.lat!=null){const [x,z]=toXZ(P.view.lat,P.view.lon),d=new THREE.Vector3(x,0,z).sub(ctl.target);cam.position.add(d);ctl.target.add(d)}cam.zoom=Math.min(ctl.maxZoom,Math.max(ctl.minZoom,P.view.zoom));if(P.view.pol!=null){const t=ctl.target,r=cam.position.distanceTo(t),pl=Math.min(ctl.maxPolarAngle,Math.max(ctl.minPolarAngle,P.view.pol));cam.position.set(t.x+r*Math.sin(pl)*Math.sin(P.view.az),t.y+r*Math.cos(pl),t.z+r*Math.sin(pl)*Math.cos(P.view.az))}cam.updateProjectionMatrix();ctl.update();dirty=true};

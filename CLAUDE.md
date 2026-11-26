@@ -19,9 +19,10 @@ Adama (אדמה) = earth. Site is a static Three.js scroll page; see README.md f
 1. `python adama/scripts/satellite_city.py --city "X" --center LAT,LON --radius KM [--scenes 4 for cloudy places]`
 2. Optional: `surface_temperature.py` (HEAT button), `skyscrapers.py` (towers), same `--city` string.
 3. Optional: `air_quality.py --city X` (AIR button: yearly regional PM2.5 as a 3D haze layer; `--waqi` adds today's value of the nearest station, needs `WAQI_TOKEN` in `satellite/.env`, never commit it; never interpolate today's stations across the city or years). For a precise history, drop a station CSV (date,pm25,no2,o3) as `city_<slug>/air_station.csv`; it wins over the regional model. To add another source, add a provider function in `air_quality.py`.
-4. Optional: `tower_dates.py --city X` after `skyscrapers.py`: fills tower construction years from Wikidata (OSM rarely has them). Towers still undated are drawn from 1990 at the earliest (`UNDATED_FROM` in `app.ts`).
-5. Add it to `web/cities.txt`, and to `NAMES` (fr/en/he) and `CODE`/`CTRY` (country) in `web/src/app.ts`.
-6. `python3 web/build.py`, then copy `dist/site/index.html` and `dist/site/data/` into `adama_site/`.
+4. Optional: `rainfall.py --city X` (yearly rainfall since 1981 from CHIRPS, 5 km grid, 60 N to 60 S only: no data for Yakutsk): writes `rain.json`, shown as a small card (curve + 5-year average) and as discreet rain over the city in explore mode (click the card to hide it). Needs no key; it reads a few pixels of each yearly file by HTTP range, the server sometimes fails, the script retries.
+5. Optional: `tower_dates.py --city X` after `skyscrapers.py`: fills tower construction years from Wikidata (OSM rarely has them). Towers still undated are drawn from 1990 at the earliest (`UNDATED_FROM` in `app.ts`).
+6. Add it to `web/cities.txt`, and to `NAMES` (fr/en/he) and `CODE`/`CTRY` (country) in `web/src/app.ts`.
+7. `python3 web/build.py`, then copy `dist/site/index.html` and `dist/site/data/` into `adama_site/`.
 
 Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder can pick the wrong object (Las Vegas resolved to a casino of 0.5 km).
 
@@ -43,7 +44,7 @@ Always pass `--center` and `--radius` for a big or ambiguous city: the geocoder 
 
 ## State in the URL
 
-- The link is short, like Google Maps: `/place/<slug>/@32.0178,34.751?s=cR4gPBI_E4g` (hash build: `#<slug>/@...?s=...`). `@lat,lon` is the readable centre of explore mode (a hand-written `,15z` is read too: Google scale, converted by `gz2zoom`, capped by `ctl.maxZoom`). `s=` is everything else, opaque: base64url of flag bytes then the payload of each set flag, in the order of `FIELDS` in `web/src/app.ts` (heat, air, "before" lens, districts hidden, year, camera heading/tilt/zoom, placed typed address). Bit 7 of a flag byte says another flag byte follows. Both parts are optional and either opens explore mode (`?s=` alone works without `@`).
+- The link is short, like Google Maps: `/place/<slug>/@32.0178,34.751?s=cR4gPBI_E4g` (hash build: `#<slug>/@...?s=...`). `@lat,lon` is the readable centre of explore mode (a hand-written `,15z` is read too: Google scale, converted by `gz2zoom`, capped by `ctl.maxZoom`). `s=` is everything else, opaque: base64url of flag bytes then the payload of each set flag, in the order of `FIELDS` in `web/src/app.ts` (heat, air, "before" lens, districts hidden, year, camera heading/tilt/zoom, placed typed address, rain off). Bit 7 of a flag byte says another flag byte follows. Both parts are optional and either opens explore mode (`?s=` alone works without `@`).
 - Any new filter, layer or toggle that changes what the user sees must be in the link: append one entry at the END of `FIELDS` (never reorder or change an existing entry), with its `enc` (payload bytes or null when off) and `dec`. Keep it as short as possible: one flag bit and no payload for an on/off layer.
 - A point that comes from the GPS is never written in the link (only an address the user typed or pasted is): `place(lat, lon, gps)` keeps `meLL` empty for it.
 - The Position field also accepts a pasted Google Maps link (pin `!3d..!4d..` first, else `@lat,lon`) or plain coordinates.
