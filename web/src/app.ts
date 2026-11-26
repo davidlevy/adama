@@ -171,7 +171,7 @@ sl.max=yi0;sl.value=yi0;
 const goCity=slug=>{if(slug===D.slug)return;if(PATHMODE){location.href=ROOTP+slug}else{location.hash=slug;location.reload()}};
 mountCityMenu(document.querySelector('.crumb'),{cities:CITIES,current:{slug:D.slug,name:D.name},go:goCity});
 let zpLang=()=>{};   // set by the hand tool below, called when the language changes
-function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
+function applyLang(){domYi=-1;airLang();rainLang();document.documentElement.lang=LG;document.documentElement.dir=LG==='he'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));[['bf','before','bf'],['ht','heat','heat'],['ar','air','airb'],['rn','rain','rainb'],['hdb','hoods','hoods']].forEach(([id,ic,k])=>{const b=document.getElementById(id);if(b)b.innerHTML=IC[ic]+T(k)});{const b=document.getElementById('shr');b.innerHTML=IC.share;b.setAttribute('aria-label',T('shr'));b.title=T('shr')}document.querySelectorAll('[data-ih]').forEach(e=>e.innerHTML=T(e.dataset.ih));if(!OUTL)document.querySelectorAll('[data-i=pc]').forEach(e=>e.textContent=T('pcr').replace('{r}',RKM));
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LG));try{localStorage.setItem('city_lang',LG)}catch(e){}
   document.title=((NAMES[D.slug]||{}).en||D.name.split(',')[0])+', '+YR[0]+'\u2013'+YR[yi0]+' \u00b7 Adama \u2013 40 years of cities spreading, seen from space';
   zpLang();window.__lh&&window.__lh();roadLabs.forEach(l=>{l.d.textContent=l.nm[LG]||l.nm.d||l.nm.en||l.nm.he});hoodTxt();dirty=true}
@@ -219,7 +219,7 @@ function animHaze(tm){if(!haze.visible)return;haze.children.forEach((m,i)=>{m.po
 // ---------- air quality (air.json from scripts/air_quality.py): yearly PM2.5 curve that follows the timeline ----------
 const AIR=D.air&&D.air.series&&D.air.series.pm25,AIRL=D.air&&D.air.live;let airUpd=()=>{};
 if(AIR||AIRL){const el=document.createElement('div');el.className='air';document.getElementById('cards').prepend(el);
-  const W_=230,H_=60,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
+  const W_=170,H_=44,y0=AIR?AIR.years[0]:0,y1=AIR?AIR.years[AIR.years.length-1]:1,who=D.air.who_pm25||5,vmax=AIR?Math.max(who*1.4,...AIR.values)*1.08:1,
     X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-v/vmax*(H_-8),br=AIR&&AIR.break_before;
   const pts=AIR?AIR.years.map((y,i)=>[y,AIR.values[i]]):[],line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
   const old=br?pts.filter(p=>p[0]<=br):[],cur=br?pts.filter(p=>p[0]>=br):pts;
@@ -236,7 +236,7 @@ if(AIR||AIRL){const el=document.createElement('div');el.className='air';document
 // ---------- rainfall (rain.json from scripts/rainfall.py, CHIRPS): a small card with the yearly total and its 5-year average, no layer on the map ----------
 const RAIN=D.rain&&D.rain.years&&D.rain.years.length>=10?D.rain:null;
 if(RAIN){const el=document.getElementById('rain');
-  const W_=230,H_=60,ys=RAIN.years,vs=RAIN.values,y0=ys[0],y1=ys[ys.length-1],mean=vs.reduce((a,b)=>a+b,0)/vs.length,vmax=Math.max(...vs)*1.04,vmin=Math.min(...vs)*.7,   // the scale starts under the driest year, not at zero: a line over 0-900 mm would look flat
+  const W_=170,H_=44,ys=RAIN.years,vs=RAIN.values,y0=ys[0],y1=ys[ys.length-1],mean=vs.reduce((a,b)=>a+b,0)/vs.length,vmax=Math.max(...vs)*1.04,vmin=Math.min(...vs)*.7,   // the scale starts under the driest year, not at zero: a line over 0-900 mm would look flat
     X=y=>2+(y-y0)/Math.max(1,y1-y0)*(W_-4),Y=v=>H_-3-(v-vmin)/(vmax-vmin)*(H_-8),
     ABS=RAIN.absolute!==false,   // a model that is known to run low (Open-Meteo): only the gap to the average is shown, not millimetres
     avg=ys.map((_,i)=>i<4?null:vs.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5),line=a=>a.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');

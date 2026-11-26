@@ -77,17 +77,26 @@ body.exp.rainon .rain {
   stroke-width: 1.5;
 }
 
-/* The air and rain cards sit side by side above the buttons, bottom left. */
+/* The rain and air cards, one above the other (rain on top), above the buttons, bottom left. */
 .cards {
   position: fixed;
   left: clamp(18px, 3vw, 44px);
-  bottom: clamp(128px, 19vh, 156px);
+  bottom: clamp(112px, 17vh, 138px);
   z-index: 40;
   display: flex;
-  align-items: flex-end;
-  gap: 28px;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 12px;
   pointer-events: none;
 }
 .cards > * {
   pointer-events: auto;
+}
+.air .ax,
+.rain .rx {
+  min-width: 132px;
+}
+.air .ah,
+.rain .rh {
+  gap: 10px;
 }
