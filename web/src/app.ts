@@ -187,7 +187,6 @@ const popSum=(gx,gy,rc)=>{const P=POP,out=new Float64Array(P.ys.length),rb=rc/P.
   return out};
 const popAtYear=(v,yr)=>{const ys=POP.ys;if(yr<=ys[0])return v[0];for(let e=1;e<ys.length;e++)if(yr<=ys[e])return v[e-1]+(v[e]-v[e-1])*(yr-ys[e-1])/(ys[e]-ys[e-1]);return v[ys.length-1]};
 const popRound=n=>n<1000?Math.round(n/10)*10:Math.round(n/100)*100; 
-const TREE='<svg class="tr" viewBox="0 0 24 24" width="12" height="12"><path d="M16.17 10.06H7.83c-1.18 0-1.59-.79-.9-1.75l4.17-5.84c.49-.7 1.31-.7 1.8 0l4.17 5.84c.69.96.28 1.75-.9 1.75zM17.59 18H6.41c-1.58 0-2.12-1.05-1.19-2.33l3.99-5.61h5.58l3.99 5.61c.93 1.28.39 2.33-1.19 2.33zM12.75 18v4a.75.75 0 01-1.5 0v-4z"/></svg>';   // tree icon: SVG Repo (MIT)
 const hoodLabs=[];
 const makeHoods=raw=>{const SEP=34,list=[];hoodLabs.splice(0).forEach(l=>l.d.remove());
   raw.forEach(h=>{const [x,z]=toXZ(h[0],h[1]);if(Math.hypot(x,z)>RD-3)return;const r=h[5]==='suburb'?32:22;let n=0;const g=new Float64Array(YR.length);
@@ -195,7 +194,7 @@ const makeHoods=raw=>{const SEP=34,list=[];hoodLabs.splice(0).forEach(l=>l.d.rem
     if(n<30)return;for(let y=0;y<YR.length;y++)g[y]=g[y]/n*100;list.push({h,x,z,g,loss:g[0]-g[YR.length-1]})});
   list.sort((a,b)=>b.loss-a.loss);const kept=[];
   for(const e of list){if(kept.length>=16)break;if(kept.every(k=>Math.hypot(k.x-e.x,k.z-e.z)>SEP))kept.push(e)}
-  kept.forEach(e=>{const d=document.createElement('div');d.className='hd';d.innerHTML='<span></span><b>'+TREE+'<svg viewBox="0 0 14 14" width="12" height="12"><path d="M3.5 10.5 10.5 3.5M4.6 3.5h5.9v5.9"/></svg><i></i></b>';wrap.appendChild(d);hoodLabs.push({d,h:e.h,g:e.g,v:new THREE.Vector3(e.x,4,e.z)})});hoodYi=-1;dirty=true};
+  kept.forEach(e=>{const d=document.createElement('div');d.className='hd';d.innerHTML='<span></span><b><svg viewBox="0 0 14 14" width="12" height="12"><path d="M3.5 10.5 10.5 3.5M4.6 3.5h5.9v5.9"/></svg><i></i></b>';wrap.appendChild(d);hoodLabs.push({d,h:e.h,g:e.g,v:new THREE.Vector3(e.x,4,e.z)})});hoodYi=-1;dirty=true};
 let hoodsOn=true,hoodYi=-1;const HOOD_MIN=.3,HOOD_ZOOM=1.3;   // pills appear once the map is zoomed in a little
 const hoodTxt=()=>{const yi=Math.min(yi0,Math.max(0,Math.round(tt)));hoodYi=yi;hoodLabs.forEach(l=>{const h=l.h,nm=LG==='he'?(h[4]||h[2]):(h[3]||(/^[0-9 ]+$/.test(h[2])&&h[4]?h[4]:h[2]));l.d.firstChild.textContent=nm;
   const b=l.d.lastChild,dv=yi>0?l.g[yi]-l.g[yi-1]:0;b.style.display=Math.abs(dv)<HOOD_MIN?'none':'';b.classList.toggle('dn',dv<0);b.lastChild.textContent=(dv>0?'+':'−')+Math.abs(dv).toFixed(1)+' '+T('pts');l.d.title=YR[Math.max(0,yi-1)]+' → '+YR[yi];})};

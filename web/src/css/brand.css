@@ -122,10 +122,6 @@ body.top .sh {
   unicode-bidi: isolate;
   color: #74dd7c;
 }
-.hd b svg.tr {
-  fill: currentColor;
-  stroke: none;
-}
 .hd b svg {
   fill: none;
   stroke: currentColor;
