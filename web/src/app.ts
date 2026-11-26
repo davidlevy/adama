@@ -254,9 +254,9 @@ if(RAIN){const el=document.getElementById('rain');
   rg.setAttribute('position',new THREE.BufferAttribute(rp,3));rg.setAttribute('aEnd',new THREE.BufferAttribute(end,1));rg.setAttribute('aSd',new THREE.BufferAttribute(sd,1));
   const rm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:RU,
     vertexShader:'attribute float aEnd,aSd;uniform float uT,uH,uL;varying float vA;void main(){float y=mod(position.y-uT*(9.+7.*aSd),uH);vA=smoothstep(0.,6.,y)*(1.-smoothstep(uH*.7,uH,y))*(.45+.55*aEnd);vec3 p=vec3(position.x+y*.12,y+uL*aEnd,position.z);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
-    fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(.68,.8,1.,uA*vA);}'});
+    fragmentShader:'uniform float uA;varying float vA;void main(){gl_FragColor=vec4(.36,.62,1.,uA*vA);}'});
   const rain=new THREE.LineSegments(rg,rm);rain.frustumCulled=false;rain.renderOrder=9;rain.visible=false;scene.add(rain);
-  const fxApply=(yr)=>{const i=ys.indexOf(Math.min(yr,y1)),v=i<0?mean:vs[i],k=Math.max(.08,Math.min(1,.5*v/mean));rg.setDrawRange(0,Math.round(NMAX*k)*2);rainBase=.16+.22*k};
+  const fxApply=(yr)=>{const i=ys.indexOf(Math.min(yr,y1)),v=i<0?mean:vs[i],k=Math.max(.08,Math.min(1,.5*v/mean));rg.setDrawRange(0,Math.round(NMAX*k)*2);rainBase=.34+.3*k};
   const rnB=document.getElementById('rn'),fxShow=()=>{rain.visible=document.body.classList.contains('exp')&&rainFx;   // (not `explore`: update() runs once before it is declared)
     document.body.classList.toggle('rainon',rainFx);rnB.classList.toggle('on',rainFx)};
   rnB.style.display='';
